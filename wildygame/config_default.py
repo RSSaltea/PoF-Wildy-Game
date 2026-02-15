@@ -2,7 +2,7 @@ from typing import Dict, Any
 
 from .items import ITEM_EFFECTS
 from .npcs import NPC_DROPS
-from .wildy_drops import CHEST_COIN_RANGE, CHEST_REWARDS, SHOP_ITEMS, SHOP_SELL_ITEMS, LOOT_TABLES
+from .wildy_drops import CHEST_COIN_RANGE, CHEST_REWARDS, SHOP_ITEMS, LOOT_TABLES
 
 DEFAULT_CONFIG: Dict[str, Any] = {
     "prefix": "!",
@@ -24,7 +24,6 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "chest_coin_range": CHEST_COIN_RANGE,
     "chest_rewards": CHEST_REWARDS,
     "shop_items": SHOP_ITEMS,
-    "shop_sell_items": SHOP_SELL_ITEMS,
     "loot_tables": LOOT_TABLES,
 
     "npc_drops": NPC_DROPS,
