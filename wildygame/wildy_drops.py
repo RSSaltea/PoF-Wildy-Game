@@ -14,13 +14,6 @@ SHOP_ITEMS: Dict[str, int] = {
     "Shark": 2000,
 }
 
-SHOP_SELL_ITEMS: Dict[str, int] = {
-    "Revenant Relic Shard": 50_000,
-    "Revenant Totem": 100_000,
-    "Ancient Effigy": 500_000,
-    "Ancient Emblem": 1_000_000,
-}
-
 LOOT_TABLES: Dict[str, List[Dict[str, Any]]] = {
     "shallow": [
         {"item": "Nature rune", "min": 1, "max": 3, "chance": "1/2"},
@@ -49,4 +42,5 @@ LOOT_TABLES: Dict[str, List[Dict[str, Any]]] = {
         {"item": "Ancient Emblem", "min": 1, "max": 1, "chance": "1/300"},
     ],
 }
+
 
