@@ -82,7 +82,8 @@ ITEMS: Dict[str, Dict[str, Any]] = {
 ITEM_EFFECTS = {
     "Bracelet of ethereum": {"effect": "When worn you will take 50% reduced damage from Revenants."},
     "Wristwraps of the Damned": {"effect": "When worn, Abyssal Overlord spawns with 30% less base HP."},
-    "Viggora's Chainmace": {"effect": "Grants +7 attack against ALL NPCs (no bonus in PvP)."},
+    "Viggora's Chainmace": {"effect": "Grants +10 attack against ALL NPCs (no bonus in PvP)."},
 }
+
 
 
