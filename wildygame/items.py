@@ -25,7 +25,7 @@ FOOD: Dict[str, Dict[str, int]] = {
 
 ITEMS: Dict[str, Dict[str, Any]] = {
     # Starter gear (non-stackable)
-    "Starter Sword": {"type": "mainhand", "atk": 2, "stackable": False, "aliases": "start sword,starter sword"},
+    "Starter Sword": {"type": "mainhand", "atk": 1, "stackable": False, "aliases": "start sword,starter sword"},
     "Starter Platebody": {"type": "body", "def": 1, "stackable": False, "aliases": "starter plate,start body,starter body"},
 
     # Weapons (non-stackable)
@@ -84,4 +84,5 @@ ITEM_EFFECTS = {
     "Wristwraps of the Damned": {"effect": "When worn, Abyssal Overlord spawns with 30% less base HP."},
     "Viggora's Chainmace": {"effect": "Grants +7 attack against ALL NPCs (no bonus in PvP)."},
 }
+
 
