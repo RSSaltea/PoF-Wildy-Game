@@ -5,7 +5,7 @@ NPCS: List[Tuple[str, int, int, int, str, int, int]] = [
     ("Revenant goblin", 50, 1, 1, "revenant", 3, 1),
     ("Revenant knight", 50, 2, 10, "revenant", 5, 3),
     ("Chaos fanatic", 90, 3, 20, "chaos_fanatic", 7, 5),
-    ("Abyssal Overlord", 140, 4, 35, "overlord", 11, 7),
+    ("Abyssal Overlord", 280, 4, 35, "overlord", 11, 7),
 ]
 
 NPC_DROPS: Dict[str, Dict[str, Any]] = {
@@ -59,3 +59,4 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
         ],
     },
 }
+
