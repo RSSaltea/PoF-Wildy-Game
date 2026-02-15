@@ -1221,16 +1221,29 @@ class Wilderness(commands.Cog):
             deff = int(meta.get("def", 0))
             atk_vs_npc = int(meta.get("atk_vs_npc", 0))
             stackable = bool(meta.get("stackable", False))
-            parts = [f"🧩 **{item_key}**", f"Slot: **{slot}**", f"Stackable: **{stackable}**"]
+            sell_value = int(meta.get("value", 0))
+
+            parts = [
+                f"🧩 **{item_key}**",
+                f"Slot: **{slot}**",
+                f"Stackable: **{stackable}**",
+            ]
+
             stat_line = f"Stats: **+{atk} atk / +{deff} def**"
             if atk_vs_npc:
                 stat_line += f" | **+{atk_vs_npc} atk vs NPCs**"
             parts.append(stat_line)
+
+            if sell_value > 0:
+                parts.append(f"💰 Sell value: **{sell_value:,} coins**")
+
             effect = (self.config.get("item_effects", {}) or {}).get(item_key, {}).get("effect")
             if effect:
                 parts.append(f"Effect: {effect}")
+
             await ctx.reply("\n".join(parts))
             return
+
 
         if item_key and meta:
             stackable = bool(meta.get("stackable", False))
