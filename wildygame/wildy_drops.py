@@ -1,3 +1,4 @@
+
 from typing import Dict, Any, List
 
 CHEST_COIN_RANGE = [5000, 25000]
@@ -42,5 +43,3 @@ LOOT_TABLES: Dict[str, List[Dict[str, Any]]] = {
         {"item": "Ancient Emblem", "min": 1, "max": 1, "chance": "1/300"},
     ],
 }
-
-
