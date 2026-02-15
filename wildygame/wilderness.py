@@ -682,10 +682,6 @@ class Wilderness(commands.Cog):
             return "(none)"
 
         max_inv = int(self.config["max_inventory_items"])
-        used = self._inv_slots_used(p.inventory)
-        space = max_inv - used
-        if space <= 0:
-            return "(inventory full - lost)"
 
         slots_needed = self._slots_needed_to_add(p.inventory, item, qty)
 
@@ -693,12 +689,19 @@ class Wilderness(commands.Cog):
             self._add_item(p.inventory, item, qty)
             return ""
 
+        used = self._inv_slots_used(p.inventory)
+        space = max_inv - used
+        if space <= 0:
+            return "(inventory full - lost)"
+
+        # Stackable but not already in bag: needs 1 free slot
         if self._is_stackable(item) and item not in FOOD:
             if space >= 1:
                 self._add_item(p.inventory, item, qty)
                 return ""
             return "(inventory full - lost)"
 
+        # Non-stackable (or food): fill what we can
         take = min(space, qty)
         if take > 0:
             self._add_item(p.inventory, item, take)
@@ -706,6 +709,7 @@ class Wilderness(commands.Cog):
         if rem > 0:
             return f"(x{take} inv, x{rem} lost)"
         return ""
+
 
     def _maybe_auto_eat_after_hit(self, p: PlayerState, your_hp: int) -> Tuple[int, Optional[str], int, int]:
         """
