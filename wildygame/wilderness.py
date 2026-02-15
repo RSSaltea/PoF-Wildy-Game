@@ -546,20 +546,38 @@ class Wilderness(commands.Cog):
             return slot
         return None
 
-    def _equipped_bonus(self, p: PlayerState, *, vs_npc: bool) -> Tuple[int, int]:
-        """
-        Bonuses from equipped items only.
-        - vs_npc=True: includes "atk_vs_npc" special bonuses (e.g., Chainmace)
-        - vs_npc=False: PvP, does NOT include atk_vs_npc
-        """
+    # NOTE:
+    # - PvP should NOT consume ether (so we never charge ether in _duel_action).
+    # - PvM SHOULD consume 3 ether per hit IF available.
+    # - If you don't have 3 ether, you still get normal atk (e.g. 4), but NOT atk_vs_npc (e.g. 20).
+    #
+    # This function supports an override for "charged this hit" so that:
+    # - we can check ether first (>=3), consume it, and STILL apply atk_vs_npc for that hit
+    #   even if consuming drops you below 3 afterward.
+    def _equipped_bonus(
+        self,
+        p: PlayerState,
+        *,
+        vs_npc: bool,
+        chainmace_charged: Optional[bool] = None,
+    ) -> Tuple[int, int]:
         atk = 0
         deff = 0
+
         for item in p.equipment.values():
             meta = ITEMS.get(item, {})
             atk += int(meta.get("atk", 0))
             deff += int(meta.get("def", 0))
+
             if vs_npc:
+                if item == "Viggora's Chainmace":
+                    charged = chainmace_charged
+                    if charged is None:
+                        charged = (p.inventory.get("Revenant ether", 0) >= 3)
+                    if not charged:
+                        continue  # no atk_vs_npc when not charged
                 atk += int(meta.get("atk_vs_npc", 0))
+
         return atk, deff
 
     def _best_food_in_inventory(self, p: PlayerState) -> Optional[str]:
@@ -1019,6 +1037,7 @@ class Wilderness(commands.Cog):
                 return
 
             if action == "hit":
+                # PvP SHOULD NOT consume ether. We just use normal bonuses.
                 atk_bonus, _ = self._equipped_bonus(attacker, vs_npc=False)
                 _, def_bonus = self._equipped_bonus(defender, vs_npc=False)
                 atk_stat = 6 + atk_bonus + int(attacker.wildy_level / 12)
@@ -1243,7 +1262,6 @@ class Wilderness(commands.Cog):
 
             await ctx.reply("\n".join(parts))
             return
-
 
         if item_key and meta:
             stackable = bool(meta.get("stackable", False))
@@ -1660,15 +1678,12 @@ class Wilderness(commands.Cog):
             if npc_type == "overlord" and p.equipment.get("gloves") == "Wristwraps of the Damned":
                 npc_hp = int(npc_hp * 0.70)
 
+            # HP scaling (change /8 to whatever scaling you want)
             npc_hp = npc_hp + int(p.wildy_level / 8)
             npc_max = npc_hp
 
             npc_atk = 1 + npc_tier + npc_atk_bonus + int(p.wildy_level / 12)
             npc_def_stat = npc_tier + npc_def_bonus + int(p.wildy_level / 20)
-
-            atk_bonus, def_bonus = self._equipped_bonus(p, vs_npc=True)
-            your_atk = 6 + atk_bonus + int(p.wildy_level / 15)
-            your_def = 6 + def_bonus + int(p.wildy_level / 20)
 
             start_hp = p.hp
             your_hp = p.hp
@@ -1683,6 +1698,18 @@ class Wilderness(commands.Cog):
             events.append(f"👹 **{npc_name}** (HP **{npc_max}**) — You start **{start_hp}/{self.config['max_hp']}**")
 
             while npc_hp > 0 and your_hp > 0:
+                # PvM ether consumption: 3 per hit IF available. If not available, chainmace is uncharged.
+                charged = False
+                if p.equipment.get("mainhand") == "Viggora's Chainmace":
+                    if p.inventory.get("Revenant ether", 0) >= 3:
+                        charged = True
+                        self._remove_item(p.inventory, "Revenant ether", 3)
+
+                # Recompute attack/def each turn so running out of ether removes atk_vs_npc properly.
+                atk_bonus, def_bonus = self._equipped_bonus(p, vs_npc=True, chainmace_charged=charged)
+                your_atk = 6 + atk_bonus + int(p.wildy_level / 15)
+                your_def = 6 + def_bonus + int(p.wildy_level / 20)
+
                 roll_a = random.randint(0, your_atk)
                 roll_d = random.randint(0, npc_def_stat)
                 hit = max(0, roll_a - roll_d)
@@ -1715,7 +1742,6 @@ class Wilderness(commands.Cog):
                 return pages or ["(no log)"]
 
             if your_hp <= 0:
-
                 lost_items = dict(p.inventory)
 
                 p.inventory.clear()
@@ -1900,15 +1926,12 @@ class Wilderness(commands.Cog):
                 if npc_type == "overlord" and p.equipment.get("gloves") == "Wristwraps of the Damned":
                     npc_hp = int(npc_hp * 0.70)
 
+                # HP scaling (change /8 to whatever scaling you want)
                 npc_hp = npc_hp + int(p.wildy_level / 8)
                 npc_max = npc_hp
 
                 npc_atk = 1 + npc_tier + npc_atk_bonus + int(p.wildy_level / 12)
                 npc_def_stat = npc_tier + npc_def_bonus + int(p.wildy_level / 20)
-
-                atk_bonus, def_bonus = self._equipped_bonus(p, vs_npc=True)
-                your_atk = 6 + atk_bonus + int(p.wildy_level / 15)
-                your_def = 6 + def_bonus + int(p.wildy_level / 20)
 
                 log = [
                     f"⚠️ **Ambush!** You tried to teleport but were attacked by **{npc_name}** (Wildy {p.wildy_level})."
@@ -1916,6 +1939,18 @@ class Wilderness(commands.Cog):
                 your_hp = p.hp
 
                 while npc_hp > 0 and your_hp > 0:
+                    # PvM ether consumption: 3 per hit IF available
+                    charged = False
+                    if p.equipment.get("mainhand") == "Viggora's Chainmace":
+                        if p.inventory.get("Revenant ether", 0) >= 3:
+                            charged = True
+                            self._remove_item(p.inventory, "Revenant ether", 3)
+
+                    # Recompute stats each turn (so losing ether stops atk_vs_npc)
+                    atk_bonus, def_bonus = self._equipped_bonus(p, vs_npc=True, chainmace_charged=charged)
+                    your_atk = 6 + atk_bonus + int(p.wildy_level / 15)
+                    your_def = 6 + def_bonus + int(p.wildy_level / 20)
+
                     roll_a = random.randint(0, your_atk)
                     roll_d = random.randint(0, npc_def_stat)
                     hit = max(0, roll_a - roll_d)
