@@ -9,7 +9,7 @@ CHEST_REWARDS: List[Dict[str, Any]] = [
 SHOP_ITEMS: Dict[str, int] = {
     "Starter Sword": 0,
     "Starter Platebody": 0,
-    "Mysterious key": 10000,
+    "Mysterious key": 100000,
     "Lobster": 1000,
     "Shark": 2000,
 }
