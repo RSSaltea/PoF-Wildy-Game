@@ -28,6 +28,9 @@ LOOT_TABLES: Dict[str, List[Dict[str, Any]]] = {
         {"item": "Lobster", "min": 1, "max": 4, "chance": "1/2"},
         {"item": "Shark", "min": 1, "max": 2, "chance": "1/6"},
         {"item": "Rune scimitar", "min": 1, "max": 1, "chance": "1/50"},
+        {"item": "Rune chainbody", "min": 1, "max": 1, "chance": "1/80"},
+        {"item": "Rune med helm", "min": 1, "max": 1, "chance": "1/40"},
+        {"item": "Rune sq shield", "min": 1, "max": 1, "chance": "1/45"},
     ],
     "mid": [
         {"item": "Death rune", "min": 5, "max": 25, "chance": "1/2"},
@@ -46,3 +49,4 @@ LOOT_TABLES: Dict[str, List[Dict[str, Any]]] = {
         {"item": "Ancient Emblem", "min": 1, "max": 1, "chance": "1/300"},
     ],
 }
+
