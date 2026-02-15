@@ -45,9 +45,12 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     },
 
     # Armour / wearables (non-stackable)
-    "Rune platebody": {"type": "body", "def": 2, "stackable": False, "aliases": "rune plate,rune body,rune platebody"},
-    "Dragon boots": {"type": "boots", "def": 1, "stackable": False, "aliases": "dboots,dragon boot,d boots,dragon boots"},
-    "Dragon platebody": {"type": "body", "def": 4, "stackable": False, "aliases": "d plate,dplate,dragon plate,d pbody,dragon platebody"},
+    "Rune platebody": {"type": "body", "def": 4, "stackable": False, "aliases": "rune plate"},
+    "Rune chainbody": {"type": "body", "def": 2, "stackable": False, "aliases": "rune chain"},
+    "Rune med helm": {"type": "helm", "def": 1, "stackable": False, "aliases": "rune med"},
+    "Rune sq shield": {"type": "offhand", "def": 2, "stackable": False, "aliases": "rune sq"},
+    "Dragon boots": {"type": "boots", "def": 3, "atk": 1, "stackable": False, "aliases": "dboots,dragon boot,d boots,dragon boots"},
+    "Dragon platebody": {"type": "body", "def": 7, "stackable": False, "aliases": "d plate,dplate,dragon plate,d pbody,dragon platebody"},
 
     # Wearables (effects described in ITEM_EFFECTS)
     "Bracelet of ethereum": {"type": "amulet", "stackable": False, "aliases": "ethereum bracelet,bracelet ethereum,bracelet of ethereum"},
@@ -81,3 +84,4 @@ ITEM_EFFECTS = {
     "Wristwraps of the Damned": {"effect": "When worn, Abyssal Overlord spawns with 30% less base HP."},
     "Viggora's Chainmace": {"effect": "Grants +7 attack against ALL NPCs (no bonus in PvP)."},
 }
+
