@@ -2204,8 +2204,7 @@ class Wilderness(commands.Cog):
             await ctx.reply("Usage: `!w shop sell <item>` or `!w shop sell <qty> <item>`")
             return
 
-        sell_items = self.config.get("shop_sell_items", {}) or {}
-
+        # Parse: [qty] <item name / alias>
         qty = 1
         item_query = ""
 
@@ -2226,17 +2225,37 @@ class Wilderness(commands.Cog):
             await ctx.reply("Usage: `!w shop sell <item>` or `!w shop sell <qty> <item>`")
             return
 
-        sell_key = None
-        for k in sell_items.keys():
-            if self._norm(k) == self._norm(item_query):
-                sell_key = k
-                break
+        # Resolve aliases -> canonical item name (e.g. dscim -> Dragon scimitar)
+        canonical = self._resolve_item(item_query)
+        if not canonical:
+            # As a convenience, try matching exact inventory key name (case-insensitive)
+            async with self._mem_lock:
+                p = self._get_player(ctx.author)
+                inv_key_direct = self._resolve_from_keys_case_insensitive(item_query, p.inventory.keys())
+            canonical = inv_key_direct
 
-        if not sell_key:
-            await ctx.reply("That item can’t be sold here.")
+        if not canonical:
+            await ctx.reply("Unknown item.")
             return
 
-        price_each = int(sell_items[sell_key])
+        # Price source: ITEMS[canonical]["value"]
+        meta = ITEMS.get(canonical, {})
+        price_each = int(meta.get("value", 0))
+
+        # OPTIONAL fallback: if you haven't migrated an item yet, allow old config sell table
+        if price_each <= 0:
+            sell_items = self.config.get("shop_sell_items", {}) or {}
+            sell_key = None
+            for k in sell_items.keys():
+                if self._norm(k) == self._norm(canonical) or self._norm(k) == self._norm(item_query):
+                    sell_key = k
+                    break
+            if sell_key:
+                price_each = int(sell_items[sell_key])
+
+        if price_each <= 0:
+            await ctx.reply("That item has no shop value (can’t be sold).")
+            return
 
         async with self._mem_lock:
             p = self._get_player(ctx.author)
@@ -2244,14 +2263,15 @@ class Wilderness(commands.Cog):
                 await ctx.reply("Sell items out of the Wilderness.")
                 return
 
-            inv_key = self._resolve_from_keys_case_insensitive(sell_key, p.inventory.keys())
+            # Find the exact inventory key (preserves original casing)
+            inv_key = self._resolve_from_keys_case_insensitive(canonical, p.inventory.keys())
             have = int(p.inventory.get(inv_key, 0)) if inv_key else 0
 
             if have <= 0:
-                await ctx.reply(f"You don’t have **{sell_key}** in your inventory.")
+                await ctx.reply(f"You don’t have **{canonical}** in your inventory.")
                 return
 
-            sell_qty = min(qty, have)
+            sell_qty = min(int(qty), have)
             if sell_qty <= 0:
                 await ctx.reply("Quantity must be > 0.")
                 return
@@ -2267,11 +2287,11 @@ class Wilderness(commands.Cog):
 
         if sell_qty < qty:
             await ctx.reply(
-                f"💰 Sold **{sell_key} x{sell_qty}** for **{total:,} coins** "
+                f"💰 Sold **{canonical} x{sell_qty}** for **{total:,} coins** "
                 f"(you only had {have})."
             )
         else:
-            await ctx.reply(f"💰 Sold **{sell_key} x{sell_qty}** for **{total:,} coins**.")
+            await ctx.reply(f"💰 Sold **{canonical} x{sell_qty}** for **{total:,} coins**.")
 
 
 async def setup(bot: commands.Bot):
