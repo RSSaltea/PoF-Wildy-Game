@@ -6,6 +6,7 @@ NPCS: List[Tuple[str, int, int, int, str, int, int]] = [
     ("Revenant knight", 50, 2, 10, "revenant", 5, 3),
     ("Chaos fanatic", 90, 3, 20, "chaos_fanatic", 7, 5),
     ("Abyssal Overlord", 280, 4, 35, "overlord", 11, 7),
+    ("Zarveth the Veilbreaker", 420, 5, 45, "veilbreaker", 22, 4),
 ]
 
 NPC_DROPS: Dict[str, Dict[str, Any]] = {
@@ -58,5 +59,21 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Abyssal Scourge", "min": 1, "max": 1, "chance": "1/200"},
         ],
     },
+    "veilbreaker": {
+        "coins_range": [0, 45000],
+        "unique": [
+            {"item": "Ancient Emblem", "min": 1, "max": 1, "chance": "1/50"},
+            {"item": "Veilbreaker", "min": 1, "max": 1, "chance": "1/300"},
+            {"item": "Zarveth's Ascendant Platebody", "min": 1, "max": 1, "chance": "1/400"},
+            {"item": "Zarveth's Ascendant Platelegs", "min": 1, "max": 1, "chance": "1/400"},
+            {"item": "Zarveth's Ascendant Mask", "min": 1, "max": 1, "chance": "1/400"},
+        ],
+        "pet": [
+            {"item": "Zarvethy", "min": 1, "max": 1, "chance": "1/2000"},
+        ],
+        "loot": [
+            {"item": "Veilfruit", "min": 2, "max": 7, "chance": "1/2"},
+            {"item": "Super Strength Potion (4)", "min": 1, "max": 2, "chance": "1/4"},
+        ],
+    },
 }
-
