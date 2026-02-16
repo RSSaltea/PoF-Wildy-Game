@@ -56,6 +56,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Abyssal charm", "min": 1, "max": 2, "chance": "1/4"},
             {"item": "Overlord core fragment", "min": 1, "max": 1, "chance": "1/6"},
             {"item": "Blood rune", "min": 1, "max": 40, "chance": "1/40"},
+            {"item": "Abyssal Whip", "min": 1, "max": 1, "chance": "1/100"},
         ],
         "special": [
             {"item": "Abyssal Scourge", "min": 1, "max": 1, "chance": "1/200"},
