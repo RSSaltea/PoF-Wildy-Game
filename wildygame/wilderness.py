@@ -103,8 +103,8 @@ class PlayerState:
     cd: Dict[str, int] = None
     last_action: int = 0
     active_buffs: Dict[str, Dict[str, int]] = None
-
     blacklist: List[str] = None
+    locked: List[str] = None
 
     def __post_init__(self):
         if self.inventory is None:
@@ -125,9 +125,10 @@ class PlayerState:
             self.last_action = _now()
         if self.active_buffs is None:
             self.active_buffs = {}
-
         if self.blacklist is None:
             self.blacklist = []
+        if self.locked is None:
+            self.locked = []
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -453,6 +454,7 @@ class Wilderness(commands.Cog):
         p.uniques = p.uniques or {}
         p.pets = p.pets or []
         p.cd = p.cd or {}
+        p.locked = getattr(p, "locked", None) or []
         p.blacklist = getattr(p, "blacklist", None) or []
         if getattr(p, "started", None) is None:
             p.started = False
@@ -744,6 +746,20 @@ class Wilderness(commands.Cog):
 
     def _full_heal(self, p: PlayerState):
         p.hp = int(self.config["max_hp"])
+
+    def _is_locked(self, p: PlayerState, item_name: str) -> bool:
+        """True if item_name matches any entry in p.locked (case/space insensitive)."""
+        if not item_name:
+            return False
+        locked = getattr(p, "locked", None) or []
+        target = self._norm(item_name)
+        return any(self._norm(x) == target for x in locked)
+
+    def _locked_pretty(self, p: PlayerState) -> str:
+        locked = getattr(p, "locked", None) or []
+        if not locked:
+            return "(none)"
+        return "\n".join(f"- {x}" for x in sorted(locked, key=lambda s: s.lower()))
 
     def _is_blacklisted(self, p: PlayerState, item_name: str) -> bool:
         """True if item_name matches any entry in p.blacklist (case/space insensitive)."""
@@ -1411,10 +1427,10 @@ class Wilderness(commands.Cog):
             "!w start (one-time until reset)\n"
             "!w reset (wipe your profile)\n"
             "!w hp / !w health\n"
-            "!w venture [level]\n"
+            "!w venture <level>\n"
             "!w equip <item> / !w unequip <slot> / !w gear\n"
             "!w inspect <itemname>\n"
-            "!w fight [npc name]\n"
+            "!w fight <npc name>\n"
             "!w npcs\n"
             "!w attack @user\n"
             "!w tele\n"
@@ -1422,12 +1438,13 @@ class Wilderness(commands.Cog):
             "!w drink <potionname>\n"
             "!w drop <itemname>\n"
             "!w bank / !w bankview\n"
-            "!w withdraw <qty> <item> (alias: !w withdra)\n"
+            "!w withdraw <qty> <item>\n"
             "!w inv\n"
             "!w chest open\n"
             "!w trade <playername> / !w trade accept"
             "!w shop list / !w shop buy <quantity> <item> / !w shop sell <quantity> <item>\n"
-            "!w blacklist / !w blacklist remove <item> / !w blacklist clear"
+            "!w blacklist / !w blacklist remove <item> / !w blacklist clear\n"
+            "!w lock <itemname> / !w lock remove <itemname>"
         )
 
     @w.group(name="trade", invoke_without_command=True)
@@ -1905,14 +1922,33 @@ class Wilderness(commands.Cog):
     async def inv(self, ctx: commands.Context):
         if not await self._ensure_ready(ctx):
             return
+
         p = self._get_player(ctx.author)
+
         inv = p.inventory.copy()
         inv[self.config["coins_item_name"]] = p.coins
 
         used = self._inv_slots_used(p.inventory)
         max_inv = int(self.config["max_inventory_items"])
 
-        pretty = "\n".join([f"- {k} x{v}" for k, v in sorted(inv.items())]) if inv else "Empty"
+        locked = getattr(p, "locked", None) or []
+
+        def is_locked_display(name: str) -> bool:
+            # Coins shouldn't be lockable (and aren't in p.inventory anyway)
+            if name == self.config["coins_item_name"]:
+                return False
+            target = self._norm(name)
+            return any(self._norm(x) == target for x in locked)
+
+        if inv:
+            lines = []
+            for k, v in sorted(inv.items(), key=lambda kv: self._norm(kv[0])):
+                lock_icon = " 🔒" if is_locked_display(k) else ""
+                lines.append(f"- {k} x{v}{lock_icon}")
+            pretty = "\n".join(lines)
+        else:
+            pretty = "Empty"
+
         await ctx.reply(f"**Inventory ({used}/{max_inv} slots):**\n{pretty}")
 
     @w.command(name="bankview")
@@ -1933,23 +1969,38 @@ class Wilderness(commands.Cog):
     async def bank_cmd(self, ctx: commands.Context):
         if not await self._ensure_ready(ctx):
             return
+
         async with self._mem_lock:
             p = self._get_player(ctx.author)
+
             ok, left = self._cd_ready(p, "bank", int(self.config["bank_cooldown_sec"]))
             if not ok:
                 await ctx.reply(f"Bank cooldown: **{left}s**")
                 return
+
             if p.in_wilderness:
                 await ctx.reply("You can’t bank in the Wilderness. !w tele out first.")
                 return
 
-            banked_items = dict(p.inventory)
+            banked_items: Dict[str, int] = {}
+            kept_locked: Dict[str, int] = {}
             banked_coins = int(p.coins)
 
+            # Move inventory items except locked ones
             for item, qty in list(p.inventory.items()):
-                self._add_item(p.bank, item, qty)
-            p.inventory.clear()
+                if qty <= 0:
+                    continue
 
+                if self._is_locked(p, item):
+                    kept_locked[item] = qty
+                    continue
+
+                # Normal banking
+                self._add_item(p.bank, item, qty)
+                banked_items[item] = qty
+                p.inventory.pop(item, None)
+
+            # Bank coins
             if p.coins > 0:
                 p.bank_coins += p.coins
                 p.coins = 0
@@ -1957,17 +2008,19 @@ class Wilderness(commands.Cog):
             self._set_cd(p, "bank")
             await self._persist()
 
-        if not banked_items and banked_coins <= 0:
-            await ctx.reply("Your inventory is empty — nothing to bank.")
-            return
-
+        # ----- Output message -----
         lines = []
+
         if banked_items:
             lines.append("📦 **Banked items:**")
             lines.append(self._format_items_short(banked_items, max_lines=18))
+        else:
+            lines.append("📦 **Banked items:** (none)")
         if banked_coins > 0:
             lines.append(f"🪙 **Banked coins:** {banked_coins:,}")
+
         lines.append("(Equipped gear unchanged.)")
+
         await ctx.reply("\n".join(lines))
 
     @w.command(name="withdraw", aliases=["withdra"])
@@ -2482,6 +2535,84 @@ class Wilderness(commands.Cog):
         await ctx.reply("✨ Teleport successful! (You are fully healed)")
 
     # Chest
+
+    @w.group(name="lock", invoke_without_command=True)
+    async def lock_cmd(self, ctx: commands.Context, *, itemname: Optional[str] = None):
+        """
+        !w lock
+        !w lock <itemname>
+        """
+        if not await self._ensure_ready(ctx):
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+
+            # No item -> show help + current locks
+            if not itemname:
+                await ctx.reply(
+                    "**Inventory Lock**\n"
+                    "`!w lock <itemname>` — lock an item so it stays in your inventory when you `!w bank`\n"
+                    "`!w lock remove <itemname>` — unlock it\n\n"
+                    f"🔒 **Locked items:**\n{self._locked_pretty(p)}"
+                )
+                return
+
+            # Resolve item using aliases/food first
+            canonical = self._resolve_item(itemname) or self._resolve_food(itemname) or itemname.strip()
+
+            # Find the actual inventory key (preserves casing)
+            inv_key = self._resolve_from_keys_case_insensitive(canonical, p.inventory.keys())
+            if not inv_key:
+                # Try also direct (maybe they typed exact inv item like "Super potion (2)")
+                inv_key = self._resolve_from_keys_case_insensitive(itemname, p.inventory.keys())
+
+            if not inv_key or int(p.inventory.get(inv_key, 0)) <= 0:
+                await ctx.reply("That item isn’t in your inventory, so it can’t be locked.")
+                return
+
+            # Prevent duplicates
+            if any(self._norm(x) == self._norm(inv_key) for x in (p.locked or [])):
+                await ctx.reply(f"🔒 **{inv_key}** is already locked.\n\nLocked items:\n{self._locked_pretty(p)}")
+                return
+
+            p.locked = (p.locked or []) + [inv_key]
+            await self._persist()
+
+        await ctx.reply(
+            f"🔒 Locked **{inv_key}**.\n"
+            "It will stay in your inventory when you use `!w bank`.\n\n"
+            f"Locked items:\n{self._locked_pretty(p)}"
+        )
+
+    @lock_cmd.command(name="remove", aliases=["rm", "del"])
+    async def lock_remove_cmd(self, ctx: commands.Context, *, itemname: str):
+        if not await self._ensure_ready(ctx):
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+            locked = getattr(p, "locked", None) or []
+            if not locked:
+                await ctx.reply("You have no locked items.")
+                return
+
+            target_norm = self._norm(itemname)
+
+            # Allow remove by canonical alias match too
+            canonical = self._resolve_item(itemname) or self._resolve_food(itemname) or itemname
+            canon_norm = self._norm(canonical)
+
+            new_locked = [x for x in locked if self._norm(x) not in (target_norm, canon_norm)]
+            if len(new_locked) == len(locked):
+                await ctx.reply("That item is not locked.")
+                return
+
+            p.locked = new_locked
+            await self._persist()
+
+        await ctx.reply(f"✅ Unlocked.\n\n🔒 Locked items:\n{self._locked_pretty(p)}")
+    
     @w.group(name="chest", invoke_without_command=True)
     async def chest(self, ctx: commands.Context):
         if not await self._ensure_ready(ctx):
