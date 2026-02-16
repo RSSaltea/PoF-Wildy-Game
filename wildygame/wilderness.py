@@ -258,6 +258,12 @@ class DuelView(discord.ui.View):
         self.cog = cog
         self.duel = duel
 
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id not in (self.duel.a_id, self.duel.b_id):
+            await interaction.response.send_message("You aren't in this fight.", ephemeral=True)
+            return False
+        return True
+
     async def _check_turn(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.duel.turn_id:
             await interaction.response.send_message("It’s not your turn.", ephemeral=True)
@@ -616,6 +622,37 @@ class Wilderness(commands.Cog):
         p.active_buffs = buffs
         return expired_msgs
 
+    def _apply_seeping_heal(self, p: PlayerState, damage_dealt: int) -> int:
+        """
+        Amulet of Seeping:
+        Costs 5 Blood runes per successful (non-zero) hit.
+        Heals 1 + 2% of damage dealt (only if damage > 0 and you can pay).
+        Returns the amount actually healed.
+        """
+        if damage_dealt <= 0:
+            return 0
+
+        if p.equipment.get("amulet") != "Amulet of Seeping":
+            return 0
+
+        RUNE_NAME = "Blood rune"
+        RUNE_COST = 5
+
+        # Must have enough runes in INVENTORY to heal
+        if int(p.inventory.get(RUNE_NAME, 0)) < RUNE_COST:
+            return 0
+
+        # Spend runes, then heal
+        if not self._remove_item(p.inventory, RUNE_NAME, RUNE_COST):
+            return 0  # safety fallback
+
+        max_hp = int(self.config["max_hp"])
+        before = int(p.hp)
+
+        heal_amt = 1 + int(damage_dealt * 0.02)
+        p.hp = clamp(before + heal_amt, 0, max_hp)
+
+        return int(p.hp) - before
 
     def _best_food_in_inventory(self, p: PlayerState) -> Optional[str]:
         best = None
@@ -1119,6 +1156,12 @@ class Wilderness(commands.Cog):
                 roll_d = random.randint(0, def_stat)
                 hit = max(0, roll_a - roll_d)
                 defender.hp = clamp(defender.hp - hit, 0, int(self.config["max_hp"]))
+
+                # 🩸 Amulet of Seeping lifesteal (PvP)
+                healed = self._apply_seeping_heal(attacker, hit)
+                if healed > 0:
+                    duel.log.append(f"🩸 Amulet of Seeping heals **{healed}**.")
+
                 mark_acted(attacker_id)
 
                 duel.log.append(
@@ -1247,6 +1290,11 @@ class Wilderness(commands.Cog):
             npc_hp = max(0, npc_hp - hit)
             events.append(f"🗡️ You hit **{hit}** | You: **{your_hp}/{self.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**")
             events.extend(self._consume_buffs_on_hit(p))
+            # Amulet of Seeping lifesteal
+            healed = self._apply_seeping_heal(p, hit)
+            if healed > 0:
+                your_hp = int(p.hp)
+                events.append(f"🩸 Amulet of Seeping heals **{healed}** | You: **{your_hp}/{self.config['max_hp']}**")
 
             if npc_hp <= 0:
                 break
@@ -2157,6 +2205,12 @@ class Wilderness(commands.Cog):
                 events.append(
                     f"🗡️ You hit **{hit}** | You: **{your_hp}/{self.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**"
                 )
+                # Amulet of Seeping lifesteal
+                healed = self._apply_seeping_heal(p, hit)
+                if healed > 0:
+                    your_hp = int(p.hp)
+                    events.append(f"🩸 Amulet of Seeping heals **{healed}** | You: **{your_hp}/{self.config['max_hp']}**")
+
                 events.extend(self._consume_buffs_on_hit(p))
                 if npc_hp <= 0:
                     break
