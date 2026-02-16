@@ -2177,9 +2177,19 @@ class Wilderness(commands.Cog):
 
         async with self._mem_lock:
             p = self._get_player(ctx.author)
+
+            # 5 second fight cooldown
+            ok, left = self._cd_ready(p, "fight", 5)
+            if not ok:
+                await ctx.reply(f"Fight cooldown: **{left}s**")
+                return
+
             if not p.in_wilderness:
                 await ctx.reply("You’re not in the Wilderness. Use !w venture.")
                 return
+
+            self._set_cd(p, "fight")
+
 
             self._touch(p)
 
