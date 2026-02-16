@@ -63,6 +63,12 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Zarveth's Ascendant Platelegs": {"type": "legs", "def": 5, "atk": 3, "stackable": False, "value": 72000, "aliases": "zarveth legs,zarveths platelegs,zarveths legs"},
     "Zarveth's Ascendant Mask": {"type": "helm", "def": 3, "atk": 1, "stackable": False, "value": 62000, "aliases": "zarveth mask,zarveths mask"},
 
+    # Amulets
+    "Amulet of Seeping": {"type": "amulet", "def": 0, "atk": 2, "stackable": False, "value": 12000, "aliases": "ammy of seeping,seeping"},
+
+    # Rings
+    "Ring of Valthyros": {"type": "ring", "def": 5, "atk": 1, "stackable": False, "value": 10000, "aliases": "ring of valth,valth ring"},
+
     # Wearables (effects described in ITEM_EFFECTS)
     "Bracelet of ethereum": {"type": "amulet", "stackable": False, "value": 12000, "aliases": "ethereum bracelet,bracelet ethereum,bracelet of ethereum"},
     "Wristwraps of the Damned": {"type": "gloves", "stackable": False, "value": 54000, "aliases": "wristwraps of damned,wotd,wraps of the damned,wristwraps of the damned"},
@@ -99,7 +105,8 @@ ITEMS: Dict[str, Dict[str, Any]] = {
 ITEM_EFFECTS = {
     "Bracelet of ethereum": {"effect": "When worn you will take 50% reduced damage from Revenants."},
     "Wristwraps of the Damned": {"effect": "When worn, Abyssal Overlord spawns with 30% less base HP."},
-    "Viggora's Chainmace": {"effect": "Grants +16 attack against ALL NPCs (no bonus in PvP)."},
+    "Viggora's Chainmace": {"effect": "Grants +16 attack against ALL NPCs at a cost of 3 Revenant ether per hit (no bonus in PvP)."},
+    "Amulet of Seeping": {"effect": "Heals 1 + 2% of damage dealt at the cost of 5 Blood runes per successful hit."},
 }
 
 
