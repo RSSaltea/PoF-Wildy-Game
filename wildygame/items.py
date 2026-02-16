@@ -14,6 +14,7 @@ EQUIP_SLOT_SET = {
     "amulet",
     "gloves",
     "ring",
+    "cape",
 }
 
 POTIONS: Dict[str, Dict[str, int]] = {
@@ -24,22 +25,23 @@ POTIONS: Dict[str, Dict[str, int]] = {
 FOOD: Dict[str, Dict[str, int]] = {
     "Lobster": {"heal": 12},
     "Shark": {"heal": 20},
-    "Manta Ray": {"heal": 26},
-    "Veilfruit": {"heal": 34},
+    "Manta Ray": {"heal": 22},
+    "Anglerfish": {"heal": 24},
+    "Veilfruit": {"heal": 28},
 }
 
 ITEMS: Dict[str, Dict[str, Any]] = {
     # Starter gear (non-stackable)
-    "Starter Sword": {"type": "mainhand", "atk": 1, "stackable": False, "value": 0, "aliases": "start sword,starter sword"},
-    "Starter Platebody": {"type": "body", "def": 1, "stackable": False, "value": 0, "aliases": "starter plate,start body,starter body"},
+    "Starter Sword": {"type": "mainhand", "atk": 2, "stackable": False, "value": 0, "aliases": "start sword,starter sword"},
+    "Starter Platebody": {"type": "body", "def": 2, "stackable": False, "value": 0, "aliases": "starter plate,start body,starter body"},
 
     # Weapons (non-stackable)
-    "Rune scimitar": {"type": "mainhand", "atk": 2, "stackable": False, "value": 5000, "aliases": "rune scim,rune scimmy,runescim"},
-    "Dragon dagger": {"type": "mainhand", "atk": 3, "stackable": False, "value": 17000, "aliases": "dds,dragon dagger,d dagger"},
-    "Dragon scimitar": {"type": "mainhand", "atk": 4, "stackable": False, "value": 32000, "aliases": "d scim,dscim,dragon scim,d scimitar"},
-    "Dragon 2h sword": {"type": "mainhand", "atk": 7, "stackable": False, "value": 54000, "aliases": "d2h,dragon 2h"},
-    "Abyssal Whip": {"type": "mainhand", "atk": 10, "stackable": False, "value": 60000, "aliases": "whip,abby whip,abyssal whip"},
-    "Abyssal Scourge": {"type": "mainhand", "atk": 14, "stackable": False, "value": 72000, "aliases": "scourge,abby scourge,abyssal scourge"},
+    "Rune scimitar": {"type": "mainhand", "atk": 3, "stackable": False, "value": 5000, "aliases": "rune scim,rune scimmy,runescim"},
+    "Dragon dagger": {"type": "mainhand", "atk": 4, "stackable": False, "value": 17000, "aliases": "dds,dragon dagger,d dagger"},
+    "Dragon scimitar": {"type": "mainhand", "atk": 5, "stackable": False, "value": 32000, "aliases": "d scim,dscim,dragon scim,d scimitar"},
+    "Dragon 2h sword": {"type": "mainhand", "atk": 8, "stackable": False, "value": 54000, "aliases": "d2h,dragon 2h"},
+    "Abyssal Whip": {"type": "mainhand", "atk": 11, "stackable": False, "value": 60000, "aliases": "whip,abby whip,abyssal whip"},
+    "Abyssal Scourge": {"type": "mainhand", "atk": 15, "stackable": False, "value": 72000, "aliases": "scourge,abby scourge,abyssal scourge"},
     "Veilbreaker": {"type": "mainhand", "atk": 28, "stackable": False, "value": 142000, "aliases": "veil"},
 
     "Viggora's Chainmace": {
@@ -53,14 +55,14 @@ ITEMS: Dict[str, Dict[str, Any]] = {
 
     # Armour / wearables (non-stackable)
     "Rune platebody": {"type": "body", "def": 4, "stackable": False, "value": 12000, "aliases": "rune plate"},
-    "Rune chainbody": {"type": "body", "def": 2, "stackable": False, "value": 8000, "aliases": "rune chain"},
-    "Rune platelegs": {"type": "legs", "def": 2, "stackable": False, "value": 9000, "aliases": "rune legs"},
+    "Rune chainbody": {"type": "body", "def": 3, "stackable": False, "value": 8000, "aliases": "rune chain"},
+    "Rune platelegs": {"type": "legs", "def": 3, "stackable": False, "value": 9000, "aliases": "rune legs"},
     "Rune full helm": {"type": "helm", "def": 2, "stackable": False, "value": 8000, "aliases": "rune helm"},
     "Rune med helm": {"type": "helm", "def": 1, "stackable": False, "value": 5000, "aliases": "rune med"},
-    "Rune sq shield": {"type": "offhand", "def": 2, "stackable": False, "value": 7000, "aliases": "rune sq"},
+    "Rune sq shield": {"type": "offhand", "def": 3, "stackable": False, "value": 7000, "aliases": "rune sq"},
     "Dragon boots": {"type": "boots", "def": 3, "atk": 1, "stackable": False, "value": 24000, "aliases": "dboots,dragon boot,d boots,dragon boots"},
-    "Dragon platebody": {"type": "body", "def": 7, "stackable": False, "value": 42000, "aliases": "d plate,dplate,dragon plate,d pbody,dragon platebody"},
-    "Dragon platelegs": {"type": "legs", "def": 5, "stackable": False, "value": 32000, "aliases": "d legs,dlegs,dragon leg"},
+    "Dragon platebody": {"type": "body", "def": 8, "stackable": False, "value": 42000, "aliases": "d plate,dplate,dragon plate,d pbody,dragon platebody"},
+    "Dragon platelegs": {"type": "legs", "def": 6, "stackable": False, "value": 32000, "aliases": "d legs,dlegs,dragon leg"},
     "Zarveth's Ascendant Platebody": {"type": "body", "def": 7, "atk": 4, "stackable": False, "value": 142000, "aliases": "zarveth plate,zarveths plate,zarveths platebody,zarveths body"},
     "Zarveth's Ascendant Platelegs": {"type": "legs", "def": 5, "atk": 3, "stackable": False, "value": 72000, "aliases": "zarveth legs,zarveths platelegs,zarveths legs"},
     "Zarveth's Ascendant Mask": {"type": "helm", "def": 3, "atk": 1, "stackable": False, "value": 62000, "aliases": "zarveth mask,zarveths mask"},
