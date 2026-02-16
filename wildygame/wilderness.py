@@ -27,6 +27,8 @@ CONFIG_FILE = os.path.join(DATA_DIR, "config.json")
 
 ALLOWED_CHANNEL_IDS = {1465451116803391529, 1472610522313523323, 1472942650381570171}
 
+REVENANT_TYPES = {"revenant", "revenant knight", "revenant abyssal demon"}
+
 AFK_TIMEOUT_SEC = 60 * 60
 AFK_SWEEP_INTERVAL_SEC = 5 * 60
 
@@ -1321,7 +1323,7 @@ class Wilderness(commands.Cog):
             roll_nd = random.randint(0, your_def)
             npc_hit = max(0, roll_na - roll_nd)
 
-            if npc_type == "revenant" and p.equipment.get("amulet") == "Bracelet of ethereum":
+            if npc_type == REVENANT_TYPES and p.equipment.get("amulet") == "Bracelet of ethereum":
                 npc_hit = int(npc_hit * 0.5)
 
             your_hp = clamp(your_hp - npc_hit, 0, int(self.config["max_hp"]))
