@@ -1377,6 +1377,7 @@ class Wilderness(commands.Cog):
             "!w withdraw <qty> <item> (alias: !w withdra)\n"
             "!w inv\n"
             "!w chest open\n"
+            "!w trade <playername> / !w trade accept"
             "!w shop list / !w shop buy <quantity> <item> / !w shop sell <quantity> <item>\n"
             "!w blacklist / !w blacklist remove <item> / !w blacklist clear"
         )
