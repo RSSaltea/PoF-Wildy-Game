@@ -17,15 +17,17 @@ from .items import (
     STARTER_SHOP_COOLDOWN_SEC,
     POTIONS,
 )
+
 from .npcs import NPCS
 from .config_default import DEFAULT_CONFIG
 from .trade import TradeManager
+from .pets import get_all_pets, get_pet_sources, resolve_pet
 
 DATA_DIR = "data/wilderness"
 PLAYERS_FILE = os.path.join(DATA_DIR, "players.json")
 CONFIG_FILE = os.path.join(DATA_DIR, "config.json")
 
-ALLOWED_CHANNEL_IDS = {1465451116803391529, 1472610522313523323, 1472942650381570171, 1472986472700448768}
+ALLOWED_CHANNEL_IDS = {1465451116803391529, 1472610522313523323, 1472942650381570171, 1472986472700448768, 1473103361862664338}
 TRADE_ONLY_CHANNEL_IDS = {1472986668695814277}
 
 REVENANT_TYPES = {"revenant", "revenant knight", "revenant demon", "revenant necro"}
@@ -88,7 +90,6 @@ def parse_chance(v: Any) -> float:
     except Exception:
         return 0.0
 
-
 @dataclass
 class PlayerState:
     user_id: int
@@ -118,6 +119,7 @@ class PlayerState:
     active_buffs: Dict[str, Dict[str, int]] = None
     blacklist: List[str] = None
     locked: List[str] = None
+    wildy_run_id: int = 0
 
     def __post_init__(self):
         if self.inventory is None:
@@ -148,8 +150,17 @@ class PlayerState:
 
     @staticmethod
     def from_dict(d: Dict[str, Any]) -> "PlayerState":
-        return PlayerState(**d)
+        if not isinstance(d, dict):
+            return PlayerState(user_id=0)
 
+        allowed = set(PlayerState.__dataclass_fields__.keys())
+        cleaned = {k: v for k, v in d.items() if k in allowed}
+
+        # Ensure required fields exist
+        if "user_id" not in cleaned:
+            cleaned["user_id"] = int(d.get("user_id", 0) or 0)
+
+        return PlayerState(**cleaned)
 
 class JsonStore:
     def __init__(self):
@@ -207,15 +218,91 @@ class DuelState:
     a_acted: bool = False
     b_acted: bool = False
 
+class GroundPickupButton(discord.ui.Button):
+    def __init__(
+        self,
+        *,
+        cog: "Wilderness",
+        author_id: int,
+        item: str,
+        qty: int,
+        run_id: int,
+    ):
+        super().__init__(
+            emoji="🫳",
+            style=discord.ButtonStyle.success,
+            label=f"Pick up {item} x{qty}",
+        )
+        self.cog = cog
+        self.author_id = author_id
+        self.item = item
+        self.qty = int(qty)
+        self.run_id = int(run_id)
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the fighter can pick this up.", ephemeral=True)
+            return
+
+        async with self.cog._mem_lock:
+            p = self.cog._get_player(interaction.user)
+
+            # Invalidate if they teleported/died since the drop
+            if int(p.wildy_run_id) != self.run_id or not p.in_wilderness:
+                await interaction.response.send_message(
+                    "You can’t pick this up anymore (you teleported or died after it dropped).",
+                    ephemeral=True
+                )
+                return
+
+            # Check if it fits NOW
+            need = self.cog._slots_needed_to_add(p.inventory, self.item, self.qty)
+            free = self.cog._inv_free_slots(p.inventory)
+            if need > free:
+                await interaction.response.send_message(
+                    f"Still no space. You need **{need}** free slot(s), you have **{free}**.",
+                    ephemeral=True
+                )
+                return
+
+            # Add item
+            self.cog._add_item(p.inventory, self.item, self.qty)
+            self.cog._touch(p)
+            await self.cog._persist()
+
+        # Disable this one button after successful pickup
+        self.disabled = True
+        await interaction.response.edit_message(view=self.view)
+        await interaction.followup.send(f"🫳 Picked up **{self.item} x{self.qty}**.", ephemeral=True)
 
 class FightLogView(discord.ui.View):
-    def __init__(self, *, author_id: int, pages: List[str], title: str = "Fight Log"):
-        super().__init__(timeout=180)
+    def __init__(
+        self,
+        *,
+        author_id: int,
+        pages: List[str],
+        title: str = "Fight Log",
+        cog: Optional["Wilderness"] = None,
+        ground_drops: Optional[List[Tuple[str, int, int]]] = None,
+        start_on_last: bool = False,
+    ):
+        super().__init__(timeout=300)
         self.author_id = author_id
         self.pages = pages
         self.title = title
-        self.page = 0
+
+        self.page = (max(0, len(self.pages) - 1) if start_on_last else 0)
+
         self._sync_buttons()
+
+        self._ground_buttons: List[GroundPickupButton] = []
+        if cog and ground_drops:
+            for (item, qty, run_id) in ground_drops:
+                if qty <= 0:
+                    continue
+                btn = GroundPickupButton(cog=cog, author_id=author_id, item=item, qty=qty, run_id=run_id)
+                self._ground_buttons.append(btn)
+                self.add_item(btn)
 
     def _sync_buttons(self):
         last = max(0, len(self.pages) - 1)
@@ -1160,6 +1247,59 @@ class Wilderness(commands.Cog):
             return f"(x{take} inv, x{rem} lost)"
         return ""
 
+    def _try_put_item_or_ground_with_blacklist(
+        self,
+        p: PlayerState,
+        item: str,
+        qty: int,
+        auto_drops: Dict[str, int],
+    ) -> Tuple[str, int]:
+        """
+        If blacklisted: don't add, record auto_drop, no ground.
+        Else: add what fits, remainder goes to ground.
+        Returns: (log_suffix, ground_qty)
+        """
+        if qty <= 0:
+            return "(none)", 0
+
+        if self._is_blacklisted(p, item):
+            self._record_autodrop(auto_drops, item, qty)
+            return "(blacklisted - dropped)", 0
+
+        return self._try_put_item_or_ground(p, item, qty)
+
+    def _try_put_item_or_ground(self, p: PlayerState, item: str, qty: int) -> Tuple[str, int]:
+        """
+        Try to add to inventory. If it doesn't fit, return (log_suffix, ground_qty).
+        ground_qty is what should be offered via 🫳 pickup button.
+        """
+        if qty <= 0:
+            return "(none)", 0
+
+        max_inv = int(self.config["max_inventory_items"])
+        used = self._inv_slots_used(p.inventory)
+        free = max_inv - used
+        if free <= 0:
+            return "(inventory full - on ground)", qty
+
+        # Stackable: if already in bag, always fits; if not, needs 1 slot
+        if item not in FOOD and self._is_stackable(item):
+            if p.inventory.get(item, 0) > 0:
+                self._add_item(p.inventory, item, qty)
+                return "", 0
+            if free >= 1:
+                self._add_item(p.inventory, item, qty)
+                return "", 0
+            return "(inventory full - on ground)", qty
+
+        # Non-stackable or food: can partially fit
+        take = min(free, qty)
+        if take > 0:
+            self._add_item(p.inventory, item, take)
+        rem = qty - take
+        if rem > 0:
+            return f"(x{take} inv, x{rem} on ground)", rem
+        return "", 0
 
     def _maybe_auto_eat_after_hit(self, p: PlayerState, your_hp: int) -> Tuple[int, Optional[str], int, int]:
         """
@@ -1229,6 +1369,47 @@ class Wilderness(commands.Cog):
             dest = self._try_put_item(winner, item, 1)
             lines.append(f"🛡️ Looted equipped ({slot}) {item} x1 {dest}".rstrip())
         loser.equipment.clear()
+        return lines
+
+    def _food_summary_lines(self, eaten: Dict[str, int], inv: Dict[str, int]) -> List[str]:
+        """
+        Builds lines showing food eaten + food left.
+        - Shows foods that were eaten (even if 0 left).
+        - Also shows any other food currently in inventory (>0).
+        """
+        eaten = eaten or {}
+        inv = inv or {}
+
+        # Collect food keys we should show
+        keys = set()
+        for k, v in eaten.items():
+            if int(v) > 0:
+                keys.add(k)
+        for k, v in inv.items():
+            if k in FOOD and int(v) > 0:
+                keys.add(k)
+
+        if not keys:
+            return []
+
+        def sort_key(name: str):
+            return (name.lower(), name)
+
+        lines: List[str] = []
+        eaten_pairs = [(k, int(eaten.get(k, 0))) for k in keys]
+        eaten_pairs = [(k, v) for (k, v) in eaten_pairs if v > 0]
+        eaten_pairs.sort(key=lambda kv: sort_key(kv[0]))
+
+        left_pairs = [(k, int(inv.get(k, 0))) for k in keys]
+        left_pairs.sort(key=lambda kv: sort_key(kv[0]))
+
+        if eaten_pairs:
+            lines.append("🍖 **Food eaten:** " + ", ".join(f"**{k} x{v}**" for k, v in eaten_pairs))
+        else:
+            lines.append("🍖 **Food eaten:** (none)")
+
+        lines.append("🥩 **Food left:** " + ", ".join(f"**{k} x{v}**" for k, v in left_pairs))
+
         return lines
 
     def _format_items_short(self, items: Dict[str, int], max_lines: int = 12) -> str:
@@ -1357,6 +1538,7 @@ class Wilderness(commands.Cog):
                             except Exception:
                                 pass
 
+                    p.wildy_run_id = int(p.wildy_run_id) + 1
                     p.in_wilderness = False
                     p.skulled = False
                     p.wildy_level = 1
@@ -1440,6 +1622,7 @@ class Wilderness(commands.Cog):
 
                 if random.random() <= chance:
                     duel.log.append(f"✨ {attacker_member.display_name} teleports out! (**{int(chance*100)}%** roll)")
+                    attacker.wildy_run_id = int(attacker.wildy_run_id) + 1
                     attacker.in_wilderness = False
                     attacker.skulled = False
                     attacker.wildy_level = 1
@@ -1548,6 +1731,7 @@ class Wilderness(commands.Cog):
                             duel.log.append("• Equipped: (none)")
 
                     defender.hp = int(self.config["starting_hp"])
+                    defender.wildy_run_id = int(defender.wildy_run_id) + 1
                     defender.in_wilderness = False
                     defender.wildy_level = 1
                     defender.skulled = False
@@ -1587,7 +1771,7 @@ class Wilderness(commands.Cog):
         Returns:
         (won, npc_name, events, lost_items_on_death, bank_loss_on_death, loot_lines_on_win)
         """
-
+    
         npc_name, npc_hp, npc_tier, _, npc_type, npc_atk_bonus, npc_def_bonus = chosen_npc
 
         npc_hp += int(p.wildy_level / 8)
@@ -1600,6 +1784,8 @@ class Wilderness(commands.Cog):
         start_hp = p.hp
 
         events: List[str] = []
+        eaten_food: Dict[str, int] = {}
+
         if header_lines:
             events.extend(header_lines)
 
@@ -1664,6 +1850,16 @@ class Wilderness(commands.Cog):
             your_hp = clamp(your_hp - npc_hit, 0, int(self.config["max_hp"]))
             events.append(f"💥 {npc_name} hits **{npc_hit}** | You: **{your_hp}/{self.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**")
 
+            # Auto-eat (same logic as normal fights)
+            if your_hp > 0:
+                before = your_hp
+                your_hp, ate_food, extra_roll, healed_amt = self._maybe_auto_eat_after_hit(p, your_hp)
+                if ate_food:
+                    eaten_food[ate_food] = eaten_food.get(ate_food, 0) + 1
+                    events.append(
+                        f"🍖 Auto-eat **{ate_food}** (+{your_hp - before}) | You: **{your_hp}/{self.config['max_hp']}**"
+                    )
+
             # Zarveth 5% proc
             if npc_name == "Zarveth the Veilbreaker" and your_hp > 0 and npc_hp > 0:
                 if random.random() < 0.05:
@@ -1678,6 +1874,7 @@ class Wilderness(commands.Cog):
             bank_loss = int(p.bank_coins * 0.10)
             if bank_loss > 0:
                 p.bank_coins -= bank_loss
+            events.extend(self._food_summary_lines(eaten_food, p.inventory))
 
             return False, npc_name, events, lost_items, bank_loss, []
 
@@ -1686,6 +1883,7 @@ class Wilderness(commands.Cog):
 
         loot_lines: List[str] = []
         auto_drops: Dict[str, int] = {}
+        ground_drops: List[Tuple[str, int, int]] = []  # (item, qty, run_id)
 
         max_items = 3
         items_dropped = 0
@@ -1697,43 +1895,73 @@ class Wilderness(commands.Cog):
         else:
             loot_lines.append("🪙 Coins: **+0**")
 
-        def can_drop():
+        def can_drop() -> bool:
             return items_dropped < max_items
 
+        # --- Wildy loot ---
         if can_drop():
             w_roll = self._loot_for_level(p.wildy_level)
             if w_roll:
                 item, qty = w_roll
-                dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops) 
-                loot_lines.append(f"🎁 Wildy loot: **{item} x{qty}** {dest}".rstrip())
+                if self._is_blacklisted(p, item):
+                    self._record_autodrop(auto_drops, item, qty)
+                    loot_lines.append(f"🎁 Wildy loot: **{item} x{qty}** (blacklisted - dropped)")
+                else:
+                    dest, on_ground = self._try_put_item_or_ground(p, item, qty)
+                    loot_lines.append(f"🎁 Wildy loot: **{item} x{qty}** {dest}".rstrip())
+                    if on_ground > 0:
+                        ground_drops.append((item, on_ground, int(p.wildy_run_id)))
+                        loot_lines.append(f"🫳 On ground: **{item} x{on_ground}** (5 min)")
                 items_dropped += 1
 
+        # --- NPC loot ---
         if can_drop():
             npc_loot = self._npc_roll_table(npc_type, "loot")
             if npc_loot:
                 item, qty = npc_loot
-                dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
-                loot_lines.append(f"👹 {npc_name} loot: **{item} x{qty}** {dest}".rstrip())
+                if self._is_blacklisted(p, item):
+                    self._record_autodrop(auto_drops, item, qty)
+                    loot_lines.append(f"👹 {npc_name} loot: **{item} x{qty}** (blacklisted - dropped)")
+                else:
+                    dest, on_ground = self._try_put_item_or_ground(p, item, qty)
+                    loot_lines.append(f"👹 {npc_name} loot: **{item} x{qty}** {dest}".rstrip())
+                    if on_ground > 0:
+                        ground_drops.append((item, on_ground, int(p.wildy_run_id)))
+                        loot_lines.append(f"🫳 On ground: **{item} x{on_ground}** (5 min)")
                 items_dropped += 1
 
+        # --- NPC unique ---
         if can_drop():
             npc_unique = self._npc_roll_table_for_player(p, npc_type, "unique")
             if npc_unique:
                 item, qty = npc_unique
-                dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
-                if not self._is_blacklisted(p, item):
+                if self._is_blacklisted(p, item):
+                    self._record_autodrop(auto_drops, item, qty)
+                    loot_lines.append(f"✨ UNIQUE: **{item} x{qty}** (blacklisted - dropped)")
+                else:
+                    dest, on_ground = self._try_put_item_or_ground(p, item, qty)
                     p.uniques[item] = p.uniques.get(item, 0) + qty
                     p.unique_drops += 1
-                loot_lines.append(f"✨ UNIQUE: **{item} x{qty}** {dest}".rstrip())
-
+                    loot_lines.append(f"✨ UNIQUE: **{item} x{qty}** {dest}".rstrip())
+                    if on_ground > 0:
+                        ground_drops.append((item, on_ground, int(p.wildy_run_id)))
+                        loot_lines.append(f"🫳 On ground: **{item} x{on_ground}** (5 min)")
                 items_dropped += 1
 
+        # --- NPC special ---
         if can_drop():
             npc_special = self._npc_roll_table(npc_type, "special")
             if npc_special:
                 item, qty = npc_special
-                dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
-                loot_lines.append(f"🩸 SPECIAL: **{item} x{qty}** {dest}".rstrip())
+                if self._is_blacklisted(p, item):
+                    self._record_autodrop(auto_drops, item, qty)
+                    loot_lines.append(f"🩸 SPECIAL: **{item} x{qty}** (blacklisted - dropped)")
+                else:
+                    dest, on_ground = self._try_put_item_or_ground(p, item, qty)
+                    loot_lines.append(f"🩸 SPECIAL: **{item} x{qty}** {dest}".rstrip())
+                    if on_ground > 0:
+                        ground_drops.append((item, on_ground, int(p.wildy_run_id)))
+                        loot_lines.append(f"🫳 On ground: **{item} x{on_ground}** (5 min)")
                 items_dropped += 1
 
         pet = self._npc_roll_pet(npc_type)
@@ -1747,6 +1975,7 @@ class Wilderness(commands.Cog):
             loot_lines.append("🗑️ Auto-dropped (blacklist):")
             for name, q in sorted(auto_drops.items(), key=lambda x: x[0].lower()):
                 loot_lines.append(f"- {name} x{q}")
+        loot_lines.extend(self._food_summary_lines(eaten_food, p.inventory))
 
         return True, npc_name, events, {}, 0, loot_lines
 
@@ -1777,7 +2006,9 @@ class Wilderness(commands.Cog):
             "!w trade <playername> / !w trade accept\n"
             "!w shop list / !w shop buy <quantity> <item> / !w shop sell <quantity> <item>\n"
             "!w blacklist / !w blacklist remove <item> / !w blacklist clear\n"
-            "!w lock <itemname> / !w lock remove <itemname>"
+            "!w lock <itemname> / !w lock remove <itemname>\n"
+            "!w pets\n"
+            "!w stats / !w stats @playername"
         )
 
     @w.group(name="trade", invoke_without_command=True)
@@ -2084,7 +2315,7 @@ class Wilderness(commands.Cog):
         else:
             await ctx.reply(f"🗑️ Dropped **{inv_key} x{drop_qty}**. You have **{have - drop_qty}** left.")
 
-    @w.command(name="inspect", aliases=["examine"])
+    @w.command(name="inspect", aliases=["insp"])
     async def inspect(self, ctx: commands.Context, *, itemname: str):
         if not await self._ensure_ready(ctx):
             return
@@ -2148,6 +2379,163 @@ class Wilderness(commands.Cog):
             return
 
         await ctx.reply(f"**{raw}**\nThis item has no use currently.")
+
+    @w.command(name="examine", aliases=["look", "inspectplayer"])
+    async def examine_cmd(self, ctx: commands.Context, *, target: Optional[str] = None):
+        """
+        !w examine <player>
+        Shows that player's equipped gear.
+        """
+        if not await self._ensure_ready(ctx):
+            return
+
+        if not target:
+            await ctx.reply("Usage: `!w examine <playername or @mention>`")
+            return
+
+    # --------------------------------------------------
+    # Resolve target player (mention -> ID -> name)
+    # --------------------------------------------------
+        member = None
+
+        # mention
+        if ctx.message.mentions:
+            member = ctx.message.mentions[0]
+
+        # numeric ID (optional convenience)
+        elif target.isdigit():
+            uid = int(target)
+            if ctx.guild:
+                member = ctx.guild.get_member(uid)
+
+        # name match
+        if not member and ctx.guild:
+            search = target.lower().strip()
+            for m in ctx.guild.members:
+                if m.display_name.lower() == search or m.name.lower() == search:
+                    member = m
+                    break
+
+        if not member:
+            await ctx.reply("Player not found.")
+            return
+
+        # must exist in wilderness DB
+        if member.id not in self.players:
+            await ctx.reply("That player has not entered the Wilderness yet.")
+            return
+
+        p = self.players[member.id]
+        gear = getattr(p, "equipment", None) or {}
+
+        if not gear:
+            await ctx.reply(f"🧍 **{member.display_name}** has no gear equipped.")
+            return
+
+        # Pretty ordering (optional)
+        slot_order = [
+            "helm", "cape", "amulet",
+            "body", "legs",
+           "gloves", "boots",
+            "ring",
+            "mainhand", "offhand",
+        ]
+
+        lines = []
+        used = set()
+
+        for slot in slot_order:
+            if slot in gear and gear[slot]:
+                lines.append(f"• **{slot}**: {gear[slot]}")
+                used.add(slot)
+
+        # Any unknown/extra slots
+        for slot, item in sorted(gear.items(), key=lambda kv: kv[0]):
+            if slot in used:
+                continue
+            if item:
+                lines.append(f"• **{slot}**: {item}")
+
+        emb = discord.Embed(
+            title=f"🕵️ Examine: {member.display_name}",
+            description="\n".join(lines),
+        )
+        if member.display_avatar:
+            emb.set_thumbnail(url=member.display_avatar.url)
+
+        await ctx.reply(embed=emb)
+
+    @w.command(name="pets", aliases=["pet"])
+    async def pets_cmd(self, ctx: commands.Context, *, pet: Optional[str] = None):
+        """
+        !w pets
+        !w pet
+        !w pets <pet name/alias>
+        !w pet <pet name/alias>
+        """
+        if not await self._ensure_ready(ctx):
+            return
+
+        p = self._get_player(ctx.author)
+
+        owned = list(getattr(p, "pets", None) or [])
+        owned_norm = {self._norm(x) for x in owned}
+
+        all_pets = get_all_pets()
+        pet_sources = get_pet_sources()
+
+        # If they asked about a specific pet -> show details + owned status
+        if pet:
+            canonical = resolve_pet(pet)
+            if not canonical:
+                await ctx.reply("Unknown pet. Try `!w pets` to see your pets.")
+                return
+
+            is_owned = (self._norm(canonical) in owned_norm)
+
+            src_lines = []
+            for npc_type, chance in pet_sources.get(canonical, []):
+                src_lines.append(f"• **{npc_type}** — `{chance}`")
+
+            emb = discord.Embed(
+                title=f"🐾 Pet: {canonical}",
+                description=("✅ You own this pet." if is_owned else "❌ You don’t own this pet."),
+            )
+
+            emb.add_field(name="Owned", value="✅ Yes" if is_owned else "❌ No", inline=True)
+            emb.add_field(name="Your total pets", value=str(len(owned)), inline=True)
+
+            emb.add_field(
+                name="Drops from",
+                value="\n".join(src_lines) if src_lines else "(unknown)",
+                inline=False,
+            )
+
+            await ctx.reply(embed=emb)
+            return
+
+        # No argument -> list owned pets + progress
+        emb = discord.Embed(
+            title=f"🐾 {ctx.author.display_name}'s Pets",
+            description=f"Owned: **{len(owned)} / {len(all_pets)}**",
+        )
+
+        if not owned:
+            emb.add_field(name="Pets", value="(none)", inline=False)
+            await ctx.reply(embed=emb)
+            return
+
+        owned_sorted = sorted(owned, key=lambda s: s.lower())
+        lines = [f"• {x}" for x in owned_sorted]
+        chunks = self._chunk_lines(lines, max_chars=950)
+
+        if len(chunks) == 1:
+            emb.add_field(name="Pets", value=chunks[0], inline=False)
+        else:
+            for i, ch in enumerate(chunks, start=1):
+                emb.add_field(name=f"Pets ({i}/{len(chunks)})", value=ch, inline=False)
+
+        await ctx.reply(embed=emb)
 
     @w.command(name="reset")
     async def reset(self, ctx: commands.Context):
@@ -2459,6 +2847,116 @@ class Wilderness(commands.Cog):
         else:
             await ctx.reply(f"Withdrew **{bank_key} x{take}**.")
 
+    @w.command(name="stats", aliases=["profile", "me"])
+    async def stats_cmd(self, ctx: commands.Context, *, target: Optional[str] = None):
+        if not await self._ensure_ready(ctx):
+            return
+
+        member = None
+
+        if not target:
+            member = ctx.author
+
+        else:
+            # Try mention first
+            if ctx.message.mentions:
+                member = ctx.message.mentions[0]
+
+            # Try exact ID match
+            elif target.isdigit() and int(target) in self.players:
+                member = ctx.guild.get_member(int(target)) if ctx.guild else None
+
+            # Try name match (case-insensitive)
+            else:
+                search = target.lower()
+                if ctx.guild:
+                    for m in ctx.guild.members:
+                        if m.display_name.lower() == search or m.name.lower() == search:
+                            member = m
+                            break
+
+        if not member:
+            await ctx.reply("Player not found.")
+            return
+
+        # If player exists in DB
+        if member.id not in self.players:
+            await ctx.reply("That player has not entered the Wilderness yet.")
+            return
+
+        p = self.players[member.id]
+
+    # --------------------------------------------------
+    # Build embed
+    # --------------------------------------------------
+
+        where = f"Wilderness (lvl {p.wildy_level})" if p.in_wilderness else "Safe"
+        total_coins = int(p.coins) + int(p.bank_coins)
+
+        emb = discord.Embed(
+            title=f"📊 {member.display_name}'s Wilderness Stats",
+            description=f"Status: **{where}**\nHP: **{p.hp}/{self.config['max_hp']}**",
+        )
+
+        kd = (p.kills / p.deaths) if int(p.deaths) > 0 else float(p.kills)
+
+        emb.add_field(
+            name="⚔️ Combat",
+            value=(
+                f"Kills: **{int(p.kills)}**\n"
+                f"Deaths: **{int(p.deaths)}**\n"
+                f"K/D: **{kd:.2f}**" if int(p.deaths) > 0 else
+                f"Kills: **{int(p.kills)}**\n"
+                f"Deaths: **{int(p.deaths)}**\n"
+                f"K/D: **∞**"
+            ),
+            inline=True,
+        )
+
+        emb.add_field(
+            name="🧭 Exploring",
+            value=(
+                f"Ventures: **{int(p.ventures)}**\n"
+                f"Escapes: **{int(p.escapes)}**\n"
+                f"Skulled: **{'Yes' if p.skulled else 'No'}**"
+            ),
+            inline=True,
+        )
+
+        emb.add_field(
+            name="💰 Wealth",
+            value=(
+                f"Coins (inv): **{int(p.coins):,}**\n"
+                f"Coins (bank): **{int(p.bank_coins):,}**\n"
+                f"Total: **{total_coins:,}**"
+            ),
+            inline=True,
+        )
+
+        emb.add_field(
+            name="✨ Drops",
+            value=(
+                f"Unique drops: **{int(p.unique_drops)}**\n"
+                f"Pet drops: **{int(p.pet_drops)}**\n"
+                f"Pets owned: **{len(getattr(p, 'pets', []) or [])}**"
+            ),
+            inline=True,
+        )
+
+        emb.add_field(
+            name="📈 Biggest Win/Loss",
+            value=(
+                f"Biggest win: **{int(p.biggest_win):,}**\n"
+                f"Biggest loss: **{int(p.biggest_loss):,}**"
+            ),
+            inline=True,
+        )
+
+        if member.display_avatar:
+            emb.set_thumbnail(url=member.display_avatar.url)
+
+        await ctx.reply(embed=emb)
+
     # Venture
     @w.command(name="venture")
     async def venture(self, ctx: commands.Context, wildy_level: Optional[int] = None):
@@ -2610,12 +3108,15 @@ class Wilderness(commands.Cog):
             start_hp = p.hp
             your_hp = p.hp
 
+            eaten_food: Dict[str, int] = {}
             events: List[str] = []
+
             if forced_npc:
                 if forced_success:
                     events.append(f"🎯 Targeted fight: **{forced_npc[0]}** — **SUCCESS**")
                 else:
                     events.append(f"🎯 Targeted fight: **{forced_npc[0]}** — **FAILED**, random encounter instead…")
+            ground_drops: List[Tuple[str, int, int]] = []
 
             events.append(f"👹 **{npc_name}** (HP **{npc_max}**) — You start **{start_hp}/{self.config['max_hp']}**")
 
@@ -2691,7 +3192,10 @@ class Wilderness(commands.Cog):
                     before = your_hp
                     your_hp, ate_food, extra_roll, healed_amt = self._maybe_auto_eat_after_hit(p, your_hp)
                     if ate_food:
-                        events.append(f"🍖 Auto-eat **{ate_food}** (+{your_hp - before}) | You: **{your_hp}/{self.config['max_hp']}**")
+                        eaten_food[ate_food] = eaten_food.get(ate_food, 0) + 1
+                        events.append(
+                            f"🍖 Auto-eat **{ate_food}** (+{your_hp - before}) | You: **{your_hp}/{self.config['max_hp']}**"
+                        )
 
             def build_pages(lines: List[str], per_page: int = 10) -> List[str]:
                 pages: List[str] = []
@@ -2701,14 +3205,17 @@ class Wilderness(commands.Cog):
                 return pages or ["(no log)"]
 
             if your_hp <= 0:
+                inv_before_death = dict(p.inventory)   # snapshot for food-left + lost items
                 lost_items = dict(p.inventory)
+
+                food_lines = self._food_summary_lines(eaten_food, inv_before_death)
 
                 p.inventory.clear()
                 bank_loss = int(p.bank_coins * 0.10)
                 if bank_loss > 0:
                     p.bank_coins = max(0, p.bank_coins - bank_loss)
-
                 p.deaths += 1
+                p.wildy_run_id = int(p.wildy_run_id) + 1
                 p.in_wilderness = False
                 p.skulled = False
                 p.wildy_level = 1
@@ -2721,10 +3228,19 @@ class Wilderness(commands.Cog):
                     f"\n\n☠️ **You died to {npc_name}.**\n"
                     f"📉 **Lost from inventory:**\n{self._format_items_short(lost_items, max_lines=18)}\n"
                     f"🏦 Lost bank coins: **{bank_loss:,}** (10%)"
+                    + (("\n\n" + "\n".join(food_lines)) if food_lines else "")
                 )
 
-                view = FightLogView(author_id=ctx.author.id, pages=pages, title=f"{ctx.author.display_name} vs {npc_name}")
+                view = FightLogView(
+                    author_id=ctx.author.id,
+                    pages=pages,
+                    title=f"{ctx.author.display_name} vs {npc_name}",
+                    cog=self,
+                    ground_drops=ground_drops,
+                    start_on_last=True,
+                )
                 await ctx.reply(content=view._render(), view=view)
+
                 return
 
             p.kills += 1
@@ -2751,35 +3267,53 @@ class Wilderness(commands.Cog):
                 w_roll = self._loot_for_level(p.wildy_level)
                 if w_roll:
                     item, qty = w_roll
-                    dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
+                    dest, on_ground = self._try_put_item_or_ground_with_blacklist(p, item, qty, auto_drops)
                     loot_lines.append(f"🎁 Wildy loot: **{item} x{qty}** {dest}".rstrip())
+                    if on_ground > 0:
+                        ground_drops.append((item, on_ground, int(p.wildy_run_id)))
+                        loot_lines.append(f"🫳 On ground: **{item} x{on_ground}** (5 min)")
                     items_dropped += 1
 
             if can_drop_more():
                 npc_loot = self._npc_roll_table(npc_type, "loot")
                 if npc_loot:
                     item, qty = npc_loot
-                    dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
+                    dest, on_ground = self._try_put_item_or_ground_with_blacklist(p, item, qty, auto_drops)
                     loot_lines.append(f"👹 {npc_name} loot: **{item} x{qty}** {dest}".rstrip())
+                    if on_ground > 0:
+                        ground_drops.append((item, on_ground, int(p.wildy_run_id)))
+                        loot_lines.append(f"🫳 On ground: **{item} x{on_ground}** (5 min)")
                     items_dropped += 1
 
             if can_drop_more():
                 npc_unique = self._npc_roll_table_for_player(p, npc_type, "unique")
                 if npc_unique:
                     item, qty = npc_unique
-                    dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
+                    dest, on_ground = self._try_put_item_or_ground_with_blacklist(p, item, qty, auto_drops)
+
                     if not self._is_blacklisted(p, item):
                         p.uniques[item] = p.uniques.get(item, 0) + qty
                         p.unique_drops += 1
+
                     loot_lines.append(f"✨ UNIQUE: **{item} x{qty}** {dest}".rstrip())
+                    if on_ground > 0:
+                        ground_drops.append((item, on_ground, int(p.wildy_run_id)))
+                        loot_lines.append(f"🫳 On ground: **{item} x{on_ground}** (5 min)")
                     items_dropped += 1
 
             if can_drop_more():
                 npc_special = self._npc_roll_table(npc_type, "special")
                 if npc_special:
                     item, qty = npc_special
-                    dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops) 
-                    loot_lines.append(f"🩸 SPECIAL: **{item} x{qty}** {dest}".rstrip())
+                    if self._is_blacklisted(p, item):
+                        self._record_autodrop(auto_drops, item, qty)
+                        loot_lines.append(f"🩸 SPECIAL: **{item} x{qty}** (blacklisted - dropped)")
+                    else:
+                        dest, on_ground = self._try_put_item_or_ground(p, item, qty)
+                        loot_lines.append(f"🩸 SPECIAL: **{item} x{qty}** {dest}".rstrip())
+                        if on_ground > 0:
+                            ground_drops.append((item, on_ground, int(p.wildy_run_id)))
+                            loot_lines.append(f"🫳 On ground: **{item} x{on_ground}** (5 min)")
                     items_dropped += 1
 
             pet = self._npc_roll_pet(npc_type)
@@ -2796,13 +3330,16 @@ class Wilderness(commands.Cog):
 
             await self._persist()
 
+            food_lines = self._food_summary_lines(eaten_food, p.inventory)
+
             pages = build_pages(events, per_page=10)
             pages[-1] += (
                 f"\n\n✅ **You win!** End HP: **{p.hp}/{self.config['max_hp']}**\n"
                 + ("\n".join(loot_lines) if loot_lines else "(no loot)")
+                + (("\n\n" + "\n".join(food_lines)) if food_lines else "")
             )
 
-            view = FightLogView(author_id=ctx.author.id, pages=pages, title=f"{ctx.author.display_name} vs {npc_name}")
+            view = FightLogView(author_id=ctx.author.id, pages=pages, title=f"{ctx.author.display_name} vs {npc_name}", cog=self, ground_drops=ground_drops, start_on_last=True,)
             await ctx.reply(content=view._render(), view=view)
 
     # Turn-based PvP fight (attack)
@@ -2925,6 +3462,7 @@ class Wilderness(commands.Cog):
                 return
 
             # 80% successful teleport
+            p.wildy_run_id = int(p.wildy_run_id) + 1
             p.in_wilderness = False
             p.skulled = False
             p.wildy_level = 1
