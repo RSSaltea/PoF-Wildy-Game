@@ -25,9 +25,20 @@ DATA_DIR = "data/wilderness"
 PLAYERS_FILE = os.path.join(DATA_DIR, "players.json")
 CONFIG_FILE = os.path.join(DATA_DIR, "config.json")
 
-ALLOWED_CHANNEL_IDS = {1465451116803391529, 1472610522313523323, 1472942650381570171}
+ALLOWED_CHANNEL_IDS = {1465451116803391529, 1472610522313523323, 1472942650381570171, 1472986472700448768}
+TRADE_ONLY_CHANNEL_IDS = {1472986668695814277}
 
 REVENANT_TYPES = {"revenant", "revenant knight", "revenant demon", "revenant necro"}
+
+DEFENDER_ORDER = [
+    "Bronze Defender",
+    "Iron Defender",
+    "Steel Defender",
+    "Black Defender",
+    "Mithril Defender",
+    "Adamant Defender",
+    "Rune Defender",
+    ]
 
 AFK_TIMEOUT_SEC = 60 * 60
 AFK_SWEEP_INTERVAL_SEC = 5 * 60
@@ -332,10 +343,111 @@ class NPCInfoView(discord.ui.View):
                 child.disabled = True
         return
 
+class BankCategorySelect(discord.ui.Select):
+    def __init__(self, cog: "Wilderness", author_id: int, categories: List[str], current: str):
+        self.cog = cog
+        self.author_id = author_id
+
+        opts = []
+        for c in categories:
+            opts.append(discord.SelectOption(label=c, value=c, default=(c == current)))
+
+        super().__init__(
+            placeholder="Select a bank category…",
+            min_values=1,
+            max_values=1,
+            options=opts[:25],
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the command user can use this menu.", ephemeral=True)
+            return
+
+        category = self.values[0]
+        emb = self.cog._bank_embed(interaction.user, category)
+        view = BankView(self.cog, self.author_id, category)
+        await interaction.response.edit_message(embed=emb, view=view)
+
+
+class BankView(discord.ui.View):
+    def __init__(self, cog: "Wilderness", author_id: int, current_category: str):
+        super().__init__(timeout=180)
+        self.cog = cog
+        self.author_id = author_id
+        self.current_category = current_category
+
+        categories = cog._bank_categories_for_user(author_id)
+        if current_category not in categories:
+            current_category = categories[0] if categories else "All"
+
+        self.add_item(BankCategorySelect(cog, author_id, categories, current_category))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the command user can use this menu.", ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self):
+        for child in self.children:
+            if isinstance(child, discord.ui.Select):
+                child.disabled = True
+
+class InventoryCategorySelect(discord.ui.Select):
+    def __init__(self, cog: "Wilderness", author_id: int, categories: List[str], current: str):
+        self.cog = cog
+        self.author_id = author_id
+
+        opts = []
+        for c in categories:
+            opts.append(discord.SelectOption(label=c, value=c, default=(c == current)))
+
+        super().__init__(
+            placeholder="Select an inventory category…",
+            min_values=1,
+            max_values=1,
+            options=opts[:25],
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the command user can use this menu.", ephemeral=True)
+            return
+
+        category = self.values[0]
+        emb = self.cog._inv_embed(interaction.user, category)
+        view = InventoryView(self.cog, self.author_id, category)
+        await interaction.response.edit_message(embed=emb, view=view)
+
+
+class InventoryView(discord.ui.View):
+    def __init__(self, cog: "Wilderness", author_id: int, current_category: str):
+        super().__init__(timeout=180)
+        self.cog = cog
+        self.author_id = author_id
+        self.current_category = current_category
+
+        categories = cog._inv_categories_for_user(author_id)
+        if current_category not in categories:
+            current_category = categories[0] if categories else "All"
+
+        self.add_item(InventoryCategorySelect(cog, author_id, categories, current_category))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the command user can use this menu.", ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self):
+        for child in self.children:
+            if isinstance(child, discord.ui.Select):
+                child.disabled = True
 
 class Wilderness(commands.Cog):
     def __init__(self, bot: commands.Bot):
-        self.trade_mgr = TradeManager(self, allowed_channel_ids=ALLOWED_CHANNEL_IDS)
+        self.trade_mgr = TradeManager(self, allowed_channel_ids=ALLOWED_CHANNEL_IDS | TRADE_ONLY_CHANNEL_IDS)
         self.bot = bot
         self.store = JsonStore()
         self.config: Dict[str, Any] = DEFAULT_CONFIG.copy()
@@ -431,11 +543,24 @@ class Wilderness(commands.Cog):
 
     async def _ensure_ready(self, ctx: commands.Context) -> bool:
         ch = getattr(ctx, "channel", None)
-        if ch is None or getattr(ch, "id", None) not in ALLOWED_CHANNEL_IDS:
+        if ch is None:
             return False
+
+        # If in trade-only channel → block non-trade commands
+        if ch.id in TRADE_ONLY_CHANNEL_IDS:
+            if ctx.command and ctx.command.qualified_name.startswith("w trade"):
+                return True
+            await ctx.reply("This channel is for **trading only**.")
+            return False
+
+        # Normal wilderness channels
+        if ch.id not in ALLOWED_CHANNEL_IDS:
+            return False
+
         if not self._ready:
             await ctx.reply("Wilderness is still loading. Try again in a moment.")
             return False
+
         return True
 
     async def _persist(self):
@@ -570,14 +695,23 @@ class Wilderness(commands.Cog):
             return slot
         return None
 
-    # NOTE:
-    # - PvP should NOT consume ether (so we never charge ether in _duel_action).
-    # - PvM SHOULD consume 3 ether per hit IF available.
-    # - If you don't have 3 ether, you still get normal atk (e.g. 4), but NOT atk_vs_npc (e.g. 20).
-    #
-    # This function supports an override for "charged this hit" so that:
-    # - we can check ether first (>=3), consume it, and STILL apply atk_vs_npc for that hit
-    #   even if consuming drops you below 3 afterward.
+    def _next_defender_drop(self, p: PlayerState) -> Optional[str]:
+        """
+        Returns the next defender that is allowed to drop based on equipped offhand.
+        - If no defender equipped -> Bronze
+        - If Bronze equipped -> Iron
+        - ...
+        - If Rune equipped -> None (no further defender)
+        """
+        equipped = p.equipment.get("offhand")
+        if equipped not in DEFENDER_ORDER:
+            return DEFENDER_ORDER[0]
+
+        idx = DEFENDER_ORDER.index(equipped)
+        if idx + 1 >= len(DEFENDER_ORDER):
+            return None
+        return DEFENDER_ORDER[idx + 1]
+
     def _equipped_bonus(
         self,
         p: PlayerState,
@@ -716,6 +850,33 @@ class Wilderness(commands.Cog):
         table = self.config.get("loot_tables", {}).get(band, [])
         return self._roll_pick_one(table)
 
+    def _npc_roll_table_for_player(self, p: PlayerState, npc_type: str, key: str) -> Optional[Tuple[str, int]]:
+        npc_drop = self.config.get("npc_drops", {}).get(npc_type, {}) or {}
+        entries = (npc_drop.get(key, []) or [])
+
+        # Special rule: Blighted Cyclops defenders must drop in order
+        if npc_type == "blight cyclops" and key == "unique":
+            next_def = self._next_defender_drop(p)
+            if not next_def:
+                return None  # already at Rune Defender, so no defender uniques
+
+            # Find the configured entry for that defender so we keep its chance/min/max
+            chosen_entry = None
+            for e in entries:
+                if str(e.get("item", "")).strip() == next_def:
+                    chosen_entry = e
+                    break
+
+            # If it isn't in the table for some reason, just don't roll
+            if not chosen_entry:
+                return None
+
+            # Roll ONLY the next defender
+            return self._roll_pick_one([chosen_entry])
+
+        # Normal behavior for everything else
+        return self._roll_pick_one(entries)
+
     def _npc_roll_table(self, npc_type: str, key: str) -> Optional[Tuple[str, int]]:
         npc_drop = self.config.get("npc_drops", {}).get(npc_type, {})
         entries = npc_drop.get(key, [])
@@ -747,6 +908,169 @@ class Wilderness(commands.Cog):
         if hi < lo:
             hi = lo
         return random.randint(lo, hi) if hi > 0 else 0
+        
+    def _bank_category_for_item(self, item_name: str) -> str:
+        if item_name in FOOD:
+            return "Food"
+
+        norm = self._norm(item_name)
+        for base in POTIONS.keys():
+            if norm.startswith(self._norm(base)):
+                return "Potions"
+
+        meta = ITEMS.get(item_name, {})
+        t = str(meta.get("type", "")).lower()
+
+        if t == "mainhand":
+            return "Weapons"
+        if t in ("helm", "body", "legs", "boots", "cape", "gloves"):
+            return "Armour"
+        if t == "offhand":
+            return "Offhands"
+        if t in ("amulet", "ring"):
+            return "Jewellery"
+
+        return "Misc"
+
+    def _chunk_lines(self, lines: list[str], max_chars: int = 950) -> list[str]:
+        """
+        Embed field values cap at 1024 chars. Keep some headroom.
+        Returns a list of chunks (strings).
+        """
+        chunks = []
+        cur = ""
+        for line in lines:
+            if not cur:
+                nxt = line
+            else:
+                nxt = cur + "\n" + line
+            if len(nxt) > max_chars:
+                chunks.append(cur)
+                cur = line
+            else:
+                cur = nxt
+        if cur:
+            chunks.append(cur)
+        return chunks or ["(none)"]
+
+    def _bank_categories_for_user(self, user_id: int) -> List[str]:
+        p = self.players.get(int(user_id))
+        if not p:
+            return ["All"]
+
+        cats = set()
+        for item, qty in (p.bank or {}).items():
+            if int(qty) <= 0:
+                continue
+            cats.add(self._bank_category_for_item(item))
+
+        order = ["All", "Food", "Potions", "Weapons", "Armour", "Offhands", "Jewellery", "Misc"]
+        present = [c for c in order if c == "All" or c in cats]
+        return present or ["All"]
+
+
+    def _bank_embed(self, user: discord.abc.User, category: str) -> discord.Embed:
+        p = self._get_player(user)
+
+        items = [(k, int(v)) for k, v in (p.bank or {}).items() if int(v) > 0]
+        items.sort(key=lambda kv: self._norm(kv[0]))
+
+        if category != "All":
+            items = [(k, v) for (k, v) in items if self._bank_category_for_item(k) == category]
+
+        emb = discord.Embed(
+            title=f"🏦 {user.display_name}'s Bank",
+            description=f"Category: **{category}**",
+        )
+
+        # Always show bank coins
+        emb.add_field(
+            name="🪙 Bank Coins",
+            value=f"**{int(p.bank_coins):,}**",
+            inline=False,
+        )
+
+        if not items:
+            emb.add_field(name="Items", value="(none)", inline=False)
+            return emb
+
+        lines = [f"• {name} x{qty}" for name, qty in items]
+        chunks = self._chunk_lines(lines, max_chars=950)
+
+        if len(chunks) == 1:
+            emb.add_field(name="Items", value=chunks[0], inline=False)
+        else:
+            for i, ch in enumerate(chunks, start=1):
+                emb.add_field(name=f"Items ({i}/{len(chunks)})", value=ch, inline=False)
+
+        return emb
+
+    def _inv_categories_for_user(self, user_id: int) -> List[str]:
+        p = self.players.get(int(user_id))
+        if not p:
+            return ["All"]
+
+        cats = set()
+        for item, qty in (p.inventory or {}).items():
+            if int(qty) <= 0:
+                continue
+            cats.add(self._bank_category_for_item(item))
+
+        order = ["All", "Food", "Potions", "Weapons", "Armour", "Offhands", "Jewellery", "Misc"]
+        present = [c for c in order if c == "All" or c in cats]
+        return present or ["All"]
+
+
+    def _inv_embed(self, user: discord.abc.User, category: str) -> discord.Embed:
+        p = self._get_player(user)
+
+        used = self._inv_slots_used(p.inventory)
+        max_inv = int(self.config["max_inventory_items"])
+
+        locked = getattr(p, "locked", None) or []
+        locked_norm = {self._norm(x) for x in locked}
+
+        def is_locked_item(name: str) -> bool:
+            return self._norm(name) in locked_norm
+
+        # Inventory items
+        items = [(k, int(v)) for k, v in (p.inventory or {}).items() if int(v) > 0]
+        items.sort(key=lambda kv: self._norm(kv[0]))
+
+        # Filter by category (unless All)
+        if category != "All":
+            items = [(k, v) for (k, v) in items if self._bank_category_for_item(k) == category]
+
+        emb = discord.Embed(
+            title=f"🎒 {user.display_name}'s Inventory",
+            description=f"Slots: **{used}/{max_inv}**\nCategory: **{category}**",
+        )
+
+        # Coins (inventory coins, not bank)
+        emb.add_field(
+            name="🪙 Coins",
+            value=f"**{int(p.coins):,}**",
+            inline=False,
+        )
+
+        if not items:
+            emb.add_field(name="Items", value="(none)", inline=False)
+            return emb
+
+        lines = []
+        for name, qty in items:
+            lock_icon = " 🔒" if is_locked_item(name) else ""
+            lines.append(f"• {name} x{qty}{lock_icon}")
+
+        chunks = self._chunk_lines(lines, max_chars=950)
+
+        if len(chunks) == 1:
+            emb.add_field(name="Items", value=chunks[0], inline=False)
+        else:
+            for i, ch in enumerate(chunks, start=1):
+                emb.add_field(name=f"Items ({i}/{len(chunks)})", value=ch, inline=False)
+
+        return emb
 
     def _full_heal(self, p: PlayerState):
         p.hp = int(self.config["max_hp"])
@@ -1266,9 +1590,6 @@ class Wilderness(commands.Cog):
 
         npc_name, npc_hp, npc_tier, _, npc_type, npc_atk_bonus, npc_def_bonus = chosen_npc
 
-        if npc_type == "overlord" and p.equipment.get("gloves") == "Wristwraps of the Damned":
-            npc_hp = int(npc_hp * 0.70)
-
         npc_hp += int(p.wildy_level / 8)
         npc_max = npc_hp
 
@@ -1285,6 +1606,7 @@ class Wilderness(commands.Cog):
         events.append(f"👹 **{npc_name}** (HP **{npc_max}**) — You start **{start_hp}/{self.config['max_hp']}**")
 
         force_zero_next_hit = False
+        bleed_hits = 0
 
         while npc_hp > 0 and your_hp > 0:
             charged = False
@@ -1307,6 +1629,19 @@ class Wilderness(commands.Cog):
                 force_zero_next_hit = False
                 events.append("🕳️ The veil disrupts your swing — your hit is forced to **0**!")
 
+            # Wristwraps
+            if p.equipment.get("gloves") == "Wristwraps of the Damned":
+                # 5% chance to apply bleed on a successful hit
+                if hit > 0 and random.random() < 0.05:
+                    bleed_hits = 3
+                    events.append("🩸 **Bleed inflicted!** Next 3 hits deal +2 damage.")
+
+            # If bleed is active, apply bonus damage (only when you actually hit)
+            if bleed_hits > 0 and hit > 0:
+                bleed_hits -= 1
+                hit += 2
+                events.append(f"🩸 Bleed deals +2 damage. ({bleed_hits} hits remaining)")
+
             npc_hp = max(0, npc_hp - hit)
             events.append(f"🗡️ You hit **{hit}** | You: **{your_hp}/{self.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**")
             events.extend(self._consume_buffs_on_hit(p))
@@ -1323,7 +1658,7 @@ class Wilderness(commands.Cog):
             roll_nd = random.randint(0, your_def)
             npc_hit = max(0, roll_na - roll_nd)
 
-            if npc_type == REVENANT_TYPES and p.equipment.get("amulet") == "Bracelet of ethereum":
+            if npc_type in REVENANT_TYPES and p.equipment.get("amulet") == "Bracelet of ethereum":
                 npc_hit = int(npc_hit * 0.5)
 
             your_hp = clamp(your_hp - npc_hit, 0, int(self.config["max_hp"]))
@@ -1334,12 +1669,6 @@ class Wilderness(commands.Cog):
                 if random.random() < 0.05:
                     force_zero_next_hit = True
                     events.append("🌀 **Zarveth the Veilbreaker** shatters the veil! Your **next hit will deal 0**.")
-
-            if your_hp > 0:
-                before = your_hp
-                your_hp, ate_food, _, healed = self._maybe_auto_eat_after_hit(p, your_hp)
-                if ate_food:
-                    events.append(f"🍖 Auto-eat **{ate_food}** (+{your_hp - before})")
 
         # ------------------ PLAYER DIED ------------------
         if your_hp <= 0:
@@ -1388,7 +1717,7 @@ class Wilderness(commands.Cog):
                 items_dropped += 1
 
         if can_drop():
-            npc_unique = self._npc_roll_table(npc_type, "unique")
+            npc_unique = self._npc_roll_table_for_player(p, npc_type, "unique")
             if npc_unique:
                 item, qty = npc_unique
                 dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
@@ -1445,7 +1774,7 @@ class Wilderness(commands.Cog):
             "!w withdraw <quantity> <item>\n"
             "!w inv\n"
             "!w chest open\n"
-            "!w trade <playername> / !w trade accept"
+            "!w trade <playername> / !w trade accept\n"
             "!w shop list / !w shop buy <quantity> <item> / !w shop sell <quantity> <item>\n"
             "!w blacklist / !w blacklist remove <item> / !w blacklist clear\n"
             "!w lock <itemname> / !w lock remove <itemname>"
@@ -1957,52 +2286,37 @@ class Wilderness(commands.Cog):
 
         await ctx.reply(f"✅ Unequipped **{item}** from **{slot}**.")
 
-    # Inventory / Bank
     @w.command(name="inv", aliases=["inventory"])
     async def inv(self, ctx: commands.Context):
         if not await self._ensure_ready(ctx):
             return
 
         p = self._get_player(ctx.author)
+        has_any = bool(p.inventory) or bool(p.coins)
+        if not has_any:
+            await ctx.reply("Your inventory is empty.")
+            return
 
-        inv = p.inventory.copy()
-        inv[self.config["coins_item_name"]] = p.coins
-
-        used = self._inv_slots_used(p.inventory)
-        max_inv = int(self.config["max_inventory_items"])
-
-        locked = getattr(p, "locked", None) or []
-
-        def is_locked_display(name: str) -> bool:
-            if name == self.config["coins_item_name"]:
-                return False
-            target = self._norm(name)
-            return any(self._norm(x) == target for x in locked)
-
-        if inv:
-            lines = []
-            for k, v in sorted(inv.items(), key=lambda kv: self._norm(kv[0])):
-                lock_icon = " 🔒" if is_locked_display(k) else ""
-                lines.append(f"- {k} x{v}{lock_icon}")
-            pretty = "\n".join(lines)
-        else:
-            pretty = "Empty"
-
-        await ctx.reply(f"**Inventory ({used}/{max_inv} slots):**\n{pretty}")
+        start_category = "All"
+        emb = self._inv_embed(ctx.author, start_category)
+        view = InventoryView(self, author_id=ctx.author.id, current_category=start_category)
+        await ctx.reply(embed=emb, view=view)
 
     @w.command(name="bankview")
     async def bankview(self, ctx: commands.Context):
         if not await self._ensure_ready(ctx):
             return
+
         p = self._get_player(ctx.author)
-        bank = p.bank.copy()
-        if p.bank_coins:
-            bank[self.config["coins_item_name"]] = p.bank_coins
-        if not bank:
+        has_any = bool(p.bank) or bool(p.bank_coins)
+        if not has_any:
             await ctx.reply("Your bank is empty.")
             return
-        pretty = "\n".join([f"- {k} x{v}" for k, v in sorted(bank.items())])
-        await ctx.reply(f"**Bank:**\n{pretty}")
+
+        start_category = "All"
+        emb = self._bank_embed(ctx.author, start_category)
+        view = BankView(self, author_id=ctx.author.id, current_category=start_category)
+        await ctx.reply(embed=emb, view=view)
 
     @w.command(name="bank")
     async def bank_cmd(self, ctx: commands.Context):
@@ -2286,9 +2600,6 @@ class Wilderness(commands.Cog):
 
             npc_name, npc_hp, npc_tier, _, npc_type, npc_atk_bonus, npc_def_bonus = chosen
 
-            if npc_type == "overlord" and p.equipment.get("gloves") == "Wristwraps of the Damned":
-                npc_hp = int(npc_hp * 0.70)
-
             # HP scaling (change /8 to whatever scaling you want)
             npc_hp = npc_hp + int(p.wildy_level / 8)
             npc_max = npc_hp
@@ -2309,9 +2620,9 @@ class Wilderness(commands.Cog):
             events.append(f"👹 **{npc_name}** (HP **{npc_max}**) — You start **{start_hp}/{self.config['max_hp']}**")
 
             force_zero_next_hit = False
+            bleed_hits = 0
 
             while npc_hp > 0 and your_hp > 0:
-                # PvM ether consumption: 3 per hit IF available. If not available, chainmace is uncharged.
                 charged = False
                 if p.equipment.get("mainhand") == "Viggora's Chainmace":
                     if p.inventory.get("Revenant ether", 0) >= 3:
@@ -2326,50 +2637,61 @@ class Wilderness(commands.Cog):
                 roll_d = random.randint(0, npc_def_stat)
                 hit = max(0, roll_a - roll_d)
 
-                # --- Zarveth debuff: force your next hit to 0 ---
+                # Zarveth forced zero mechanic
                 if force_zero_next_hit:
                     hit = 0
                     force_zero_next_hit = False
                     events.append("🕳️ The veil disrupts your swing — your hit is forced to **0**!")
 
+                # Wristwraps: 5% chance to apply bleed on a successful hit
+                if p.equipment.get("gloves") == "Wristwraps of the Damned":
+                    if hit > 0 and random.random() < 0.05:
+                        bleed_hits = 3
+                        events.append("🩸 **Bleed inflicted!** Next 3 hits deal +2 damage.")
+
+                # Bleed bonus: only when you actually hit
+                if bleed_hits > 0 and hit > 0:
+                    bleed_hits -= 1
+                    hit += 2
+                    events.append(f"🩸 Bleed deals +2 damage. ({bleed_hits} hits remaining)")
+
+                # Apply your hit (ALWAYS)
                 npc_hp = max(0, npc_hp - hit)
-                events.append(
-                    f"🗡️ You hit **{hit}** | You: **{your_hp}/{self.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**"
-                )
-                # Amulet of Seeping lifesteal
+                events.append(f"🗡️ You hit **{hit}** | You: **{your_hp}/{self.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**")
+
+                # Lifesteal + buffs (ALWAYS)
                 healed = self._apply_seeping_heal(p, hit)
                 if healed > 0:
                     your_hp = int(p.hp)
                     events.append(f"🩸 Amulet of Seeping heals **{healed}** | You: **{your_hp}/{self.config['max_hp']}**")
-
                 events.extend(self._consume_buffs_on_hit(p))
+
                 if npc_hp <= 0:
                     break
 
+                # NPC attacks (ALWAYS)
                 roll_na = random.randint(0, npc_atk)
                 roll_nd = random.randint(0, your_def)
                 npc_hit = max(0, roll_na - roll_nd)
 
-                if npc_type == "revenant" and p.equipment.get("amulet") == "Bracelet of ethereum":
+                if npc_type in REVENANT_TYPES and p.equipment.get("amulet") == "Bracelet of ethereum":
                     npc_hit = int(npc_hit * 0.5)
 
                 your_hp = clamp(your_hp - npc_hit, 0, int(self.config["max_hp"]))
-                events.append(
-                    f"💥 {npc_name} hits **{npc_hit}** | You: **{your_hp}/{self.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**"
-                )
+                events.append(f"💥 {npc_name} hits **{npc_hit}** | You: **{your_hp}/{self.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**")
 
-                # --- Zarveth special: 5% chance to apply debuff on its attack ---
+                # Zarveth 5% proc
                 if npc_name == "Zarveth the Veilbreaker" and your_hp > 0 and npc_hp > 0:
                     if random.random() < 0.05:
                         force_zero_next_hit = True
                         events.append("🌀 **Zarveth the Veilbreaker** shatters the veil! Your **next hit will deal 0**.")
 
+                # Auto eat
                 if your_hp > 0:
                     before = your_hp
-                    your_hp, ate_food, extra_roll, healed = self._maybe_auto_eat_after_hit(p, your_hp)
+                    your_hp, ate_food, extra_roll, healed_amt = self._maybe_auto_eat_after_hit(p, your_hp)
                     if ate_food:
                         events.append(f"🍖 Auto-eat **{ate_food}** (+{your_hp - before}) | You: **{your_hp}/{self.config['max_hp']}**")
-
 
             def build_pages(lines: List[str], per_page: int = 10) -> List[str]:
                 pages: List[str] = []
@@ -2442,7 +2764,7 @@ class Wilderness(commands.Cog):
                     items_dropped += 1
 
             if can_drop_more():
-                npc_unique = self._npc_roll_table(npc_type, "unique")
+                npc_unique = self._npc_roll_table_for_player(p, npc_type, "unique")
                 if npc_unique:
                     item, qty = npc_unique
                     dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
