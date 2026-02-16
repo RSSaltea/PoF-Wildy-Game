@@ -19,6 +19,7 @@ from .items import (
 )
 from .npcs import NPCS
 from .config_default import DEFAULT_CONFIG
+from .trade import TradeManager
 
 DATA_DIR = "data/wilderness"
 PLAYERS_FILE = os.path.join(DATA_DIR, "players.json")
@@ -325,6 +326,7 @@ class NPCInfoView(discord.ui.View):
 
 class Wilderness(commands.Cog):
     def __init__(self, bot: commands.Bot):
+        self.trade_mgr = TradeManager(self, allowed_channel_ids=ALLOWED_CHANNEL_IDS)
         self.bot = bot
         self.store = JsonStore()
         self.config: Dict[str, Any] = DEFAULT_CONFIG.copy()
@@ -1378,6 +1380,48 @@ class Wilderness(commands.Cog):
             "!w shop list / !w shop buy <quantity> <item> / !w shop sell <quantity> <item>\n"
             "!w blacklist / !w blacklist remove <item> / !w blacklist clear"
         )
+
+    @w.group(name="trade", invoke_without_command=True)
+    async def trade_cmd(self, ctx: commands.Context, target: Optional[discord.Member] = None):
+        if not await self._ensure_ready(ctx):
+            return
+
+        if target is None:
+            await ctx.reply(
+                "Usage:\n"
+                "`!w trade @player` (request)\n"
+                "`!w trade accept`\n"
+                "`!w trade add <qty> <item>`\n"
+                "`!w trade remove <qty> <item>`\n"
+                "`!w trade cancel`"
+            )
+            return
+
+        await self.trade_mgr.start_trade_request(ctx, target)
+
+    @trade_cmd.command(name="accept")
+    async def trade_accept_cmd(self, ctx: commands.Context):
+        if not await self._ensure_ready(ctx):
+            return
+        await self.trade_mgr.accept_trade(ctx)
+
+    @trade_cmd.command(name="add")
+    async def trade_add_cmd(self, ctx: commands.Context, qty: int, *, itemname: str):
+        if not await self._ensure_ready(ctx):
+            return
+        await self.trade_mgr.add_to_trade(ctx, qty, itemname)
+
+    @trade_cmd.command(name="remove", aliases=["rm", "del"])
+    async def trade_remove_cmd(self, ctx: commands.Context, qty: int, *, itemname: str):
+        if not await self._ensure_ready(ctx):
+            return
+        await self.trade_mgr.remove_from_trade(ctx, qty, itemname)
+
+    @trade_cmd.command(name="cancel")
+    async def trade_cancel_cmd(self, ctx: commands.Context):
+        if not await self._ensure_ready(ctx):
+            return
+        await self.trade_mgr.cancel_trade_by_command(ctx)
 
     @w.group(name="blacklist", invoke_without_command=True)
     async def blacklist_cmd(self, ctx: commands.Context, *, itemname: Optional[str] = None):
