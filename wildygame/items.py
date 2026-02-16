@@ -43,6 +43,8 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Abyssal Whip": {"type": "mainhand", "atk": 11, "stackable": False, "value": 60000, "aliases": "whip,abby whip,abyssal whip"},
     "Abyssal Scourge": {"type": "mainhand", "atk": 15, "stackable": False, "value": 72000, "aliases": "scourge,abby scourge,abyssal scourge"},
     "Veilbreaker": {"type": "mainhand", "atk": 28, "stackable": False, "value": 142000, "aliases": "veil"},
+    "Death Guard": {"type": "mainhand", "atk": 5, "stackable": False, "value": 142000, "aliases": "deathguard"},
+    "Skull Lantern": {"type": "offhand", "atk": 4, "stackable": False, "value": 142000, "aliases": "lantern"},
 
     "Viggora's Chainmace": {
         "type": "mainhand",
