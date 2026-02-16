@@ -2179,7 +2179,7 @@ class Wilderness(commands.Cog):
             p = self._get_player(ctx.author)
 
             # 5 second fight cooldown
-            ok, left = self._cd_ready(p, "fight", 5)
+            ok, left = self._cd_ready(p, "fight", 2)
             if not ok:
                 await ctx.reply(f"Fight cooldown: **{left}s**")
                 return
