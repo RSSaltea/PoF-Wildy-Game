@@ -1143,6 +1143,168 @@ class Wilderness(commands.Cog):
                 )
                 return
 
+    def _build_pages(self, lines: List[str], per_page: int = 10) -> List[str]:
+        pages: List[str] = []
+        for i in range(0, len(lines), per_page):
+            pages.append("\n".join(lines[i:i + per_page]))
+        return pages or ["(no log)"]
+    
+    def _simulate_pvm_fight_and_loot(
+        self,
+        p: PlayerState,
+        chosen_npc: Tuple[str, int, int, int, str, int, int],
+        *,
+        header_lines: Optional[List[str]] = None,
+    ) -> Tuple[bool, str, List[str], Dict[str, int], int, List[str]]:
+        """
+        Returns:
+        (won, npc_name, events, lost_items_on_death, bank_loss_on_death, loot_lines_on_win)
+        """
+
+        npc_name, npc_hp, npc_tier, _, npc_type, npc_atk_bonus, npc_def_bonus = chosen_npc
+
+        if npc_type == "overlord" and p.equipment.get("gloves") == "Wristwraps of the Damned":
+            npc_hp = int(npc_hp * 0.70)
+
+        npc_hp += int(p.wildy_level / 8)
+        npc_max = npc_hp
+
+        npc_atk = 1 + npc_tier + npc_atk_bonus + int(p.wildy_level / 12)
+        npc_def_stat = npc_tier + npc_def_bonus + int(p.wildy_level / 20)
+
+        your_hp = p.hp
+        start_hp = p.hp
+
+        events: List[str] = []
+        if header_lines:
+            events.extend(header_lines)
+
+        events.append(f"👹 **{npc_name}** (HP **{npc_max}**) — You start **{start_hp}/{self.config['max_hp']}**")
+
+        force_zero_next_hit = False
+
+        while npc_hp > 0 and your_hp > 0:
+            charged = False
+            if p.equipment.get("mainhand") == "Viggora's Chainmace":
+                if p.inventory.get("Revenant ether", 0) >= 3:
+                    charged = True
+                    self._remove_item(p.inventory, "Revenant ether", 3)
+
+            atk_bonus, def_bonus = self._equipped_bonus(p, vs_npc=True, chainmace_charged=charged)
+            your_atk = 6 + atk_bonus + int(p.wildy_level / 15)
+            your_def = 6 + def_bonus + int(p.wildy_level / 20)
+
+            roll_a = random.randint(0, your_atk)
+            roll_d = random.randint(0, npc_def_stat)
+            hit = max(0, roll_a - roll_d)
+
+            # Zarveth forced zero mechanic
+            if force_zero_next_hit:
+                hit = 0
+                force_zero_next_hit = False
+                events.append("🕳️ The veil disrupts your swing — your hit is forced to **0**!")
+
+            npc_hp = max(0, npc_hp - hit)
+            events.append(f"🗡️ You hit **{hit}** | You: **{your_hp}/{self.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**")
+            events.extend(self._consume_buffs_on_hit(p))
+
+            if npc_hp <= 0:
+                break
+
+            roll_na = random.randint(0, npc_atk)
+            roll_nd = random.randint(0, your_def)
+            npc_hit = max(0, roll_na - roll_nd)
+
+            if npc_type == "revenant" and p.equipment.get("amulet") == "Bracelet of ethereum":
+                npc_hit = int(npc_hit * 0.5)
+
+            your_hp = clamp(your_hp - npc_hit, 0, int(self.config["max_hp"]))
+            events.append(f"💥 {npc_name} hits **{npc_hit}** | You: **{your_hp}/{self.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**")
+
+            # Zarveth 5% proc
+            if npc_name == "Zarveth the Veilbreaker" and your_hp > 0 and npc_hp > 0:
+                if random.random() < 0.05:
+                    force_zero_next_hit = True
+                    events.append("🌀 **Zarveth the Veilbreaker** shatters the veil! Your **next hit will deal 0**.")
+
+            if your_hp > 0:
+                before = your_hp
+                your_hp, ate_food, _, healed = self._maybe_auto_eat_after_hit(p, your_hp)
+                if ate_food:
+                    events.append(f"🍖 Auto-eat **{ate_food}** (+{your_hp - before})")
+
+        # ------------------ PLAYER DIED ------------------
+        if your_hp <= 0:
+            lost_items = dict(p.inventory)
+            p.inventory.clear()
+
+            bank_loss = int(p.bank_coins * 0.10)
+            if bank_loss > 0:
+                p.bank_coins -= bank_loss
+
+            return False, npc_name, events, lost_items, bank_loss, []
+
+        # ------------------ PLAYER WON ------------------
+        p.kills += 1
+        p.hp = your_hp
+
+        loot_lines: List[str] = []
+        max_items = 3
+        items_dropped = 0
+
+        coins = self._npc_coin_roll(npc_type)
+        if coins > 0:
+            p.coins += coins
+            loot_lines.append(f"🪙 Coins: **+{coins}**")
+        else:
+            loot_lines.append("🪙 Coins: **+0**")
+
+        def can_drop():
+            return items_dropped < max_items
+
+        if can_drop():
+            w_roll = self._loot_for_level(p.wildy_level)
+            if w_roll:
+                item, qty = w_roll
+                dest = self._try_put_item(p, item, qty)
+                loot_lines.append(f"🎁 Wildy loot: **{item} x{qty}** {dest}".rstrip())
+                items_dropped += 1
+
+        if can_drop():
+            npc_loot = self._npc_roll_table(npc_type, "loot")
+            if npc_loot:
+                item, qty = npc_loot
+                dest = self._try_put_item(p, item, qty)
+                loot_lines.append(f"👹 {npc_name} loot: **{item} x{qty}** {dest}".rstrip())
+                items_dropped += 1
+
+        if can_drop():
+            npc_unique = self._npc_roll_table(npc_type, "unique")
+            if npc_unique:
+                item, qty = npc_unique
+                dest = self._try_put_item(p, item, qty)
+                p.uniques[item] = p.uniques.get(item, 0) + qty
+                p.unique_drops += 1
+                loot_lines.append(f"✨ UNIQUE: **{item} x{qty}** {dest}".rstrip())
+                items_dropped += 1
+
+        if can_drop():
+            npc_special = self._npc_roll_table(npc_type, "special")
+            if npc_special:
+                item, qty = npc_special
+                dest = self._try_put_item(p, item, qty)
+                loot_lines.append(f"🩸 SPECIAL: **{item} x{qty}** {dest}".rstrip())
+                items_dropped += 1
+
+        pet = self._npc_roll_pet(npc_type)
+        if pet:
+            if pet not in p.pets:
+                p.pets.append(pet)
+                p.pet_drops += 1
+            loot_lines.append(f"🐾 PET: **{pet}**")
+
+        return True, npc_name, events, {}, 0, loot_lines
+
     # Commands
     @commands.group(name="w", invoke_without_command=True)
     async def w(self, ctx: commands.Context):
@@ -1728,6 +1890,7 @@ class Wilderness(commands.Cog):
             f"Next: !w fight or !w attack @user or !w tele."
         )
 
+
     # NPC Fight
     @w.command(name="fight")
     async def fight_npc(self, ctx: commands.Context, *, npcname: Optional[str] = None):
@@ -2013,7 +2176,6 @@ class Wilderness(commands.Cog):
             view=DuelView(self, duel),
         )
 
-    # Teleport (80% success, 20% NPC ambush)
     @w.command(name="tele")
     async def tele(self, ctx: commands.Context):
         if not await self._ensure_ready(ctx):
@@ -2038,74 +2200,19 @@ class Wilderness(commands.Cog):
             self._touch(p)
             self._set_cd(p, "tele")
 
+            # 20% ambush
             if random.random() < 0.20:
                 eligible = [n for n in NPCS if p.wildy_level >= n[3]] or [NPCS[0]]
-                npc_name, npc_hp, npc_tier, _, npc_type, npc_atk_bonus, npc_def_bonus = random.choice(eligible)
+                chosen = random.choice(eligible)
 
-                if npc_type == "overlord" and p.equipment.get("gloves") == "Wristwraps of the Damned":
-                    npc_hp = int(npc_hp * 0.70)
-
-                # HP scaling (change /8 to whatever scaling you want)
-                npc_hp = npc_hp + int(p.wildy_level / 8)
-                npc_max = npc_hp
-
-                npc_atk = 1 + npc_tier + npc_atk_bonus + int(p.wildy_level / 12)
-                npc_def_stat = npc_tier + npc_def_bonus + int(p.wildy_level / 20)
-
-                log = [
-                    f"⚠️ **Ambush!** You tried to teleport but were attacked by **{npc_name}** (Wildy {p.wildy_level})."
+                header = [
+                    f"⚠️ **Ambush!** You tried to teleport but were attacked by **{chosen[0]}** (Wildy {p.wildy_level})."
                 ]
-                your_hp = p.hp
 
-                while npc_hp > 0 and your_hp > 0:
-                    # PvM ether consumption: 3 per hit IF available
-                    charged = False
-                    if p.equipment.get("mainhand") == "Viggora's Chainmace":
-                        if p.inventory.get("Revenant ether", 0) >= 3:
-                            charged = True
-                            self._remove_item(p.inventory, "Revenant ether", 3)
+                won, npc_name, events, lost_items, bank_loss, loot_lines = \
+                    self._simulate_pvm_fight_and_loot(p, chosen, header_lines=header)
 
-                    # Recompute stats each turn (so losing ether stops atk_vs_npc)
-                    atk_bonus, def_bonus = self._equipped_bonus(p, vs_npc=True, chainmace_charged=charged)
-                    your_atk = 6 + atk_bonus + int(p.wildy_level / 15)
-                    your_def = 6 + def_bonus + int(p.wildy_level / 20)
-
-                    roll_a = random.randint(0, your_atk)
-                    roll_d = random.randint(0, npc_def_stat)
-                    hit = max(0, roll_a - roll_d)
-                    npc_hp -= hit
-                    log.append(self._hp_line_pvm(your_hp, npc_name, npc_hp, npc_max))
-                    log.append(f"🗡️ You attack and deal **{hit}**.")
-                    log.extend(self._consume_buffs_on_hit(p))
-                    if npc_hp <= 0:
-                        break
-
-                    roll_na = random.randint(0, npc_atk)
-                    roll_nd = random.randint(0, your_def)
-                    npc_hit = max(0, roll_na - roll_nd)
-
-                    if npc_type == "revenant" and p.equipment.get("amulet") == "Bracelet of ethereum":
-                        npc_hit = int(npc_hit * 0.5)
-
-                    your_hp -= npc_hit
-                    your_hp = clamp(your_hp, 0, int(self.config["max_hp"]))
-                    log.append(self._hp_line_pvm(your_hp, npc_name, npc_hp, npc_max))
-                    log.append(f"💥 {npc_name} attacks and deals **{npc_hit}**.")
-
-                    if your_hp > 0:
-                        your_hp, ate_food, extra_roll, healed = self._maybe_auto_eat_after_hit(p, your_hp)
-                        if ate_food:
-                            log.append(self._hp_line_pvm(your_hp, npc_name, npc_hp, npc_max))
-                            log.append(f"🍖 Auto-eat: **{ate_food}** (+{healed})")
-
-                if your_hp <= 0:
-                    lost_items = dict(p.inventory)
-
-                    p.inventory.clear()
-                    bank_loss = int(p.bank_coins * 0.10)
-                    if bank_loss > 0:
-                        p.bank_coins = max(0, p.bank_coins - bank_loss)
-
+                if not won:
                     p.deaths += 1
                     p.in_wilderness = False
                     p.skulled = False
@@ -2115,88 +2222,32 @@ class Wilderness(commands.Cog):
                     await self._persist()
 
                     await ctx.reply(
-                        "\n".join(log[-12:])
+                        "\n".join(events[-12:])
                         + f"\n\n☠️ You died during the ambush.\n"
-                        f"📉 **Lost from inventory:**\n{self._format_items_short(lost_items, max_lines=18)}\n"
-                        f"🏦 Lost bank coins: **{bank_loss:,}** (10%)."
+                        + f"📉 Lost from inventory:\n{self._format_items_short(lost_items, 18)}\n"
+                        + f"🏦 Lost bank coins: **{bank_loss:,}** (10%)."
                     )
                     return
 
-                p.kills += 1
-                p.hp = clamp(your_hp, 0, int(self.config["max_hp"]))
-                self._touch(p)
-
-                loot_lines: List[str] = []
-                max_items = 3
-                items_dropped = 0
-
-                coins = self._npc_coin_roll(npc_type)
-                if coins > 0:
-                    p.coins += coins
-                    loot_lines.append(f"🪙 Coins: **+{coins}**")
-                else:
-                    loot_lines.append("🪙 Coins: **+0**")
-
-                def can_drop_more() -> bool:
-                    return items_dropped < max_items
-
-                if can_drop_more():
-                    w_roll = self._loot_for_level(p.wildy_level)
-                    if w_roll:
-                        item, qty = w_roll
-                        dest = self._try_put_item(p, item, qty)
-                        loot_lines.append(f"🎁 Wildy loot: **{item} x{qty}** {dest}".rstrip())
-                        items_dropped += 1
-
-                if can_drop_more():
-                    npc_loot = self._npc_roll_table(npc_type, "loot")
-                    if npc_loot:
-                        item, qty = npc_loot
-                        dest = self._try_put_item(p, item, qty)
-                        loot_lines.append(f"👹 {npc_name} loot: **{item} x{qty}** {dest}".rstrip())
-                        items_dropped += 1
-
-                if can_drop_more():
-                    npc_unique = self._npc_roll_table(npc_type, "unique")
-                    if npc_unique:
-                        item, qty = npc_unique
-                        dest = self._try_put_item(p, item, qty)
-                        p.uniques[item] = p.uniques.get(item, 0) + qty
-                        p.unique_drops += 1
-                        loot_lines.append(f"✨ UNIQUE: **{item} x{qty}** {dest}".rstrip())
-                        items_dropped += 1
-
-                if can_drop_more():
-                    npc_special = self._npc_roll_table(npc_type, "special")
-                    if npc_special:
-                        item, qty = npc_special
-                        dest = self._try_put_item(p, item, qty)
-                        loot_lines.append(f"🩸 SPECIAL: **{item} x{qty}** {dest}".rstrip())
-                        items_dropped += 1
-
-                pet = self._npc_roll_pet(npc_type)
-                if pet:
-                    if pet not in p.pets:
-                        p.pets.append(pet)
-                        p.pet_drops += 1
-                    loot_lines.append(f"🐾 PET: **{pet}**")
-
                 await self._persist()
+
                 await ctx.reply(
-                    "\n".join(log[-12:])
+                    "\n".join(events[-12:])
                     + "\n\n✅ You survived the ambush! Your teleport was interrupted.\n"
                     + "\n".join(loot_lines)
-                    + f"\n\nYou are still in the Wilderness (level {p.wildy_level}). Try `!w tele` again if you want."
+                    + f"\n\nYou are still in the Wilderness (level {p.wildy_level}). Try `!w tele` again."
                 )
                 return
 
+            # 80% successful teleport
             p.in_wilderness = False
             p.skulled = False
             p.wildy_level = 1
             p.escapes += 1
             self._full_heal(p)
             await self._persist()
-            await ctx.reply("✨ Teleport successful! (You are fully healed)")
+
+        await ctx.reply("✨ Teleport successful! (You are fully healed)")
 
     # Chest
     @w.group(name="chest", invoke_without_command=True)
