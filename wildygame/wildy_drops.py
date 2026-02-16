@@ -16,6 +16,7 @@ SHOP_ITEMS: Dict[str, int] = {
     "Starter Sword": 0,
     "Starter Platebody": 0,
     "Mysterious key": 100000,
+    "Strength Potion": 5000,
     "Lobster": 1000,
     "Shark": 2000,
 }
