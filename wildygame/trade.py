@@ -506,6 +506,7 @@ class TradeManager:
                 f"**{a_name}** confirmed: {a_ok}\n"
                 f"**{b_name}** confirmed: {b_ok}\n\n"
                 f"Use `!w trade add <qty> <item>` / `!w trade remove <qty> <item>` (inv+bank).\n"
+                f"On completion, received items are deposited into your **bank**.\n"
                 f"Click **Confirm** when ready. Either player can **Cancel**."
             ),
         )
@@ -529,7 +530,7 @@ class TradeManager:
         """
         MUST be called inside cog._mem_lock.
         Allows offers from inventory + bank.
-        Received items always go to inventory.
+        Received items go to BANK (so trades can exceed 28 unstackables).
         """
         a_id, b_id = trade.a_id, trade.b_id
         a_offer = trade.offers.get(a_id) or TradeOffer()
@@ -586,46 +587,6 @@ class TradeManager:
                     return False, f"Player B no longer has {item} x{int(qty)} (inv+bank)."
             return False, "Player B no longer has the offered items (inv+bank)."
 
-        # ---- inventory space simulation: only remove what leaves inventory ----
-        def simulate_after_remove(pinv: Dict[str, int], outgoing_from_inv: Dict[str, int]) -> Dict[str, int]:
-            bag = dict(pinv)
-            for item, qty in outgoing_from_inv.items():
-                have = int(bag.get(item, 0))
-                newv = have - int(qty)
-                if newv <= 0:
-                    bag.pop(item, None)
-                else:
-                    bag[item] = newv
-            return bag
-
-        a_after_out = simulate_after_remove(pa.inventory, a_take_inv)
-        b_after_out = simulate_after_remove(pb.inventory, b_take_inv)
-
-        def slots_needed_for_incoming(base_bag: Dict[str, int], incoming: Dict[str, int]) -> int:
-            needed = 0
-            bag = dict(base_bag)
-            for item, qty in incoming.items():
-                qty = int(qty)
-                if qty <= 0:
-                    continue
-                need = int(self.cog._slots_needed_to_add(bag, item, qty))
-                bag[item] = int(bag.get(item, 0)) + qty
-                needed += need
-            return needed
-
-        max_inv = int(self.cog.config["max_inventory_items"])
-        a_free = max_inv - int(self.cog._inv_slots_used(a_after_out))
-        b_free = max_inv - int(self.cog._inv_slots_used(b_after_out))
-
-        a_need = slots_needed_for_incoming(a_after_out, b_offer.items)
-        b_need = slots_needed_for_incoming(b_after_out, a_offer.items)
-
-        if a_free < a_need:
-            return False, "Player A does not have enough inventory space to receive the items."
-        if b_free < b_need:
-            return False, "Player B does not have enough inventory space to receive the items."
-
-        # ---- remove items (inventory first, then bank) ----
         for item, qty in a_take_inv.items():
             if not self.cog._remove_item(pa.inventory, item, int(qty)):
                 return False, "Failed to remove an item from Player A inventory (state changed)."
@@ -640,7 +601,6 @@ class TradeManager:
             if not self.cog._remove_item(pb.bank, item, int(qty)):
                 return False, "Failed to remove an item from Player B bank (state changed)."
 
-        # ---- remove coins (inv first, then bank) ----
         if int(a_offer.coins) > 0:
             if not self.cog._spend_coins(pa, int(a_offer.coins)):
                 return False, "Player A no longer has the offered coins (state changed)."
@@ -648,15 +608,13 @@ class TradeManager:
             if not self.cog._spend_coins(pb, int(b_offer.coins)):
                 return False, "Player B no longer has the offered coins (state changed)."
 
-        # ---- add incoming items to INVENTORY ----
         for item, qty in b_offer.items.items():
-            self.cog._add_item(pa.inventory, item, int(qty))
+            self.cog._add_item(pa.bank, item, int(qty))
         for item, qty in a_offer.items.items():
-            self.cog._add_item(pb.inventory, item, int(qty))
+            self.cog._add_item(pb.bank, item, int(qty))
 
-        # ---- add incoming coins to INVENTORY coins ----
-        pa.coins += int(b_offer.coins)
-        pb.coins += int(a_offer.coins)
+        pa.bank_coins = int(getattr(pa, "bank_coins", 0)) + int(b_offer.coins)
+        pb.bank_coins = int(getattr(pb, "bank_coins", 0)) + int(a_offer.coins)
 
         return True, ""
 
