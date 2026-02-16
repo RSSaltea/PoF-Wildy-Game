@@ -3,7 +3,7 @@ from typing import Dict, Any, List, Tuple
 # name, base_hp, tier, min_wildy, npc_type, atk_bonus, def_bonus
 NPCS: List[Tuple[str, int, int, int, str, int, int]] = [
     ("Revenant goblin", 50, 1, 1, "revenant", 3, 1),
-    ("Revenant knight", 50, 2, 10, "revenant", 5, 3),
+    ("Revenant knight", 50, 2, 10, "revenant knight", 5, 3),
     ("Chaos fanatic", 90, 3, 20, "chaos_fanatic", 7, 5),
     ("Abyssal Overlord", 280, 4, 35, "overlord", 11, 7),
     ("Lord Valthyros", 250, 4, 35, "valthyros", 6, 12),
@@ -13,6 +13,22 @@ NPCS: List[Tuple[str, int, int, int, str, int, int]] = [
 NPC_DROPS: Dict[str, Dict[str, Any]] = {
     "revenant": {
         "coins_range": [0, 1000],
+        "unique": [
+            {"item": "Mysterious key", "min": 1, "max": 1, "chance": "1/50"},
+            {"item": "Revenant Relic Shard", "min": 1, "max": 1, "chance": "1/500"},
+            {"item": "Revenant Totem", "min": 1, "max": 1, "chance": "1/750"},
+        ],
+        "pet": [
+            {"item": "Tiny Revenant", "min": 1, "max": 1, "chance": "1/1000"},
+        ],
+        "loot": [
+            {"item": "Revenant ether", "min": 10, "max": 40, "chance": "1/2"},
+            {"item": "Bracelet of ethereum", "min": 1, "max": 1, "chance": "1/250"},
+            {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/2000"},
+        ],
+    },
+    "revenant knight": {
+        "coins_range": [0, 2000],
         "unique": [
             {"item": "Mysterious key", "min": 1, "max": 1, "chance": "1/25"},
             {"item": "Revenant Relic Shard", "min": 1, "max": 1, "chance": "1/250"},
