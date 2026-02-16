@@ -71,8 +71,8 @@ LOOT_TABLES: Dict[str, List[Dict[str, Any]]] = {
     "hell": [ # >35
         {"item": "Dragon dagger", "min": 1, "max": 1, "chance": "1/50"},
         {"item": "Blood rune", "min": 40, "max": 180, "chance": "1/2"},
-        {"item": "Manta Ray", "min": 2, "max": 10, "chance": "1/2"},
-        {"item": "Anglerfish", "min": 1, "max": 6, "chance": "1/3"},
+        {"item": "Manta Ray", "min": 2, "max": 6, "chance": "1/2"},
+        {"item": "Anglerfish", "min": 1, "max": 4, "chance": "1/3"},
         {"item": "Dragon scimitar", "min": 1, "max": 1, "chance": "1/100"},
         {"item": "Dragon platelegs", "min": 1, "max": 1, "chance": "1/200"},
         {"item": "Dragon boots", "min": 1, "max": 1, "chance": "1/200"},
