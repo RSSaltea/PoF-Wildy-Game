@@ -587,6 +587,10 @@ class TradeManager:
                     return False, f"Player B no longer has {item} x{int(qty)} (inv+bank)."
             return False, "Player B no longer has the offered items (inv+bank)."
 
+        # ✅ NO inventory-space simulation needed anymore
+        # because incoming items go straight to bank.
+
+        # ---- remove items (inventory first, then bank) ----
         for item, qty in a_take_inv.items():
             if not self.cog._remove_item(pa.inventory, item, int(qty)):
                 return False, "Failed to remove an item from Player A inventory (state changed)."
@@ -601,6 +605,7 @@ class TradeManager:
             if not self.cog._remove_item(pb.bank, item, int(qty)):
                 return False, "Failed to remove an item from Player B bank (state changed)."
 
+        # ---- remove coins (inv first, then bank) ----
         if int(a_offer.coins) > 0:
             if not self.cog._spend_coins(pa, int(a_offer.coins)):
                 return False, "Player A no longer has the offered coins (state changed)."
@@ -608,11 +613,13 @@ class TradeManager:
             if not self.cog._spend_coins(pb, int(b_offer.coins)):
                 return False, "Player B no longer has the offered coins (state changed)."
 
+        # ✅ add incoming items to BANK
         for item, qty in b_offer.items.items():
             self.cog._add_item(pa.bank, item, int(qty))
         for item, qty in a_offer.items.items():
             self.cog._add_item(pb.bank, item, int(qty))
 
+        # ✅ add incoming coins to BANK coins
         pa.bank_coins = int(getattr(pa, "bank_coins", 0)) + int(b_offer.coins)
         pb.bank_coins = int(getattr(pb, "bank_coins", 0)) + int(a_offer.coins)
 
