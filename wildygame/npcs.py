@@ -148,7 +148,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
         "loot": [
             {"item": "Veilfruit", "min": 2, "max": 7, "chance": "1/2"},
             {"item": "Blood rune", "min": 4, "max": 80, "chance": "1/5"},
-            {"item": "Super Strength Potion", "min": 1, "max": 2, "chance": "1/4"},
+            {"item": "Super Strength Potion", "min": 1, "max": 2, "chance": "1/12"},
         ],
     },
     "valthyros": {
