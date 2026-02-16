@@ -669,11 +669,13 @@ class Wilderness(commands.Cog):
         return best
 
     def _band(self, wildy_level: int) -> str:
-        if wildy_level <= 15:
+        if wildy_level <= 10:
             return "shallow"
-        if wildy_level <= 30:
+        if wildy_level <= 20:
             return "mid"
-        return "deep"
+        if wildy_level <= 35:
+            return "deep"
+        return "hell"
 
     def _roll_pick_one(self, entries: List[Dict[str, Any]]) -> Optional[Tuple[str, int]]:
         """
@@ -1934,7 +1936,6 @@ class Wilderness(commands.Cog):
         locked = getattr(p, "locked", None) or []
 
         def is_locked_display(name: str) -> bool:
-            # Coins shouldn't be lockable (and aren't in p.inventory anyway)
             if name == self.config["coins_item_name"]:
                 return False
             target = self._norm(name)
@@ -2008,7 +2009,6 @@ class Wilderness(commands.Cog):
             self._set_cd(p, "bank")
             await self._persist()
 
-        # ----- Output message -----
         lines = []
 
         if banked_items:
