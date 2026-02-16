@@ -103,6 +103,8 @@ class PlayerState:
     last_action: int = 0
     active_buffs: Dict[str, Dict[str, int]] = None
 
+    blacklist: List[str] = None
+
     def __post_init__(self):
         if self.inventory is None:
             self.inventory = {}
@@ -122,6 +124,9 @@ class PlayerState:
             self.last_action = _now()
         if self.active_buffs is None:
             self.active_buffs = {}
+
+        if self.blacklist is None:
+            self.blacklist = []
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -440,6 +445,7 @@ class Wilderness(commands.Cog):
         p.uniques = p.uniques or {}
         p.pets = p.pets or []
         p.cd = p.cd or {}
+        p.blacklist = getattr(p, "blacklist", None) or []
         if getattr(p, "started", None) is None:
             p.started = False
         if not getattr(p, "last_action", 0):
@@ -699,6 +705,38 @@ class Wilderness(commands.Cog):
 
     def _full_heal(self, p: PlayerState):
         p.hp = int(self.config["max_hp"])
+
+    def _is_blacklisted(self, p: PlayerState, item_name: str) -> bool:
+        """True if item_name matches any entry in p.blacklist (case/space insensitive)."""
+        if not item_name:
+            return False
+        bl = getattr(p, "blacklist", None) or []
+        target = self._norm(item_name)
+        return any(self._norm(x) == target for x in bl)
+
+    def _record_autodrop(self, auto_drops: Dict[str, int], item: str, qty: int):
+        if qty > 0:
+            auto_drops[item] = auto_drops.get(item, 0) + qty
+
+    def _try_put_item_with_blacklist(
+        self,
+        p: PlayerState,
+        item: str,
+        qty: int,
+        auto_drops: Dict[str, int],
+    ) -> str:
+        """
+        If blacklisted: do NOT add to inventory; record in auto_drops; return log suffix.
+        Else: normal _try_put_item.
+        """
+        if qty <= 0:
+            return "(none)"
+
+        if self._is_blacklisted(p, item):
+            self._record_autodrop(auto_drops, item, qty)
+            return "(blacklisted - dropped)"
+
+        return self._try_put_item(p, item, qty)
 
     def _try_put_item(self, p: PlayerState, item: str, qty: int) -> str:
         """
@@ -1244,11 +1282,12 @@ class Wilderness(commands.Cog):
 
             return False, npc_name, events, lost_items, bank_loss, []
 
-        # ------------------ PLAYER WON ------------------
         p.kills += 1
         p.hp = your_hp
 
         loot_lines: List[str] = []
+        auto_drops: Dict[str, int] = {}
+
         max_items = 3
         items_dropped = 0
 
@@ -1266,7 +1305,7 @@ class Wilderness(commands.Cog):
             w_roll = self._loot_for_level(p.wildy_level)
             if w_roll:
                 item, qty = w_roll
-                dest = self._try_put_item(p, item, qty)
+                dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops) 
                 loot_lines.append(f"🎁 Wildy loot: **{item} x{qty}** {dest}".rstrip())
                 items_dropped += 1
 
@@ -1274,7 +1313,7 @@ class Wilderness(commands.Cog):
             npc_loot = self._npc_roll_table(npc_type, "loot")
             if npc_loot:
                 item, qty = npc_loot
-                dest = self._try_put_item(p, item, qty)
+                dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
                 loot_lines.append(f"👹 {npc_name} loot: **{item} x{qty}** {dest}".rstrip())
                 items_dropped += 1
 
@@ -1282,17 +1321,19 @@ class Wilderness(commands.Cog):
             npc_unique = self._npc_roll_table(npc_type, "unique")
             if npc_unique:
                 item, qty = npc_unique
-                dest = self._try_put_item(p, item, qty)
-                p.uniques[item] = p.uniques.get(item, 0) + qty
-                p.unique_drops += 1
+                dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
+                if not self._is_blacklisted(p, item):
+                    p.uniques[item] = p.uniques.get(item, 0) + qty
+                    p.unique_drops += 1
                 loot_lines.append(f"✨ UNIQUE: **{item} x{qty}** {dest}".rstrip())
+
                 items_dropped += 1
 
         if can_drop():
             npc_special = self._npc_roll_table(npc_type, "special")
             if npc_special:
                 item, qty = npc_special
-                dest = self._try_put_item(p, item, qty)
+                dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
                 loot_lines.append(f"🩸 SPECIAL: **{item} x{qty}** {dest}".rstrip())
                 items_dropped += 1
 
@@ -1302,6 +1343,11 @@ class Wilderness(commands.Cog):
                 p.pets.append(pet)
                 p.pet_drops += 1
             loot_lines.append(f"🐾 PET: **{pet}**")
+
+        if auto_drops:
+            loot_lines.append("🗑️ Auto-dropped (blacklist):")
+            for name, q in sorted(auto_drops.items(), key=lambda x: x[0].lower()):
+                loot_lines.append(f"- {name} x{q}")
 
         return True, npc_name, events, {}, 0, loot_lines
 
@@ -1323,13 +1369,92 @@ class Wilderness(commands.Cog):
             "!w attack @user\n"
             "!w tele\n"
             "!w eat <foodname>\n"
+            "!w drink <potionname>\n"
             "!w drop <itemname>\n"
             "!w bank / !w bankview\n"
             "!w withdraw <qty> <item> (alias: !w withdra)\n"
             "!w inv\n"
             "!w chest open\n"
-            "!w shop list / !w shop buy <item> / !w shop sell <item>"
+            "!w shop list / !w shop buy <item> / !w shop sell <item>\n"
+            "!w blacklist / !w blacklist remove <item> / !w blacklist clear"
         )
+
+    @w.group(name="blacklist", invoke_without_command=True)
+    async def blacklist_cmd(self, ctx: commands.Context, *, itemname: Optional[str] = None):
+        if not await self._ensure_ready(ctx):
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+
+            # If no item provided -> show list
+            if not itemname:
+                bl = getattr(p, "blacklist", None) or []
+                if not bl:
+                    await ctx.reply("🚫 Your blacklist is empty.\nAdd one: `!w blacklist <itemname>`")
+                    return
+                pretty = "\n".join(f"- {x}" for x in sorted(bl, key=lambda s: s.lower()))
+                await ctx.reply(f"🚫 **Blacklisted items:**\n{pretty}")
+                return
+
+            # Resolve item (supports aliases + food)
+            canonical = self._resolve_item(itemname)
+            if not canonical:
+                food_key = self._resolve_food(itemname)
+                canonical = food_key
+
+            if not canonical:
+                await ctx.reply("Unknown item. Try `!w inspect <itemname>` to check names/aliases.")
+                return
+
+            # Prevent duplicates using normalized compare
+            if any(self._norm(x) == self._norm(canonical) for x in (p.blacklist or [])):
+                await ctx.reply(f"🚫 **{canonical}** is already blacklisted.")
+                return
+
+            p.blacklist = (p.blacklist or []) + [canonical]
+            await self._persist()
+
+        await ctx.reply(
+            f"🚫 Blacklisted **{canonical}**.\n"
+            f"If it drops, it will be **auto-dropped immediately** and shown in the post-fight loot log."
+        )
+
+    @blacklist_cmd.command(name="remove", aliases=["rm", "del"])
+    async def blacklist_remove_cmd(self, ctx: commands.Context, *, itemname: str):
+        if not await self._ensure_ready(ctx):
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+            bl = getattr(p, "blacklist", None) or []
+            if not bl:
+                await ctx.reply("Your blacklist is empty.")
+                return
+
+            target_norm = self._norm(itemname)
+            new_bl = [x for x in bl if self._norm(x) != target_norm]
+
+            if len(new_bl) == len(bl):
+                await ctx.reply("That item is not on your blacklist.")
+                return
+
+            p.blacklist = new_bl
+            await self._persist()
+
+        await ctx.reply("✅ Removed from your blacklist.")
+
+    @blacklist_cmd.command(name="clear")
+    async def blacklist_clear_cmd(self, ctx: commands.Context):
+        if not await self._ensure_ready(ctx):
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+            p.blacklist = []
+            await self._persist()
+
+        await ctx.reply("✅ Cleared your blacklist.")
 
     @w.command(name="drink")
     async def drink_cmd(self, ctx: commands.Context, *, potion_name: str):
@@ -2055,6 +2180,8 @@ class Wilderness(commands.Cog):
             self._touch(p)
 
             loot_lines: List[str] = []
+            auto_drops: Dict[str, int] = {} 
+
             max_items = 3
             items_dropped = 0
 
@@ -2072,7 +2199,7 @@ class Wilderness(commands.Cog):
                 w_roll = self._loot_for_level(p.wildy_level)
                 if w_roll:
                     item, qty = w_roll
-                    dest = self._try_put_item(p, item, qty)
+                    dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
                     loot_lines.append(f"🎁 Wildy loot: **{item} x{qty}** {dest}".rstrip())
                     items_dropped += 1
 
@@ -2080,7 +2207,7 @@ class Wilderness(commands.Cog):
                 npc_loot = self._npc_roll_table(npc_type, "loot")
                 if npc_loot:
                     item, qty = npc_loot
-                    dest = self._try_put_item(p, item, qty)
+                    dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
                     loot_lines.append(f"👹 {npc_name} loot: **{item} x{qty}** {dest}".rstrip())
                     items_dropped += 1
 
@@ -2088,9 +2215,10 @@ class Wilderness(commands.Cog):
                 npc_unique = self._npc_roll_table(npc_type, "unique")
                 if npc_unique:
                     item, qty = npc_unique
-                    dest = self._try_put_item(p, item, qty)
-                    p.uniques[item] = p.uniques.get(item, 0) + qty
-                    p.unique_drops += 1
+                    dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
+                    if not self._is_blacklisted(p, item):
+                        p.uniques[item] = p.uniques.get(item, 0) + qty
+                        p.unique_drops += 1
                     loot_lines.append(f"✨ UNIQUE: **{item} x{qty}** {dest}".rstrip())
                     items_dropped += 1
 
@@ -2098,7 +2226,7 @@ class Wilderness(commands.Cog):
                 npc_special = self._npc_roll_table(npc_type, "special")
                 if npc_special:
                     item, qty = npc_special
-                    dest = self._try_put_item(p, item, qty)
+                    dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops) 
                     loot_lines.append(f"🩸 SPECIAL: **{item} x{qty}** {dest}".rstrip())
                     items_dropped += 1
 
@@ -2108,6 +2236,11 @@ class Wilderness(commands.Cog):
                     p.pets.append(pet)
                     p.pet_drops += 1
                 loot_lines.append(f"🐾 PET: **{pet}**")
+
+            if auto_drops:
+                loot_lines.append("🗑️ Auto-dropped (blacklist):")
+                for name, q in sorted(auto_drops.items(), key=lambda x: x[0].lower()):
+                    loot_lines.append(f"- {name} x{q}")
 
             await self._persist()
 
@@ -2278,8 +2411,15 @@ class Wilderness(commands.Cog):
             reward = self._roll_pick_one(self.config.get("chest_rewards", []))
             if reward:
                 item, qty = reward
-                dest = self._try_put_item(p, item, qty)
+                auto_drops: Dict[str, int] = {}
+                dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
+
                 result = f"🗝️ Chest loot: **{item} x{qty}** {dest} + **{coins} coins**!"
+
+                if auto_drops:
+                    result += "\n🗑️ Auto-dropped (blacklist):"
+                    for name, q in sorted(auto_drops.items(), key=lambda x: x[0].lower()):
+                        result += f"\n- {name} x{q}"
             else:
                 result = f"🗝️ Chest loot: **{coins} coins** (no special reward this time)."
 
