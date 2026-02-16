@@ -50,7 +50,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
         "atk_vs_npc": 20,
         "stackable": False,
         "value": 54000,
-        "aliases": "chainmace,viggoras chainmace,vigs chainmace,viggora chainmace",
+        "aliases": "chainmace,viggoras chainmace,vigs chainmace,viggora chainmace,Viggora’s Chainmace",
     },
 
     # Armour / wearables (non-stackable)
@@ -74,7 +74,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Ring of Valthyros": {"type": "ring", "def": 5, "atk": 1, "stackable": False, "value": 10000, "aliases": "ring of valth,valth ring"},
 
     # Wearables (effects described in ITEM_EFFECTS)
-    "Bracelet of ethereum": {"type": "amulet", "stackable": False, "value": 12000, "aliases": "ethereum bracelet,bracelet ethereum,bracelet of ethereum"},
+    "Bracelet of ethereum": {"type": "gloves", "stackable": False, "value": 12000, "aliases": "ethereum bracelet,bracelet ethereum,bracelet of ethereum"},
     "Wristwraps of the Damned": {"type": "gloves", "stackable": False, "value": 54000, "aliases": "wristwraps of damned,wotd,wraps of the damned,wristwraps of the damned"},
 
     # Stackable / misc drops (stackable)
