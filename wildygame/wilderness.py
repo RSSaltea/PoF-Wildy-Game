@@ -7,6 +7,7 @@ import random
 import time
 from dataclasses import dataclass, asdict
 from typing import Dict, Any, Optional, Tuple, List
+import re
 
 from .items import (
     ITEMS,
@@ -14,6 +15,7 @@ from .items import (
     EQUIP_SLOT_SET,
     STARTER_ITEMS,
     STARTER_SHOP_COOLDOWN_SEC,
+    POTIONS,
 )
 from .npcs import NPCS
 from .config_default import DEFAULT_CONFIG
@@ -99,6 +101,7 @@ class PlayerState:
     pet_drops: int = 0
     cd: Dict[str, int] = None
     last_action: int = 0
+    active_buffs: Dict[str, Dict[str, int]] = None
 
     def __post_init__(self):
         if self.inventory is None:
@@ -117,6 +120,8 @@ class PlayerState:
             self.cd = {}
         if not self.last_action:
             self.last_action = _now()
+        if self.active_buffs is None:
+            self.active_buffs = {}
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -428,6 +433,7 @@ class Wilderness(commands.Cog):
             self.players[user.id] = p
 
         p.inventory = p.inventory or {}
+        p.active_buffs = p.active_buffs or {}
         p.bank = p.bank or {}
         p.risk = p.risk or {}
         p.equipment = p.equipment or {}
@@ -564,6 +570,7 @@ class Wilderness(commands.Cog):
         atk = 0
         deff = 0
 
+        # Gear bonuses
         for item in p.equipment.values():
             meta = ITEMS.get(item, {})
             atk += int(meta.get("atk", 0))
@@ -578,7 +585,29 @@ class Wilderness(commands.Cog):
                         continue  # no atk_vs_npc when not charged
                 atk += int(meta.get("atk_vs_npc", 0))
 
+        # Potion / temporary buff bonuses
+        buffs = getattr(p, "active_buffs", None) or {}
+        for buff in buffs.values():
+            atk += int(buff.get("atk", 0))
+            deff += int(buff.get("def", 0))
+
         return atk, deff
+
+    def _consume_buffs_on_hit(self, p: PlayerState) -> List[str]:
+        """Consumes 1 hit from each active buff. Returns lines to log when buffs expire."""
+        expired_msgs: List[str] = []
+        buffs = getattr(p, "active_buffs", None) or {}
+        to_remove = []
+        for name, buff in buffs.items():
+            buff["remaining_hits"] = int(buff.get("remaining_hits", 0)) - 1
+            if buff["remaining_hits"] <= 0:
+                to_remove.append(name)
+        for name in to_remove:
+            buffs.pop(name, None)
+            expired_msgs.append(f"🧪 **{name}** has worn off.")
+        p.active_buffs = buffs
+        return expired_msgs
+
 
     def _best_food_in_inventory(self, p: PlayerState) -> Optional[str]:
         best = None
@@ -1056,6 +1085,7 @@ class Wilderness(commands.Cog):
                     self._hp_line_pvp(a_member.display_name, pa.hp, b_member.display_name, pb.hp)
                 )
                 duel.log.append(f"🗡️ {attacker_member.display_name} attacks and deals **{hit}**.")
+                duel.log.extend(self._consume_buffs_on_hit(attacker))
 
                 if defender.hp <= 0:
                     lost_inv_snapshot = dict(defender.inventory)
@@ -1137,6 +1167,71 @@ class Wilderness(commands.Cog):
             "!w inv\n"
             "!w chest open\n"
             "!w shop list / !w shop buy <item> / !w shop sell <item>"
+        )
+
+    @w.command(name="drink")
+    async def drink_cmd(self, ctx: commands.Context, *, potion_name: str):
+        if not await self._ensure_ready(ctx):
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+
+            query = self._norm(potion_name)
+
+            base_name = None
+            potion_data = None
+
+            for name, meta in POTIONS.items():
+                aliases = meta.get("aliases", "")
+                alias_list = [self._norm(a) for a in aliases.split(",")] if aliases else []
+                if query == self._norm(name) or query in alias_list:
+                    base_name = name
+                    potion_data = meta
+                    break
+
+            if not base_name:
+                await ctx.reply("Unknown potion.")
+                return
+
+            inv_item = None
+            uses = 0
+            best_uses = 999999  # big number
+
+            for item in p.inventory.keys():
+                if self._norm(item).startswith(self._norm(base_name)):
+                    match = re.search(r"\((\d+)\)", item)
+                    if match:
+                        u = int(match.group(1))
+                        if u < best_uses:
+                            best_uses = u
+                            uses = u
+                            inv_item = item
+
+            if not inv_item or uses <= 0:
+                await ctx.reply(f"You don’t have any **{base_name}**.")
+                return
+
+            # Remove current potion
+            self._remove_item(p.inventory, inv_item, 1)
+
+            # Apply buff
+            p.active_buffs[base_name] = {
+                "atk": potion_data.get("atk", 0),
+                "remaining_hits": potion_data.get("hits", 0)
+            }
+
+            # Downgrade dose
+            uses -= 1
+            if uses > 0:
+                new_name = f"{base_name} ({uses})"
+                self._add_item(p.inventory, new_name, 1)
+
+            await self._persist()
+
+        await ctx.reply(
+            f"🧪 You drink **{base_name}**!\n"
+            f"+{potion_data['atk']} attack for {potion_data['hits']} hits."
         )
 
     @w.command(name="hp", aliases=["health"])
@@ -1719,6 +1814,7 @@ class Wilderness(commands.Cog):
                 hit = max(0, roll_a - roll_d)
                 npc_hp = max(0, npc_hp - hit)
                 events.append(f"🗡️ You hit **{hit}** | You: **{your_hp}/{self.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**")
+                events.extend(self._consume_buffs_on_hit(p))
                 if npc_hp <= 0:
                     break
 
@@ -1961,6 +2057,7 @@ class Wilderness(commands.Cog):
                     npc_hp -= hit
                     log.append(self._hp_line_pvm(your_hp, npc_name, npc_hp, npc_max))
                     log.append(f"🗡️ You attack and deal **{hit}**.")
+                    log.extend(self._consume_buffs_on_hit(p))
                     if npc_hp <= 0:
                         break
 
