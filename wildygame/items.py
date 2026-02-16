@@ -16,11 +16,16 @@ EQUIP_SLOT_SET = {
     "ring",
 }
 
+POTIONS: Dict[str, Dict[str, int]] = {
+    "Super Strength": {"atk": 2, "hits": 5, "aliases": "super str,sup str"},
+}
+
 # Food (not stackable)
 FOOD: Dict[str, Dict[str, int]] = {
     "Lobster": {"heal": 12},
     "Shark": {"heal": 20},
     "Manta Ray": {"heal": 26},
+    "Veilfruit": {"heal": 34},
 }
 
 ITEMS: Dict[str, Dict[str, Any]] = {
@@ -35,6 +40,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Dragon 2h sword": {"type": "mainhand", "atk": 7, "stackable": False, "value": 54000, "aliases": "d2h,dragon 2h"},
     "Abyssal Whip": {"type": "mainhand", "atk": 10, "stackable": False, "value": 60000, "aliases": "whip,abby whip,abyssal whip"},
     "Abyssal Scourge": {"type": "mainhand", "atk": 14, "stackable": False, "value": 72000, "aliases": "scourge,abby scourge,abyssal scourge"},
+    "Veilbreaker": {"type": "mainhand", "atk": 28, "stackable": False, "value": 142000, "aliases": "veil"},
 
     "Viggora's Chainmace": {
         "type": "mainhand",
@@ -52,6 +58,9 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Rune sq shield": {"type": "offhand", "def": 2, "stackable": False, "value": 7000, "aliases": "rune sq"},
     "Dragon boots": {"type": "boots", "def": 3, "atk": 1, "stackable": False, "value": 24000, "aliases": "dboots,dragon boot,d boots,dragon boots"},
     "Dragon platebody": {"type": "body", "def": 7, "stackable": False, "value": 42000, "aliases": "d plate,dplate,dragon plate,d pbody,dragon platebody"},
+    "Zarveth's Ascendant Platebody": {"type": "body", "def": 7, "atk": 4, "stackable": False, "value": 142000, "aliases": "zarveth plate,zarveths plate,zarveths platebody,zarveths body"},
+    "Zarveth's Ascendant Platelegs": {"type": "legs", "def": 5, "atk": 3, "stackable": False, "value": 72000, "aliases": "zarveth legs,zarveths platelegs,zarveths legs"},
+    "Zarveth's Ascendant Mask": {"type": "helm", "def": 3, "atk": 1, "stackable": False, "value": 62000, "aliases": "zarveth mask,zarveths mask"},
 
     # Wearables (effects described in ITEM_EFFECTS)
     "Bracelet of ethereum": {"type": "amulet", "stackable": False, "value": 12000, "aliases": "ethereum bracelet,bracelet ethereum,bracelet of ethereum"},
@@ -78,6 +87,12 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Tiny Revenant": {"type": "misc", "stackable": False, "value": 0, "aliases": "tiny revenant,rev pet"},
     "Baby Chaos Fanatic": {"type": "misc", "stackable": False, "value": 0, "aliases": "baby chaos fanatic,fanatic pet"},
     "Mini Overlord": {"type": "misc", "stackable": False, "value": 0, "aliases": "mini overlord,overlord pet"},
+
+    # Potions
+    "Super Strength (4)": {"type": "misc", "stackable": False, "value": 0, "aliases": "super str,sup str"},
+    "Super Strength (3)": {"type": "misc", "stackable": False, "value": 0, "aliases": "super str,sup str"},
+    "Super Strength (2)": {"type": "misc", "stackable": False, "value": 0, "aliases": "super str,sup str"},
+    "Super Strength (1)": {"type": "misc", "stackable": False, "value": 0, "aliases": "super str,sup str"},
 }
 
 ITEM_EFFECTS = {
