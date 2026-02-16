@@ -4,7 +4,12 @@ from typing import Dict, Any, List
 CHEST_COIN_RANGE = [5000, 25000]
 
 CHEST_REWARDS: List[Dict[str, Any]] = [
+    {"item": "Blood rune", "min": 3, "max": 20, "chance": "1/2"},
+    {"item": "Revenant ether", "min": 30, "max": 50, "chance": "1/3"},
+    {"item": "Rune platebody", "min": 1, "max": 1, "chance": "1/10"},
+    {"item": "Dragon dagger", "min": 1, "max": 1, "chance": "1/50"},
     {"item": "Dragon platebody", "min": 1, "max": 1, "chance": "1/100"},
+    {"item": "Dragon boots", "min": 1, "max": 1, "chance": "1/75"},
 ]
 
 SHOP_ITEMS: Dict[str, int] = {
