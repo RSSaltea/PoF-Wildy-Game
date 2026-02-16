@@ -23,6 +23,7 @@ LOOT_TABLES: Dict[str, List[Dict[str, Any]]] = {
         {"item": "Shark", "min": 1, "max": 2, "chance": "1/6"},
         {"item": "Rune scimitar", "min": 1, "max": 1, "chance": "1/50"},
         {"item": "Rune chainbody", "min": 1, "max": 1, "chance": "1/80"},
+        {"item": "Rune platelegs", "min": 1, "max": 1, "chance": "1/80"},
         {"item": "Rune med helm", "min": 1, "max": 1, "chance": "1/40"},
         {"item": "Rune sq shield", "min": 1, "max": 1, "chance": "1/45"},
     ],
