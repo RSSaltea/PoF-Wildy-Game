@@ -25,7 +25,7 @@ class TradeState:
     channel_id: int
     created_at: int
 
-    status: str = "pending"  
+    status: str = "pending"  # pending | active | done | cancelled
     request_message_id: Optional[int] = None
     trade_message_id: Optional[int] = None
 
@@ -34,7 +34,6 @@ class TradeState:
 
     offers: Dict[int, TradeOffer] = field(default_factory=dict)
 
-    
     request_timeout_task: Optional[asyncio.Task] = None
 
 
@@ -72,7 +71,6 @@ class TradeView(discord.ui.View):
         await self.manager.on_cancel_pressed(interaction, self.trade_key)
 
     async def on_timeout(self):
-        
         try:
             await self.manager.cancel_trade(self.trade_key, reason="⏳ Trade timed out.")
         except Exception:
@@ -91,6 +89,7 @@ class TradeManager:
       - _slots_needed_to_add(bag, item, qty)
       - _inv_slots_used(bag)
       - _add_item(bag, item, qty), _remove_item(bag, item, qty)
+      - _spend_coins(player_state, amount)  <-- required for bank+inv coin spending
       - _persist()
       - config dict with: ["max_inventory_items"] and optionally ["coins_item_name"]
       - _duel_active_for_user(uid) (optional but used)
@@ -98,8 +97,7 @@ class TradeManager:
 
     def __init__(self, cog: Any, *, allowed_channel_ids: Optional[set[int]] = None):
         self.cog = cog
-        
-        
+
         if allowed_channel_ids is not None:
             self.allowed_channel_ids: set[int] = set(allowed_channel_ids)
         else:
@@ -107,8 +105,6 @@ class TradeManager:
 
         self.trades_by_pair: Dict[FrozenSet[int], TradeState] = {}
         self.trades_by_user: Dict[int, FrozenSet[int]] = {}
-
-    
 
     async def start_trade_request(self, ctx, target) -> None:
         ch = getattr(ctx, "channel", None)
@@ -218,8 +214,6 @@ class TradeManager:
             return
         await self.cancel_trade(key, reason="❌ Trade cancelled.")
 
-    
-
     async def on_confirm_pressed(self, interaction: discord.Interaction, trade_key: FrozenSet[int]):
         async with self.cog._mem_lock:
             trade = self.trades_by_pair.get(trade_key)
@@ -236,7 +230,6 @@ class TradeManager:
                 await self._safe_ephemeral(interaction, "You are not part of this trade.")
                 return
 
-            
             if trade.a_confirmed and trade.b_confirmed:
                 ok, err = self._try_complete_trade_locked(trade)
                 if not ok:
@@ -255,13 +248,11 @@ class TradeManager:
                 self._cleanup_trade_locked(trade_key)
                 return
 
-            
             emb = await self._render_trade_embed(interaction.guild, trade)
 
         await self._safe_edit(interaction, embed=emb, view=TradeView(self, trade_key, timeout=600))
 
     async def on_cancel_pressed(self, interaction: discord.Interaction, trade_key: FrozenSet[int]):
-        
         try:
             await interaction.response.defer()
         except Exception:
@@ -269,13 +260,10 @@ class TradeManager:
 
         await self.cancel_trade(trade_key, reason="❌ Trade cancelled.")
 
-        
         try:
             await interaction.edit_original_response(view=None)
         except Exception:
             pass
-
-    
 
     def _user_in_trade(self, uid: int) -> bool:
         key = self.trades_by_user.get(uid)
@@ -328,7 +316,6 @@ class TradeManager:
 
         await self._edit_request_message(trade, content=reason)
 
-        
         if trade.trade_message_id:
             ch = self.cog.bot.get_channel(trade.channel_id)
             if isinstance(ch, discord.abc.Messageable):
@@ -372,16 +359,20 @@ class TradeManager:
             offer = trade.offers.get(ctx.author.id) or TradeOffer()
             trade.offers[ctx.author.id] = offer
 
-            
             trade.a_confirmed = False
             trade.b_confirmed = False
 
             p = self.cog._get_player(ctx.author)
 
             if is_coins:
+                total_coins = int(p.coins) + int(getattr(p, "bank_coins", 0))
+
                 if mode == "add":
-                    if int(p.coins) < qty:
-                        await ctx.reply(f"You only have **{int(p.coins):,}** coins in your inventory.")
+                    if total_coins < (offer.coins + qty):
+                        await ctx.reply(
+                            f"You only have **{total_coins:,}** total coins "
+                            f"(inv {int(p.coins):,} + bank {int(getattr(p, 'bank_coins', 0)):,})."
+                        )
                         return
                     offer.coins += qty
                 else:
@@ -389,13 +380,20 @@ class TradeManager:
                         await ctx.reply("You haven't offered that many coins.")
                         return
                     offer.coins = max(0, offer.coins - qty)
+
             else:
-                have = int(p.inventory.get(canonical_item, 0))
+                have_inv = int(p.inventory.get(canonical_item, 0))
+                have_bank = int(p.bank.get(canonical_item, 0))
+                have_total = have_inv + have_bank
+
                 cur = int(offer.items.get(canonical_item, 0))
 
                 if mode == "add":
-                    if have < (cur + qty):
-                        await ctx.reply(f"You only have **{have}** of **{canonical_item}** in your inventory.")
+                    if have_total < (cur + qty):
+                        await ctx.reply(
+                            f"You only have **{have_total}** of **{canonical_item}** "
+                            f"(inv {have_inv}, bank {have_bank})."
+                        )
                         return
                     offer.items[canonical_item] = cur + qty
                 else:
@@ -443,6 +441,13 @@ class TradeManager:
     def _resolve_trade_asset(self, user, itemname: str) -> Tuple[bool, Optional[str]]:
         """
         Returns: (is_coins, canonical_item_name)
+
+        Resolution order:
+          - coins
+          - item aliases (ITEMS)
+          - food
+          - exact key in inventory
+          - exact key in bank
         """
         q = self.cog._norm(itemname)
         coins_name = self.cog._norm(self.cog.config.get("coins_item_name", "Coins"))
@@ -459,9 +464,14 @@ class TradeManager:
             return False, food_key
 
         p = self.cog._get_player(user)
+
         inv_key = self.cog._resolve_from_keys_case_insensitive(itemname, p.inventory.keys())
         if inv_key:
             return False, inv_key
+
+        bank_key = self.cog._resolve_from_keys_case_insensitive(itemname, p.bank.keys())
+        if bank_key:
+            return False, bank_key
 
         return False, None
 
@@ -495,7 +505,7 @@ class TradeManager:
             description=(
                 f"**{a_name}** confirmed: {a_ok}\n"
                 f"**{b_name}** confirmed: {b_ok}\n\n"
-                f"Use `!w trade add <qty> <item>` / `!w trade remove <qty> <item>`.\n"
+                f"Use `!w trade add <qty> <item>` / `!w trade remove <qty> <item>` (inv+bank).\n"
                 f"Click **Confirm** when ready. Either player can **Cancel**."
             ),
         )
@@ -518,35 +528,68 @@ class TradeManager:
     def _try_complete_trade_locked(self, trade: TradeState) -> Tuple[bool, str]:
         """
         MUST be called inside cog._mem_lock.
-        Transfers assets if possible.
+        Allows offers from inventory + bank.
+        Received items always go to inventory.
         """
         a_id, b_id = trade.a_id, trade.b_id
         a_offer = trade.offers.get(a_id) or TradeOffer()
         b_offer = trade.offers.get(b_id) or TradeOffer()
 
-        
-        
         a_user = self.cog.bot.get_user(a_id) or discord.Object(id=a_id)
         b_user = self.cog.bot.get_user(b_id) or discord.Object(id=b_id)
         pa = self.cog._get_player(a_user)
         pb = self.cog._get_player(b_user)
 
-        if int(pa.coins) < int(a_offer.coins):
-            return False, "Player A no longer has the offered coins."
-        if int(pb.coins) < int(b_offer.coins):
-            return False, "Player B no longer has the offered coins."
+        # ---- validate coins (inv + bank) ----
+        a_total_coins = int(pa.coins) + int(getattr(pa, "bank_coins", 0))
+        b_total_coins = int(pb.coins) + int(getattr(pb, "bank_coins", 0))
+        if a_total_coins < int(a_offer.coins):
+            return False, "Player A no longer has the offered coins (inv+bank)."
+        if b_total_coins < int(b_offer.coins):
+            return False, "Player B no longer has the offered coins (inv+bank)."
 
-        for item, qty in a_offer.items.items():
-            if int(pa.inventory.get(item, 0)) < int(qty):
-                return False, f"Player A no longer has {item} x{qty}."
-        for item, qty in b_offer.items.items():
-            if int(pb.inventory.get(item, 0)) < int(qty):
-                return False, f"Player B no longer has {item} x{qty}."
-
-        
-        def simulate_after_remove(pinv: Dict[str, int], outgoing: Dict[str, int]) -> Dict[str, int]:
-            bag = dict(pinv)
+        # ---- helper: split outgoing items into inv-take and bank-take ----
+        def split_outgoing(
+            inv: Dict[str, int],
+            bank: Dict[str, int],
+            outgoing: Dict[str, int],
+        ) -> Tuple[Optional[Dict[str, int]], Optional[Dict[str, int]]]:
+            take_inv: Dict[str, int] = {}
+            take_bank: Dict[str, int] = {}
             for item, qty in outgoing.items():
+                qty = int(qty)
+                if qty <= 0:
+                    continue
+                inv_have = int(inv.get(item, 0))
+                bank_have = int(bank.get(item, 0))
+                if inv_have + bank_have < qty:
+                    return None, None
+                inv_take = min(inv_have, qty)
+                bank_take = qty - inv_take
+                if inv_take:
+                    take_inv[item] = inv_take
+                if bank_take:
+                    take_bank[item] = bank_take
+            return take_inv, take_bank
+
+        a_take_inv, a_take_bank = split_outgoing(pa.inventory, pa.bank, a_offer.items)
+        if a_take_inv is None:
+            for item, qty in a_offer.items.items():
+                if int(pa.inventory.get(item, 0)) + int(pa.bank.get(item, 0)) < int(qty):
+                    return False, f"Player A no longer has {item} x{int(qty)} (inv+bank)."
+            return False, "Player A no longer has the offered items (inv+bank)."
+
+        b_take_inv, b_take_bank = split_outgoing(pb.inventory, pb.bank, b_offer.items)
+        if b_take_inv is None:
+            for item, qty in b_offer.items.items():
+                if int(pb.inventory.get(item, 0)) + int(pb.bank.get(item, 0)) < int(qty):
+                    return False, f"Player B no longer has {item} x{int(qty)} (inv+bank)."
+            return False, "Player B no longer has the offered items (inv+bank)."
+
+        # ---- inventory space simulation: only remove what leaves inventory ----
+        def simulate_after_remove(pinv: Dict[str, int], outgoing_from_inv: Dict[str, int]) -> Dict[str, int]:
+            bag = dict(pinv)
+            for item, qty in outgoing_from_inv.items():
                 have = int(bag.get(item, 0))
                 newv = have - int(qty)
                 if newv <= 0:
@@ -555,8 +598,8 @@ class TradeManager:
                     bag[item] = newv
             return bag
 
-        a_after_out = simulate_after_remove(pa.inventory, a_offer.items)
-        b_after_out = simulate_after_remove(pb.inventory, b_offer.items)
+        a_after_out = simulate_after_remove(pa.inventory, a_take_inv)
+        b_after_out = simulate_after_remove(pb.inventory, b_take_inv)
 
         def slots_needed_for_incoming(base_bag: Dict[str, int], incoming: Dict[str, int]) -> int:
             needed = 0
@@ -566,7 +609,6 @@ class TradeManager:
                 if qty <= 0:
                     continue
                 need = int(self.cog._slots_needed_to_add(bag, item, qty))
-                
                 bag[item] = int(bag.get(item, 0)) + qty
                 needed += need
             return needed
@@ -583,25 +625,36 @@ class TradeManager:
         if b_free < b_need:
             return False, "Player B does not have enough inventory space to receive the items."
 
-        
-        for item, qty in a_offer.items.items():
+        # ---- remove items (inventory first, then bank) ----
+        for item, qty in a_take_inv.items():
             if not self.cog._remove_item(pa.inventory, item, int(qty)):
-                return False, "Failed to remove an item from Player A (state changed)."
-        for item, qty in b_offer.items.items():
+                return False, "Failed to remove an item from Player A inventory (state changed)."
+        for item, qty in a_take_bank.items():
+            if not self.cog._remove_item(pa.bank, item, int(qty)):
+                return False, "Failed to remove an item from Player A bank (state changed)."
+
+        for item, qty in b_take_inv.items():
             if not self.cog._remove_item(pb.inventory, item, int(qty)):
-                return False, "Failed to remove an item from Player B (state changed)."
+                return False, "Failed to remove an item from Player B inventory (state changed)."
+        for item, qty in b_take_bank.items():
+            if not self.cog._remove_item(pb.bank, item, int(qty)):
+                return False, "Failed to remove an item from Player B bank (state changed)."
 
-        
-        pa.coins -= int(a_offer.coins)
-        pb.coins -= int(b_offer.coins)
+        # ---- remove coins (inv first, then bank) ----
+        if int(a_offer.coins) > 0:
+            if not self.cog._spend_coins(pa, int(a_offer.coins)):
+                return False, "Player A no longer has the offered coins (state changed)."
+        if int(b_offer.coins) > 0:
+            if not self.cog._spend_coins(pb, int(b_offer.coins)):
+                return False, "Player B no longer has the offered coins (state changed)."
 
-        
+        # ---- add incoming items to INVENTORY ----
         for item, qty in b_offer.items.items():
             self.cog._add_item(pa.inventory, item, int(qty))
         for item, qty in a_offer.items.items():
             self.cog._add_item(pb.inventory, item, int(qty))
 
-        
+        # ---- add incoming coins to INVENTORY coins ----
         pa.coins += int(b_offer.coins)
         pb.coins += int(a_offer.coins)
 
@@ -613,8 +666,6 @@ class TradeManager:
             return
         self.trades_by_user.pop(trade.a_id, None)
         self.trades_by_user.pop(trade.b_id, None)
-
-    
 
     async def _safe_ephemeral(self, interaction: discord.Interaction, msg: str):
         try:
@@ -635,7 +686,6 @@ class TradeManager:
             else:
                 await interaction.response.edit_message(embed=embed, view=view)
         except Exception:
-            
             try:
                 if interaction.message:
                     await interaction.message.edit(embed=embed, view=view)
