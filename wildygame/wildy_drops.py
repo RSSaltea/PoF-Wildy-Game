@@ -16,7 +16,7 @@ SHOP_ITEMS: Dict[str, int] = {
 }
 
 LOOT_TABLES: Dict[str, List[Dict[str, Any]]] = {
-    "shallow": [ # <10
+    "shallow": [ # <=10
         {"item": "Nature rune", "min": 1, "max": 3, "chance": "1/2"},
         {"item": "Law rune", "min": 1, "max": 2, "chance": "1/2"},
         {"item": "Lobster", "min": 1, "max": 4, "chance": "1/2"},
@@ -26,7 +26,7 @@ LOOT_TABLES: Dict[str, List[Dict[str, Any]]] = {
         {"item": "Rune med helm", "min": 1, "max": 1, "chance": "1/40"},
         {"item": "Rune sq shield", "min": 1, "max": 1, "chance": "1/45"},
     ],
-    "mid": [ # <20
+    "mid": [ # <=20
         {"item": "Nature rune", "min": 2, "max": 10, "chance": "1/2"},
         {"item": "Law rune", "min": 2, "max": 10, "chance": "1/2"},
         {"item": "Rune scimitar", "min": 1, "max": 1, "chance": "1/25"},
@@ -41,7 +41,7 @@ LOOT_TABLES: Dict[str, List[Dict[str, Any]]] = {
         {"item": "Rune full helm", "min": 1, "max": 1, "chance": "1/80"},
         {"item": "Dragon dagger", "min": 1, "max": 1, "chance": "1/120"},
     ],
-    "deep": [ # <35
+    "deep": [ # <=35
         {"item": "Nature rune", "min": 10, "max": 50, "chance": "1/2"},
         {"item": "Law rune", "min": 10, "max": 60, "chance": "1/2"},
         {"item": "Rune scimitar", "min": 1, "max": 1, "chance": "1/5"},
