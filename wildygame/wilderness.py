@@ -1796,6 +1796,8 @@ class Wilderness(commands.Cog):
 
             events.append(f"👹 **{npc_name}** (HP **{npc_max}**) — You start **{start_hp}/{self.config['max_hp']}**")
 
+            force_zero_next_hit = False
+
             while npc_hp > 0 and your_hp > 0:
                 # PvM ether consumption: 3 per hit IF available. If not available, chainmace is uncharged.
                 charged = False
@@ -1804,7 +1806,6 @@ class Wilderness(commands.Cog):
                         charged = True
                         self._remove_item(p.inventory, "Revenant ether", 3)
 
-                # Recompute attack/def each turn so running out of ether removes atk_vs_npc properly.
                 atk_bonus, def_bonus = self._equipped_bonus(p, vs_npc=True, chainmace_charged=charged)
                 your_atk = 6 + atk_bonus + int(p.wildy_level / 15)
                 your_def = 6 + def_bonus + int(p.wildy_level / 20)
@@ -1812,8 +1813,17 @@ class Wilderness(commands.Cog):
                 roll_a = random.randint(0, your_atk)
                 roll_d = random.randint(0, npc_def_stat)
                 hit = max(0, roll_a - roll_d)
+
+                # --- Zarveth debuff: force your next hit to 0 ---
+                if force_zero_next_hit:
+                    hit = 0
+                    force_zero_next_hit = False
+                    events.append("🕳️ The veil disrupts your swing — your hit is forced to **0**!")
+
                 npc_hp = max(0, npc_hp - hit)
-                events.append(f"🗡️ You hit **{hit}** | You: **{your_hp}/{self.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**")
+                events.append(
+                    f"🗡️ You hit **{hit}** | You: **{your_hp}/{self.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**"
+                )
                 events.extend(self._consume_buffs_on_hit(p))
                 if npc_hp <= 0:
                     break
@@ -1826,13 +1836,22 @@ class Wilderness(commands.Cog):
                     npc_hit = int(npc_hit * 0.5)
 
                 your_hp = clamp(your_hp - npc_hit, 0, int(self.config["max_hp"]))
-                events.append(f"💥 {npc_name} hits **{npc_hit}** | You: **{your_hp}/{self.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**")
+                events.append(
+                    f"💥 {npc_name} hits **{npc_hit}** | You: **{your_hp}/{self.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**"
+                )
+
+                # --- Zarveth special: 5% chance to apply debuff on its attack ---
+                if npc_name == "Zarveth the Veilbreaker" and your_hp > 0 and npc_hp > 0:
+                    if random.random() < 0.05:
+                        force_zero_next_hit = True
+                        events.append("🌀 **Zarveth the Veilbreaker** shatters the veil! Your **next hit will deal 0**.")
 
                 if your_hp > 0:
                     before = your_hp
                     your_hp, ate_food, extra_roll, healed = self._maybe_auto_eat_after_hit(p, your_hp)
                     if ate_food:
                         events.append(f"🍖 Auto-eat **{ate_food}** (+{your_hp - before}) | You: **{your_hp}/{self.config['max_hp']}**")
+
 
             def build_pages(lines: List[str], per_page: int = 10) -> List[str]:
                 pages: List[str] = []
