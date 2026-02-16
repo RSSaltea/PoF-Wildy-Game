@@ -18,7 +18,8 @@ EQUIP_SLOT_SET = {
 }
 
 POTIONS: Dict[str, Dict[str, int]] = {
-    "Super Strength": {"atk": 2, "hits": 5, "aliases": "super str,sup str"},
+    "Strength Potion": {"atk": 2, "hits": 10, "aliases": "str,str pot"},
+    "Super Strength Potion": {"atk": 4, "hits": 20, "aliases": "super str,sup str"},
 }
 
 # Food (not stackable)
@@ -36,6 +37,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Starter Platebody": {"type": "body", "def": 2, "stackable": False, "value": 0, "aliases": "starter plate,start body,starter body"},
 
     # Weapons (non-stackable)
+    "Rune dagger": {"type": "mainhand", "atk": 3, "def": 1, "stackable": False, "value": 5000, "aliases": "rune dag,rdagger,r dagger,r dag"},
     "Rune scimitar": {"type": "mainhand", "atk": 3, "stackable": False, "value": 5000, "aliases": "rune scim,rune scimmy,runescim"},
     "Dragon dagger": {"type": "mainhand", "atk": 4, "stackable": False, "value": 17000, "aliases": "dds,dragon dagger,d dagger"},
     "Dragon scimitar": {"type": "mainhand", "atk": 5, "stackable": False, "value": 32000, "aliases": "d scim,dscim,dragon scim,d scimitar"},
@@ -44,7 +46,6 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Abyssal Scourge": {"type": "mainhand", "atk": 15, "stackable": False, "value": 72000, "aliases": "scourge,abby scourge,abyssal scourge"},
     "Veilbreaker": {"type": "mainhand", "atk": 28, "stackable": False, "value": 142000, "aliases": "veil"},
     "Death Guard": {"type": "mainhand", "atk": 5, "stackable": False, "value": 142000, "aliases": "deathguard"},
-    "Skull Lantern": {"type": "offhand", "atk": 4, "stackable": False, "value": 142000, "aliases": "lantern"},
 
     "Viggora's Chainmace": {
         "type": "mainhand",
@@ -55,18 +56,28 @@ ITEMS: Dict[str, Dict[str, Any]] = {
         "aliases": "chainmace,viggoras chainmace,vigs chainmace,viggora chainmace,Viggora’s Chainmace",
     },
 
+    # Offhands
+    "Rune sq shield": {"type": "offhand", "def": 3, "stackable": False, "value": 7000, "aliases": "rune sq"},
+    "Skull Lantern": {"type": "offhand", "atk": 4, "stackable": False, "value": 142000, "aliases": "lantern"},
+    "Bronze Defender": {"type": "offhand", "def": 1, "stackable": False, "value": 500, "aliases": "bronze def"},
+    "Iron Defender": {"type": "offhand", "def": 1, "stackable": False, "value": 750, "aliases": "iron def,i def"},
+    "Steel Defender": {"type": "offhand", "def": 1, "stackable": False, "value": 1000, "aliases": "steel def,s def"},
+    "Black Defender": {"type": "offhand", "def": 2, "stackable": False, "value": 1250, "aliases": "black def"},
+    "Mithril Defender": {"type": "offhand", "def": 2, "stackable": False, "value": 1500, "aliases": "mith def,mithril def,m def"},
+    "Adamant Defender": {"type": "offhand", "def": 2, "stackable": False, "value": 1750, "aliases": "addy def,addy defender,a def"},
+    "Rune Defender": {"type": "offhand", "def": 2, "atk": 2, "stackable": False, "value": 2000, "aliases": "rune def,r def"},
+
     # Armour / wearables (non-stackable)
-    "Rune platebody": {"type": "body", "def": 4, "stackable": False, "value": 12000, "aliases": "rune plate"},
-    "Rune chainbody": {"type": "body", "def": 3, "stackable": False, "value": 8000, "aliases": "rune chain"},
-    "Rune platelegs": {"type": "legs", "def": 3, "stackable": False, "value": 9000, "aliases": "rune legs"},
+    "Rune platebody": {"type": "body", "def": 3, "stackable": False, "value": 12000, "aliases": "rune plate"},
+    "Rune chainbody": {"type": "body", "def": 2, "stackable": False, "value": 8000, "aliases": "rune chain"},
+    "Rune platelegs": {"type": "legs", "def": 2, "stackable": False, "value": 9000, "aliases": "rune legs"},
     "Rune full helm": {"type": "helm", "def": 2, "stackable": False, "value": 8000, "aliases": "rune helm"},
     "Rune med helm": {"type": "helm", "def": 1, "stackable": False, "value": 5000, "aliases": "rune med"},
-    "Rune sq shield": {"type": "offhand", "def": 3, "stackable": False, "value": 7000, "aliases": "rune sq"},
     "Dragon boots": {"type": "boots", "def": 3, "atk": 1, "stackable": False, "value": 24000, "aliases": "dboots,dragon boot,d boots,dragon boots"},
     "Dragon platebody": {"type": "body", "def": 8, "stackable": False, "value": 42000, "aliases": "d plate,dplate,dragon plate,d pbody,dragon platebody"},
     "Dragon platelegs": {"type": "legs", "def": 6, "stackable": False, "value": 32000, "aliases": "d legs,dlegs,dragon leg"},
-    "Zarveth's Ascendant Platebody": {"type": "body", "def": 7, "atk": 4, "stackable": False, "value": 142000, "aliases": "zarveth plate,zarveths plate,zarveths platebody,zarveths body"},
-    "Zarveth's Ascendant Platelegs": {"type": "legs", "def": 5, "atk": 3, "stackable": False, "value": 72000, "aliases": "zarveth legs,zarveths platelegs,zarveths legs"},
+    "Zarveth's Ascendant Platebody": {"type": "body", "def": 5, "atk": 4, "stackable": False, "value": 142000, "aliases": "zarveth plate,zarveths plate,zarveths platebody,zarveths body"},
+    "Zarveth's Ascendant Platelegs": {"type": "legs", "def": 4, "atk": 3, "stackable": False, "value": 72000, "aliases": "zarveth legs,zarveths platelegs,zarveths legs"},
     "Zarveth's Ascendant Mask": {"type": "helm", "def": 3, "atk": 1, "stackable": False, "value": 62000, "aliases": "zarveth mask,zarveths mask"},
 
     # Amulets
@@ -80,6 +91,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Wristwraps of the Damned": {"type": "gloves", "stackable": False, "value": 54000, "aliases": "wristwraps of damned,wotd,wraps of the damned,wristwraps of the damned"},
 
     # Stackable / misc drops (stackable)
+    "Cyclops Eye": {"type": "misc", "stackable": False, "value": 50, "aliases": "eye"},
     "Revenant ether": {"type": "misc", "stackable": True, "value": 50, "aliases": "ether,rev ether,revenant ether"},
     "Nature rune": {"type": "misc", "stackable": True, "value": 320, "aliases": "nature rune,nats,nature runes"},
     "Law rune": {"type": "misc", "stackable": True, "value": 320, "aliases": "law rune,laws,law runes"},
@@ -110,7 +122,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
 
 ITEM_EFFECTS = {
     "Bracelet of ethereum": {"effect": "When worn you will take 50% reduced damage from Revenants."},
-    "Wristwraps of the Damned": {"effect": "When worn, Abyssal Overlord spawns with 30% less base HP."},
+    "Wristwraps of the Damned": {"effect": "When worn you have a small chance to inflict a bleed."},
     "Viggora's Chainmace": {"effect": "Grants +16 attack against ALL NPCs at a cost of 3 Revenant ether per hit (no bonus in PvP)."},
     "Amulet of Seeping": {"effect": "Heals 1 + 2% of damage dealt at the cost of 5 Blood runes per successful hit."},
 }
