@@ -54,6 +54,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     # Armour / wearables (non-stackable)
     "Rune platebody": {"type": "body", "def": 4, "stackable": False, "value": 12000, "aliases": "rune plate"},
     "Rune chainbody": {"type": "body", "def": 2, "stackable": False, "value": 8000, "aliases": "rune chain"},
+    "Rune platelegs": {"type": "legs", "def": 2, "stackable": False, "value": 9000, "aliases": "rune legs"},
     "Rune med helm": {"type": "helm", "def": 1, "stackable": False, "value": 5000, "aliases": "rune med"},
     "Rune sq shield": {"type": "offhand", "def": 2, "stackable": False, "value": 7000, "aliases": "rune sq"},
     "Dragon boots": {"type": "boots", "def": 3, "atk": 1, "stackable": False, "value": 24000, "aliases": "dboots,dragon boot,d boots,dragon boots"},
