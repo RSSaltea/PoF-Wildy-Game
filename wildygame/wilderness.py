@@ -27,7 +27,7 @@ CONFIG_FILE = os.path.join(DATA_DIR, "config.json")
 
 ALLOWED_CHANNEL_IDS = {1465451116803391529, 1472610522313523323, 1472942650381570171}
 
-REVENANT_TYPES = {"revenant", "revenant knight", "revenant abyssal demon"}
+REVENANT_TYPES = {"revenant", "revenant knight", "revenant demon", "revenant necro"}
 
 AFK_TIMEOUT_SEC = 60 * 60
 AFK_SWEEP_INTERVAL_SEC = 5 * 60
@@ -2275,7 +2275,7 @@ class Wilderness(commands.Cog):
                     )
                     return
 
-                forced_success = (random.random() <= 0.50)
+                forced_success = (random.random() <= 0.75)
                 if forced_success:
                     chosen = forced_npc
                 else:
@@ -2302,9 +2302,9 @@ class Wilderness(commands.Cog):
             events: List[str] = []
             if forced_npc:
                 if forced_success:
-                    events.append(f"🎯 Targeted fight: **{forced_npc[0]}** — **SUCCESS (50%)**")
+                    events.append(f"🎯 Targeted fight: **{forced_npc[0]}** — **SUCCESS**")
                 else:
-                    events.append(f"🎯 Targeted fight: **{forced_npc[0]}** — **FAILED (50%)**, random encounter instead…")
+                    events.append(f"🎯 Targeted fight: **{forced_npc[0]}** — **FAILED**, random encounter instead…")
 
             events.append(f"👹 **{npc_name}** (HP **{npc_max}**) — You start **{start_hp}/{self.config['max_hp']}**")
 
