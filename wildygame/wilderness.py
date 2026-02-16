@@ -1438,9 +1438,9 @@ class Wilderness(commands.Cog):
             "!w tele\n"
             "!w eat <foodname>\n"
             "!w drink <potionname>\n"
-            "!w drop <itemname>\n"
+            "!w drop <quantity> <itemname>\n"
             "!w bank / !w bankview\n"
-            "!w withdraw <qty> <item>\n"
+            "!w withdraw <quantity> <item>\n"
             "!w inv\n"
             "!w chest open\n"
             "!w trade <playername> / !w trade accept"
@@ -1459,8 +1459,8 @@ class Wilderness(commands.Cog):
                 "Usage:\n"
                 "`!w trade @player` (request)\n"
                 "`!w trade accept`\n"
-                "`!w trade add <qty> <item>`\n"
-                "`!w trade remove <qty> <item>`\n"
+                "`!w trade add <quantity> <item>`\n"
+                "`!w trade remove <quantity> <item>`\n"
                 "`!w trade cancel`"
             )
             return
@@ -1686,7 +1686,7 @@ class Wilderness(commands.Cog):
         await ctx.reply(f"🍖 You eat **{food_key}** and heal **{p.hp - before}**. HP: **{p.hp}/{self.config['max_hp']}**")
 
     @w.command(name="drop")
-    async def drop_cmd(self, ctx: commands.Context, *, itemname: str):
+    async def drop_cmd(self, ctx: commands.Context, *args):
         if not await self._ensure_ready(ctx):
             return
 
@@ -1694,11 +1694,35 @@ class Wilderness(commands.Cog):
             await ctx.reply("You’re in a PvP fight — finish the fight before dropping items.")
             return
 
+        if not args:
+            await ctx.reply("Usage: `!w drop <item>` or `!w drop <qty> <item>`")
+            return
+
+        qty: Optional[int] = None
+        item_query: str = ""
+
+        if len(args) >= 2:
+            try:
+                qty_try = int(args[0])
+                if qty_try > 0:
+                    qty = qty_try
+                    item_query = " ".join(args[1:]).strip()
+                else:
+                    item_query = " ".join(args).strip()
+            except ValueError:
+                item_query = " ".join(args).strip()
+        else:
+            item_query = " ".join(args).strip()
+
+        if not item_query:
+            await ctx.reply("Usage: `!w drop <item>` or `!w drop <qty> <item>`")
+            return
+
         async with self._mem_lock:
             p = self._get_player(ctx.author)
-            inv_key = self._resolve_from_keys_case_insensitive(itemname, p.inventory.keys())
+            inv_key = self._resolve_from_keys_case_insensitive(item_query, p.inventory.keys())
             if not inv_key:
-                maybe = self._resolve_item(itemname)
+                maybe = self._resolve_item(item_query) or self._resolve_food(item_query)
                 if maybe:
                     inv_key = self._resolve_from_keys_case_insensitive(maybe, p.inventory.keys())
 
@@ -1706,18 +1730,30 @@ class Wilderness(commands.Cog):
                 await ctx.reply("That item isn’t in your inventory.")
                 return
 
-            qty = int(p.inventory.get(inv_key, 0))
-            if qty <= 0:
+            have = int(p.inventory.get(inv_key, 0))
+            if have <= 0:
                 await ctx.reply("That item isn’t in your inventory.")
                 return
 
-            p.inventory.pop(inv_key, None)
+            drop_qty = have if qty is None else min(int(qty), have)
+            if drop_qty <= 0:
+                await ctx.reply("Quantity must be > 0.")
+                return
+
+            ok = self._remove_item(p.inventory, inv_key, drop_qty)
+            if not ok:
+                await ctx.reply("Couldn’t drop that amount (weird state).")
+                return
+
             self._touch(p)
             await self._persist()
 
-        await ctx.reply(f"🗑️ Dropped **{inv_key} x{qty}** from your inventory.")
+        if drop_qty == have:
+            await ctx.reply(f"🗑️ Dropped **{inv_key} x{drop_qty}** from your inventory.")
+        else:
+            await ctx.reply(f"🗑️ Dropped **{inv_key} x{drop_qty}**. You have **{have - drop_qty}** left.")
 
-    @w.command(name="inspect")
+    @w.command(name="inspect", aliases=["examine"])
     async def inspect(self, ctx: commands.Context, *, itemname: str):
         if not await self._ensure_ready(ctx):
             return
@@ -1830,7 +1866,7 @@ class Wilderness(commands.Cog):
         )
 
     # Equipment
-    @w.command(name="gear")
+    @w.command(name="gear", aliases=["worn"])
     async def gear(self, ctx: commands.Context):
         if not await self._ensure_ready(ctx):
             return
@@ -1920,7 +1956,7 @@ class Wilderness(commands.Cog):
         await ctx.reply(f"✅ Unequipped **{item}** from **{slot}**.")
 
     # Inventory / Bank
-    @w.command(name="inv")
+    @w.command(name="inv", aliases=["inventory"])
     async def inv(self, ctx: commands.Context):
         if not await self._ensure_ready(ctx):
             return
@@ -2024,11 +2060,33 @@ class Wilderness(commands.Cog):
         await ctx.reply("\n".join(lines))
 
     @w.command(name="withdraw", aliases=["withdra"])
-    async def withdraw(self, ctx: commands.Context, qty: int, *, item: str):
+    async def withdraw(self, ctx: commands.Context, *args):
         if not await self._ensure_ready(ctx):
             return
-        if qty <= 0:
-            await ctx.reply("Quantity must be > 0.")
+
+        if not args:
+            await ctx.reply("Usage: `!w withdraw <item>` or `!w withdraw <qty> <item>`")
+            return
+
+        # Parse: [qty] <item>
+        qty = 1
+        item_query = ""
+
+        if len(args) >= 2:
+            try:
+                qty_try = int(args[0])
+                if qty_try > 0:
+                    qty = qty_try
+                    item_query = " ".join(args[1:]).strip()
+                else:
+                    item_query = " ".join(args).strip()
+            except ValueError:
+                item_query = " ".join(args).strip()
+        else:
+            item_query = " ".join(args).strip()
+
+        if not item_query:
+            await ctx.reply("Usage: `!w withdraw <item>` or `!w withdraw <qty> <item>`")
             return
 
         async with self._mem_lock:
@@ -2036,11 +2094,11 @@ class Wilderness(commands.Cog):
             if p.in_wilderness:
                 await ctx.reply("Withdraw items out of the Wilderness. !w tele first.")
                 return
-
-            bank_key = self._resolve_from_keys_case_insensitive(item, p.bank.keys())
-
+            
+            # Find item in bank (case-insensitive), supporting aliases
+            bank_key = self._resolve_from_keys_case_insensitive(item_query, p.bank.keys())
             if not bank_key:
-                maybe_canonical = self._resolve_item(item)
+                maybe_canonical = self._resolve_item(item_query)
                 if maybe_canonical:
                     bank_key = self._resolve_from_keys_case_insensitive(maybe_canonical, p.bank.keys())
 
@@ -2048,16 +2106,24 @@ class Wilderness(commands.Cog):
                 await ctx.reply("That item isn’t in your bank.")
                 return
 
-            have = p.bank.get(bank_key, 0)
-            if have < qty:
-                await ctx.reply(f"You only have **{have}** of **{bank_key}** in your bank.")
+            have = int(p.bank.get(bank_key, 0))
+            if have <= 0:
+                await ctx.reply("That item isn’t in your bank.")
                 return
+
+            # Clamp qty to what they have
+            qty = int(qty)
+            if qty <= 0:
+                await ctx.reply("Quantity must be > 0.")
+                return
+            qty = min(qty, have)
 
             space = self._inv_free_slots(p.inventory)
             if space <= 0:
                 await ctx.reply("Your inventory is full.")
                 return
 
+            # How many can we actually take based on slot rules?
             if bank_key in FOOD or (not self._is_stackable(bank_key) and bank_key not in FOOD):
                 take = min(space, qty)
             else:
