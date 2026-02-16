@@ -7,6 +7,7 @@ NPCS: List[Tuple[str, int, int, int, str, int, int]] = [
     ("Chaos fanatic", 90, 3, 20, "chaos_fanatic", 7, 5),
     ("Revenant necromancer", 140, 4, 20, "revenant necro", 10, 0),
     ("Revenant abyssal demon", 140, 4, 35, "revenant demon", 9, 3),
+    ("Blighted Cyclops", 120, 4, 35, "blight cyclops", 7, 4),
     ("Abyssal Overlord", 280, 4, 35, "overlord", 11, 7),
     ("Lord Valthyros", 250, 4, 35, "valthyros", 6, 12),
     ("Zarveth the Veilbreaker", 420, 5, 45, "veilbreaker", 22, 4),
@@ -95,6 +96,23 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Uncut emerald", "min": 1, "max": 2, "chance": "1/5"},
         ],
     },
+    "blight cyclops": {
+        "coins_range": [0, 50],
+        "unique": [
+            {"item": "Bronze Defender", "min": 1, "max": 1, "chance": "1/50"},
+            {"item": "Iron Defender", "min": 1, "max": 1, "chance": "1/50"},
+            {"item": "Steel Defender", "min": 1, "max": 1, "chance": "1/50"},
+            {"item": "Black Defender", "min": 1, "max": 1, "chance": "1/50"},
+            {"item": "Mithril Defender", "min": 1, "max": 1, "chance": "1/50"},
+            {"item": "Adamant Defender", "min": 1, "max": 1, "chance": "1/50"},
+            {"item": "Rune Defender", "min": 1, "max": 1, "chance": "1/50"},
+        ],
+        "loot": [
+            {"item": "Chaos rune", "min": 20, "max": 120, "chance": "1/2"},
+            {"item": "Rune dagger", "min": 1, "max": 1, "chance": "1/20"},
+            {"item": "Cyclops Eye", "min": 1, "max": 1, "chance": "1/50"},
+        ],
+    },
     "overlord": {
         "coins_range": [0, 25000],
         "unique": [
@@ -130,7 +148,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
         "loot": [
             {"item": "Veilfruit", "min": 2, "max": 7, "chance": "1/2"},
             {"item": "Blood rune", "min": 4, "max": 80, "chance": "1/5"},
-            {"item": "Super Strength Potion (4)", "min": 1, "max": 2, "chance": "1/4"},
+            {"item": "Super Strength Potion", "min": 1, "max": 2, "chance": "1/4"},
         ],
     },
     "valthyros": {
