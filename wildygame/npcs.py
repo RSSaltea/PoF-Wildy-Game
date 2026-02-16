@@ -6,6 +6,7 @@ NPCS: List[Tuple[str, int, int, int, str, int, int]] = [
     ("Revenant knight", 50, 2, 10, "revenant", 5, 3),
     ("Chaos fanatic", 90, 3, 20, "chaos_fanatic", 7, 5),
     ("Abyssal Overlord", 280, 4, 35, "overlord", 11, 7),
+    ("Lord Valthyros", 250, 4, 35, "valthyros", 6, 12),
     ("Zarveth the Veilbreaker", 420, 5, 45, "veilbreaker", 22, 4),
 ]
 
@@ -54,6 +55,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Abyssal ash", "min": 5, "max": 25, "chance": "1/2"},
             {"item": "Abyssal charm", "min": 1, "max": 2, "chance": "1/4"},
             {"item": "Overlord core fragment", "min": 1, "max": 1, "chance": "1/6"},
+            {"item": "Blood rune", "min": 1, "max": 40, "chance": "1/40"},
         ],
         "special": [
             {"item": "Abyssal Scourge", "min": 1, "max": 1, "chance": "1/200"},
@@ -73,7 +75,22 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
         ],
         "loot": [
             {"item": "Veilfruit", "min": 2, "max": 7, "chance": "1/2"},
+            {"item": "Blood rune", "min": 4, "max": 80, "chance": "1/5"},
             {"item": "Super Strength Potion (4)", "min": 1, "max": 2, "chance": "1/4"},
+        ],
+    },
+    "valthyros": {
+        "coins_range": [0, 20000],
+        "unique": [
+            {"item": "Ancient Emblem", "min": 1, "max": 1, "chance": "1/300"},
+            {"item": "Amulet of Seeping", "min": 1, "max": 1, "chance": "1/300"},
+        ],
+        "pet": [
+            {"item": "Splat", "min": 1, "max": 1, "chance": "1/1000"},
+        ],
+        "loot": [
+            {"item": "Blood rune", "min": 40, "max": 250, "chance": "1/2"},
+            {"item": "Ring of Valthyros", "min": 1, "max": 1, "chance": "1/100"},
         ],
     },
 }
