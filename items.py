@@ -1,0 +1,148 @@
+from typing import Dict, Any
+
+STARTER_ITEMS = {"Starter Sword", "Starter Platebody"}
+STARTER_SHOP_COOLDOWN_SEC = 30 * 60
+
+EQUIP_SLOT_SET = {
+    "helm",
+    "body",
+    "legs",
+    "offhand",
+    "mainhand",
+    "boots",
+    "amulet",
+    "gloves",
+    "ring",
+    "cape",
+    "ammo",
+}
+
+POTIONS = {
+    "Strength": {"atk": 2, "hits": 10, "aliases": "str,str pot"},
+    "Super Strength": {"atk": 4, "hits": 20, "aliases": "super str,sup str"},
+}
+
+FOOD: Dict[str, Dict[str, int]] = {
+    "Lobster": {"heal": 12},
+    "Shark": {"heal": 20},
+    "Manta Ray": {"heal": 22, "aliases": "manta"},
+    "Anglerfish": {"heal": 24, "aliases": "angler"},
+    "Veilfruit": {"heal": 28},
+}
+
+ITEMS: Dict[str, Dict[str, Any]] = {
+    # Starter gear (non-stackable)
+    "Starter Sword": {"type": "mainhand", "atk": 2, "stackable": False, "value": 0, "aliases": "start sword,starter sword"},
+    "Starter Platebody": {"type": "body", "def": 2, "stackable": False, "value": 0, "aliases": "starter plate,start body,starter body"},
+
+    # Weapons (non-stackable)
+    "Rune dagger": {"type": "mainhand", "atk": 3, "def": 1, "stackable": False, "value": 5000, "aliases": "rune dag,rdagger,r dagger,r dag"},
+    "Rune scimitar": {"type": "mainhand", "atk": 3, "stackable": False, "value": 5000, "aliases": "rune scim,rune scimmy,runescim"},
+    "Dragon dagger": {"type": "mainhand", "atk": 4, "stackable": False, "value": 17000, "aliases": "dds,dragon dagger,d dagger"},
+    "Dragon scimitar": {"type": "mainhand", "atk": 5, "stackable": False, "value": 32000, "aliases": "d scim,dscim,dragon scim,d scimitar"},
+    "Dragon 2h sword": {"type": "mainhand", "atk": 8, "stackable": False, "value": 54000, "aliases": "d2h,dragon 2h"},
+    "Abyssal Whip": {"type": "mainhand", "atk": 11, "stackable": False, "value": 60000, "aliases": "whip,abby whip,abyssal whip"},
+    "Abyssal Scourge": {"type": "mainhand", "atk": 15, "stackable": False, "value": 72000, "aliases": "scourge,abby scourge,abyssal scourge"},
+    "Veilbreaker": {"type": "mainhand", "atk": 28, "stackable": False, "value": 142000, "aliases": "veil"},
+    "Death Guard": {"type": "mainhand", "atk": 5, "stackable": False, "value": 142000, "aliases": "deathguard"},
+
+    "Viggora's Chainmace": {
+        "type": "mainhand",
+        "atk": 4,
+        "atk_vs_npc": 20,
+        "stackable": False,
+        "value": 54000,
+        "aliases": "chainmace,viggoras chainmace,vigs chainmace,viggora chainmace,Viggora's Chainmace",
+    },
+    "Abyssal Chainmace": {
+        "type": "mainhand",
+        "atk": 6,
+        "atk_vs_npc": 34,
+        "stackable": False,
+        "value": 250000,
+        "aliases": "abyssal mace,abyssal chainmace,abby chainmace,abby mace",
+    },
+
+    # Offhands
+    "Rune sq shield": {"type": "offhand", "def": 3, "stackable": False, "value": 7000, "aliases": "rune sq"},
+    "Skull Lantern": {"type": "offhand", "atk": 4, "stackable": False, "value": 142000, "aliases": "lantern"},
+    "Bronze Defender": {"type": "offhand", "def": 1, "stackable": False, "value": 500, "aliases": "bronze def"},
+    "Iron Defender": {"type": "offhand", "def": 1, "stackable": False, "value": 750, "aliases": "iron def,i def"},
+    "Steel Defender": {"type": "offhand", "def": 1, "stackable": False, "value": 1000, "aliases": "steel def,s def"},
+    "Black Defender": {"type": "offhand", "def": 2, "stackable": False, "value": 1250, "aliases": "black def"},
+    "Mithril Defender": {"type": "offhand", "def": 2, "stackable": False, "value": 1500, "aliases": "mith def,mithril def,m def"},
+    "Adamant Defender": {"type": "offhand", "def": 2, "stackable": False, "value": 1750, "aliases": "addy def,addy defender,a def"},
+    "Rune Defender": {"type": "offhand", "def": 2, "atk": 2, "stackable": False, "value": 2000, "aliases": "rune def,r def"},
+
+    # Armour / wearables (non-stackable)
+    "Rune platebody": {"type": "body", "def": 3, "stackable": False, "value": 12000, "aliases": "rune plate"},
+    "Rune chainbody": {"type": "body", "def": 2, "stackable": False, "value": 8000, "aliases": "rune chain"},
+    "Rune platelegs": {"type": "legs", "def": 2, "stackable": False, "value": 9000, "aliases": "rune legs"},
+    "Rune full helm": {"type": "helm", "def": 2, "stackable": False, "value": 8000, "aliases": "rune helm"},
+    "Rune med helm": {"type": "helm", "def": 1, "stackable": False, "value": 5000, "aliases": "rune med"},
+    "Dragon boots": {"type": "boots", "def": 3, "atk": 1, "stackable": False, "value": 24000, "aliases": "dboots,dragon boot,d boots,dragon boots"},
+    "Dragon platebody": {"type": "body", "def": 8, "stackable": False, "value": 42000, "aliases": "d plate,dplate,dragon plate,d pbody,dragon platebody"},
+    "Dragon platelegs": {"type": "legs", "def": 6, "stackable": False, "value": 32000, "aliases": "d legs,dlegs,dragon leg"},
+    "Zarveth's Ascendant Platebody": {"type": "body", "def": 5, "atk": 4, "stackable": False, "value": 142000, "aliases": "zarveth plate,zarveths plate,zarveths platebody,zarveths body"},
+    "Zarveth's Ascendant Platelegs": {"type": "legs", "def": 4, "atk": 3, "stackable": False, "value": 72000, "aliases": "zarveth legs,zarveths platelegs,zarveths legs"},
+    "Zarveth's Ascendant Mask": {"type": "helm", "def": 3, "atk": 1, "stackable": False, "value": 62000, "aliases": "zarveth mask,zarveths mask"},
+
+    # Amulets
+    "Amulet of Seeping": {"type": "amulet", "def": 0, "atk": 2, "stackable": False, "value": 12000, "aliases": "ammy of seeping,seeping"},
+
+    # Rings
+    "Ring of Valthyros": {"type": "ring", "def": 5, "atk": 1, "stackable": False, "value": 10000, "aliases": "ring of valth,valth ring"},
+
+    # Wearables (effects described in ITEM_EFFECTS)
+    "Bracelet of ethereum": {"type": "gloves", "stackable": False, "value": 12000, "aliases": "ethereum bracelet,bracelet ethereum,bracelet of ethereum"},
+    "Wristwraps of the Damned": {"type": "gloves", "stackable": False, "value": 54000, "aliases": "wristwraps of damned,wotd,wraps of the damned,wristwraps of the damned"},
+
+    # Stackable / misc drops
+    "Small pouch": {"type": "esspouch", "essstorage": 4, "stackable": False, "value": 0, "aliases": "spouch"},
+    "Medium pouch": {"type": "esspouch", "essstorage": 6, "stackable": False, "value": 0, "aliases": "mpouch"},
+    "Large pouch": {"type": "esspouch", "essstorage": 9, "stackable": False, "value": 0, "aliases": "lpouch"},
+    "Giant pouch": {"type": "esspouch", "essstorage": 12, "stackable": False, "value": 0, "aliases": "gpouch"},
+    "Colossal pouch": {"type": "esspouch", "essstorage": 16, "stackable": False, "value": 0, "aliases": "cpouch"},
+    "Pure essence": {"type": "misc", "stackable": False, "value": 5, "aliases": "ess"},
+    "Cyclops Eye": {"type": "misc", "stackable": False, "value": 50, "aliases": "eye"},
+    "Revenant ether": {"type": "misc", "stackable": True, "value": 50, "aliases": "ether,rev ether,revenant ether"},
+    "Nature rune": {"type": "rune", "multiplier": 1, "stackable": True, "value": 320, "aliases": "nature rune,nats,nature runes"},
+    "Law rune": {"type": "rune", "multiplier": 0, "stackable": True, "value": 320, "aliases": "law rune,laws,law runes"},
+    "Death rune": {"type": "rune", "multiplier": 0, "stackable": True, "value": 320, "aliases": "death rune,deaths,death runes"},
+    "Blood rune": {"type": "rune", "multiplier": 0, "stackable": True, "value": 320, "aliases": "blood rune,bloods,blood runes"},
+    "Chaos rune": {"type": "rune", "multiplier": 1, "stackable": True, "value": 240, "aliases": "chaos rune,chaos runes,chaos"},
+    "Uncut sapphire": {"type": "misc", "stackable": False, "value": 5000, "aliases": "uncut sapphire,sapphire,uncut sapphires"},
+    "Uncut emerald": {"type": "misc", "stackable": False, "value": 7500, "aliases": "uncut emerald,emerald,uncut emeralds"},
+    "Abyssal ash": {"type": "misc", "stackable": True, "value": 40, "aliases": "abyssal ash,ash"},
+    "Abyssal charm": {"type": "misc", "stackable": True, "value": 50, "aliases": "abyssal charm,charm"},
+    "Overlord core fragment": {"type": "misc", "stackable": False, "value": 500000, "aliases": "core fragment,overlord fragment,overlord core fragment"},
+    "Revenant Relic Shard": {"type": "misc", "stackable": True, "value": 50000, "aliases": "relic shard,rev relic shard,revenant relic shard"},
+    "Revenant Totem": {"type": "misc", "stackable": False, "value": 100000, "aliases": "rev totem,revenant totem,totem"},
+    "Ancient Effigy": {"type": "misc", "stackable": False, "value": 500000, "aliases": "effigy,ancient effigy"},
+    "Ancient Emblem": {"type": "misc", "stackable": False, "value": 1000000, "aliases": "emblem,ancient emblem"},
+    "Mysterious key": {"type": "misc", "stackable": True, "value": 30000, "aliases": "mysterious key,key,keys"},
+    # Pets
+    "Tiny Revenant": {"type": "misc", "stackable": False, "value": 0, "aliases": "tiny revenant,rev pet"},
+    "Baby Chaos Fanatic": {"type": "misc", "stackable": False, "value": 0, "aliases": "baby chaos fanatic,fanatic pet"},
+    "Mini Overlord": {"type": "misc", "stackable": False, "value": 0, "aliases": "mini overlord,overlord pet"},
+
+    # Potions
+    "Strength (4)": {"type": "misc", "stackable": False, "value": 5000, "aliases": "strength,str,str pot"},
+    "Strength (3)": {"type": "misc", "stackable": False, "value": 3750, "aliases": ""},
+    "Strength (2)": {"type": "misc", "stackable": False, "value": 2500, "aliases": ""},
+    "Strength (1)": {"type": "misc", "stackable": False, "value": 1250, "aliases": ""},
+    "Super Strength (4)": {"type": "misc", "stackable": False, "value": 8000, "aliases": "super strength,super str,sup str"},
+    "Super Strength (3)": {"type": "misc", "stackable": False, "value": 6000, "aliases": ""},
+    "Super Strength (2)": {"type": "misc", "stackable": False, "value": 4000, "aliases": ""},
+    "Super Strength (1)": {"type": "misc", "stackable": False, "value": 2000, "aliases": ""},
+}
+
+ITEM_EFFECTS = {
+    "Bracelet of ethereum": {"effect": "When worn you will take 50% reduced damage from Revenants."},
+    "Wristwraps of the Damned": {"effect": "When worn you have a small chance to inflict a bleed."},
+    "Viggora's Chainmace": {"effect": "Grants +16 attack against ALL NPCs at a cost of 3 Revenant ether per hit (no bonus in PvP)."},
+    "Abyssal Chainmace": {"effect": "Grants +28 attack against ALL NPCs at a cost of 3 Revenant ether per hit (no bonus in PvP)."},
+    "Amulet of Seeping": {"effect": "Heals 1 + 2% of damage dealt at the cost of 5 Blood runes per successful hit."},
+}
+
+
