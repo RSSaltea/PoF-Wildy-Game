@@ -2213,7 +2213,7 @@ class Wilderness(commands.Cog):
         await ctx.reply(embed=emb, view=view)
 
     @w.command(name="eat")
-    async def eat_cmd(self, ctx: commands.Context, *, foodname: str):
+    async def eat_cmd(self, ctx: commands.Context, *args):
         if not await self._ensure_ready(ctx):
             return
 
@@ -2222,9 +2222,39 @@ class Wilderness(commands.Cog):
             await ctx.reply("You’re in a PvP fight — use the **Eat** button on your turn.")
             return
 
-        food_key = self._resolve_food(foodname)
+        if not args:
+            await ctx.reply("Usage: `!w eat <foodname>` or `!w eat <qty> <foodname>`")
+            return
+
+        qty = 1
+        food_query = ""
+
+        # Try parse first arg as qty
+        if len(args) >= 2:
+            try:
+                q = int(args[0])
+                if q > 0:
+                    qty = q
+                    food_query = " ".join(args[1:]).strip()
+                else:
+                    # qty provided but invalid -> treat as part of name
+                    qty = 1
+                    food_query = " ".join(args).strip()
+            except ValueError:
+                # first token isn't a number -> it's part of the name
+                qty = 1
+                food_query = " ".join(args).strip()
+        else:
+            # single token -> food name
+            food_query = " ".join(args).strip()
+
+        if not food_query:
+            await ctx.reply("Usage: `!w eat <foodname>` or `!w eat <qty> <foodname>`")
+            return
+
+        food_key = self._resolve_food(food_query)
         if not food_key:
-            await ctx.reply("Unknown food. Example: `!w eat lobster` or `!w eat shark`.")
+            await ctx.reply("Unknown food. Example: `!w eat lobster` or `!w eat 3 shark`.")
             return
 
         heal = int(FOOD[food_key].get("heal", 0))
@@ -2234,18 +2264,41 @@ class Wilderness(commands.Cog):
 
         async with self._mem_lock:
             p = self._get_player(ctx.author)
-            if p.inventory.get(food_key, 0) <= 0:
+
+            have = int(p.inventory.get(food_key, 0))
+            if have <= 0:
                 await ctx.reply(f"You don’t have **{food_key}** in your inventory.")
                 return
-            if not self._remove_item(p.inventory, food_key, 1):
-                await ctx.reply(f"You don’t have **{food_key}** in your inventory.")
+
+            eat_qty = min(int(qty), have)
+            if eat_qty <= 0:
+                await ctx.reply("Quantity must be > 0.")
                 return
-            before = p.hp
-            p.hp = clamp(p.hp + heal, 0, int(self.config["max_hp"]))
+
+            max_hp = int(self.config["max_hp"])
+            before_hp = int(p.hp)
+
+            # Eat multiple, but stop once full HP or you run out
+            actually_ate = 0
+            while actually_ate < eat_qty and p.hp < max_hp and int(p.inventory.get(food_key, 0)) > 0:
+                if not self._remove_item(p.inventory, food_key, 1):
+                    break
+                actually_ate += 1
+                p.hp = clamp(int(p.hp) + heal, 0, max_hp)
+
+            if actually_ate <= 0:
+                await ctx.reply(f"❤️ You’re already full HP (**{p.hp}/{max_hp}**).")
+                return
+
             self._touch(p)
             await self._persist()
 
-        await ctx.reply(f"🍖 You eat **{food_key}** and heal **{p.hp - before}**. HP: **{p.hp}/{self.config['max_hp']}**")
+        healed_total = int(p.hp) - before_hp
+        left = int(p.inventory.get(food_key, 0))
+        await ctx.reply(
+            f"🍖 You eat **{food_key} x{actually_ate}** and heal **{healed_total}**. "
+            f"HP: **{p.hp}/{self.config['max_hp']}** (left: **{left}**)."
+        )
 
     @w.command(name="drop")
     async def drop_cmd(self, ctx: commands.Context, *args):
@@ -3059,7 +3112,7 @@ class Wilderness(commands.Cog):
             p = self._get_player(ctx.author)
 
             # 5 second fight cooldown
-            ok, left = self._cd_ready(p, "fight", 2)
+            ok, left = self._cd_ready(p, "fight", 1)
             if not ok:
                 await ctx.reply(f"Fight cooldown: **{left}s**")
                 return
