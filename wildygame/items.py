@@ -26,8 +26,8 @@ POTIONS = {
 FOOD: Dict[str, Dict[str, int]] = {
     "Lobster": {"heal": 12},
     "Shark": {"heal": 20},
-    "Manta Ray": {"heal": 22},
-    "Anglerfish": {"heal": 24},
+    "Manta Ray": {"heal": 22, "aliases": "manta"},
+    "Anglerfish": {"heal": 24, "aliases": "angler"},
     "Veilfruit": {"heal": 28},
 }
 
