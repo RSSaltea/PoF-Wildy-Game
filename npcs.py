@@ -21,6 +21,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Mysterious key", "min": 1, "max": 1, "chance": "1/50"},
             {"item": "Revenant Relic Shard", "min": 1, "max": 1, "chance": "1/500"},
             {"item": "Revenant Totem", "min": 1, "max": 1, "chance": "1/750", "noted": True},
+            {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/2000"},
         ],
         "pet": [
             {"item": "Tiny Revenant", "min": 1, "max": 1, "chance": "1/1000"},
@@ -28,7 +29,6 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
         "loot": [
             {"item": "Revenant ether", "min": 10, "max": 40, "chance": "1/2"},
             {"item": "Bracelet of ethereum", "min": 1, "max": 1, "chance": "1/250"},
-            {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/2000"},
         ],
     },
     "revenant knight": {
@@ -37,6 +37,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Mysterious key", "min": 1, "max": 1, "chance": "1/25"},
             {"item": "Revenant Relic Shard", "min": 1, "max": 1, "chance": "1/250"},
             {"item": "Revenant Totem", "min": 1, "max": 1, "chance": "1/500", "noted": True},
+            {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/1000"},
         ],
         "pet": [
             {"item": "Tiny Revenant", "min": 1, "max": 1, "chance": "1/1000"},
@@ -44,7 +45,6 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
         "loot": [
             {"item": "Revenant ether", "min": 10, "max": 80, "chance": "1/2"},
             {"item": "Bracelet of ethereum", "min": 1, "max": 1, "chance": "1/250"},
-            {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/1000"},
         ],
     },
     "revenant necro": {
@@ -53,6 +53,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Mysterious key", "min": 1, "max": 1, "chance": "1/10"},
             {"item": "Revenant Relic Shard", "min": 1, "max": 1, "chance": "1/250"},
             {"item": "Revenant Totem", "min": 1, "max": 1, "chance": "1/500", "noted": True},
+            {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/900"},
         ],
         "pet": [
             {"item": "Tiny Revenant", "min": 1, "max": 1, "chance": "1/1000"},
@@ -62,7 +63,6 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Bracelet of ethereum", "min": 1, "max": 1, "chance": "1/250"},
             {"item": "Death Guard", "min": 1, "max": 1, "chance": "1/150"},
             {"item": "Skull Lantern", "min": 1, "max": 1, "chance": "1/150"},
-            {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/900"},
         ],
     },
     "revenant demon": {
@@ -71,6 +71,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Mysterious key", "min": 1, "max": 1, "chance": "1/20"},
             {"item": "Revenant Relic Shard", "min": 1, "max": 1, "chance": "1/200"},
             {"item": "Revenant Totem", "min": 1, "max": 1, "chance": "1/450", "noted": True},
+            {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/850"},
         ],
         "pet": [
             {"item": "Tiny Revenant", "min": 1, "max": 1, "chance": "1/1000"},
@@ -80,7 +81,6 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Pure essence", "min": 10, "max": 90, "chance": "1/10", "noted": True},
             {"item": "Bracelet of ethereum", "min": 1, "max": 1, "chance": "1/250"},
             {"item": "Abyssal Whip", "min": 1, "max": 1, "chance": "1/200"},
-            {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/850"},
         ],
     },
     "chaos_fanatic": {
@@ -164,6 +164,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Bone key", "min": 1, "max": 1, "chance": "1/50"},
             {"item": "Revenant Relic Shard", "min": 1, "max": 1, "chance": "1/150"},
             {"item": "Revenant Totem", "min": 1, "max": 1, "chance": "1/300", "noted": True},
+            {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/850"},
         ],
         "pet": [
             {"item": "Tiny Revenant", "min": 1, "max": 1, "chance": "1/750"},
@@ -172,7 +173,6 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Revenant ether", "min": 50, "max": 200, "chance": "1/2"},
             {"item": "Cursed Bone", "min": 1, "max": 1, "chance": "1/20"},
             {"item": "Bracelet of ethereum", "min": 1, "max": 1, "chance": "1/150"},
-            {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/850"},
             {"item": "Ancient Emblem", "min": 1, "max": 1, "chance": "1/400", "noted": True},
         ],
     },
