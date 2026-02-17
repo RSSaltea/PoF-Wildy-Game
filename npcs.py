@@ -10,6 +10,7 @@ NPCS: List[Tuple[str, int, int, int, str, int, int]] = [
     ("Blighted Cyclops", 120, 4, 35, "blight cyclops", 7, 4),
     ("Abyssal Overlord", 280, 4, 35, "overlord", 11, 7),
     ("Lord Valthyros", 250, 4, 35, "valthyros", 6, 12),
+    ("Revenant Archon", 200, 4, 40, "revenant archon", 13, 8),
     ("Zarveth the Veilbreaker", 420, 5, 45, "veilbreaker", 22, 4),
 ]
 
@@ -155,6 +156,24 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Veilfruit", "min": 5, "max": 24, "chance": "1/10", "noted": True},
             {"item": "Blood rune", "min": 4, "max": 80, "chance": "1/5"},
             {"item": "Super Strength (4)", "min": 1, "max": 1, "chance": "1/12"},
+        ],
+    },
+    "revenant archon": {
+        "coins_range": [0, 8000],
+        "unique": [
+            {"item": "Bone key", "min": 1, "max": 1, "chance": "1/50"},
+            {"item": "Revenant Relic Shard", "min": 1, "max": 1, "chance": "1/150"},
+            {"item": "Revenant Totem", "min": 1, "max": 1, "chance": "1/300", "noted": True},
+        ],
+        "pet": [
+            {"item": "Tiny Revenant", "min": 1, "max": 1, "chance": "1/750"},
+        ],
+        "loot": [
+            {"item": "Revenant ether", "min": 50, "max": 200, "chance": "1/2"},
+            {"item": "Cursed Bone", "min": 1, "max": 1, "chance": "1/20"},
+            {"item": "Bracelet of ethereum", "min": 1, "max": 1, "chance": "1/150"},
+            {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/850"},
+            {"item": "Ancient Emblem", "min": 1, "max": 1, "chance": "1/400", "noted": True},
         ],
     },
     "valthyros": {

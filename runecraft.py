@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from .wilderness import Wilderness
 
 RC_COOLDOWN_SEC = 25
+RC_BLOCKED = {"Bone Rune"}
 
 
 class RunecraftManager:
@@ -19,11 +20,11 @@ class RunecraftManager:
         resolved = self.cog._resolve_item(query)
         if resolved:
             meta = ITEMS.get(resolved, {})
-            if meta.get("type") == "rune":
+            if meta.get("type") == "rune" and resolved not in RC_BLOCKED:
                 return resolved
         norm_q = self.cog._norm(query)
         for name, meta in ITEMS.items():
-            if meta.get("type") == "rune" and self.cog._norm(name) == norm_q:
+            if meta.get("type") == "rune" and name not in RC_BLOCKED and self.cog._norm(name) == norm_q:
                 return name
         return None
 

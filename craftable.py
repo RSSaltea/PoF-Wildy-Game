@@ -3,6 +3,16 @@
 from typing import Dict, Any
 
 CRAFTABLES: Dict[str, Dict[str, Any]] = {
+    "Bone Defender": {
+        "materials": {
+            "Rune Defender": 1,
+            "Cursed Bone": 30,
+            "Revenant ether": 2000,
+            "Revenant Relic Shard": 10,
+            "Revenant Totem": 2,
+        },
+        "description": "A defender forged from cursed bones, stronger than rune. Requires materials from the Revenant Archon.",
+    },
     "Abyssal Chainmace": {
         "materials": {
             "Overlord core fragment": 100,

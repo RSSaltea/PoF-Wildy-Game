@@ -10,7 +10,7 @@ from .items import FOOD, ITEMS
 if TYPE_CHECKING:
     from .wilderness import Wilderness
 
-REVENANT_TYPES = {"revenant", "revenant knight", "revenant demon", "revenant necro"}
+REVENANT_TYPES = {"revenant", "revenant knight", "revenant demon", "revenant necro", "revenant archon"}
 ETHER_WEAPONS = {"Viggora's Chainmace", "Abyssal Chainmace"}
 AFK_TIMEOUT_SEC = 60 * 60
 AFK_SWEEP_INTERVAL_SEC = 5 * 60

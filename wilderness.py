@@ -1,3 +1,9 @@
+# cd "C:\Users\admin\OneDrive\Desktop\paws of fury bot\cogs\wildygame"
+# git add .
+# git commit -m "change"
+# git push
+
+
 import discord
 from discord.ext import commands
 import asyncio
@@ -58,7 +64,7 @@ BROADCAST_CHANNEL_ID = 1473373945729126641
 TRADE_CHANNEL_CMDS = {"w trade", "w deposit", "w bank", "w inv", "w inventory"}
 INFO_CHANNEL_CMDS = {"w stats", "w examine", "w inspect", "w insp", "w npcs", "w bank", "w inv", "w kc", "w killcount"}
 
-REVENANT_TYPES = {"revenant", "revenant knight", "revenant demon", "revenant necro"}
+REVENANT_TYPES = {"revenant", "revenant knight", "revenant demon", "revenant necro", "revenant archon"}
 
 class Wilderness(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -410,7 +416,8 @@ class Wilderness(commands.Cog):
             "`!w shop list` — View the shop\n"
             "`!w shop buy [qty] <item>` — Buy\n"
             "`!w shop sell [qty] <item>` — Sell\n"
-            "`!w chest open` — Open with a Mysterious key"
+            "`!w chest open mysterious` — Open with a Mysterious key\n"
+            "`!w chest open bone` — Open with a Bone key"
         ), inline=False)
         emb.add_field(name="Presets & Settings", value=(
             "`!w preset create <name>` — Save / override preset\n"
@@ -2068,41 +2075,81 @@ class Wilderness(commands.Cog):
     async def chest(self, ctx: commands.Context):
         if not await self._ensure_ready(ctx):
             return
-        await ctx.reply("Use !w chest open (requires **Mysterious key** in your inventory).")
+        await ctx.reply(
+            "**Chests:**\n"
+            "`!w chest open mysterious` — Open with a **Mysterious key**\n"
+            "`!w chest open bone` — Open with a **Bone key**"
+        )
 
     @chest.command(name="open")
-    async def chest_open(self, ctx: commands.Context):
+    async def chest_open(self, ctx: commands.Context, chest_type: str = ""):
         if not await self._ensure_ready(ctx):
             return
+
+        ct = chest_type.strip().lower()
+        if ct not in ("mysterious", "bone"):
+            await ctx.reply("Usage: `!w chest open mysterious` or `!w chest open bone`")
+            return
+
         async with self._mem_lock:
             p = self._get_player(ctx.author)
             if p.in_wilderness:
                 await ctx.reply("Open chests out of the Wilderness.")
                 return
-            if p.inventory.get("Mysterious key", 0) < 1:
-                await ctx.reply("You need a **Mysterious key** in your inventory.")
-                return
 
-            self._remove_item(p.inventory, "Mysterious key", 1)
+            if ct == "mysterious":
+                key_name = "Mysterious key"
+                if p.inventory.get(key_name, 0) < 1:
+                    await ctx.reply(f"You need a **{key_name}** in your inventory.")
+                    return
 
-            lo, hi = self.config["chest_coin_range"]
-            coins = random.randint(int(lo), int(hi))
-            p.coins += coins
+                self._remove_item(p.inventory, key_name, 1)
 
-            reward = self._roll_pick_one(self.config.get("chest_rewards", []))
-            if reward:
-                item, qty = reward
-                auto_drops: Dict[str, int] = {}
-                dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
+                lo, hi = self.config["chest_coin_range"]
+                coins = random.randint(int(lo), int(hi))
+                p.coins += coins
 
-                result = f"🗝️ Chest loot: **{item} x{qty}** {dest} + **{coins} coins**!"
+                reward = self._roll_pick_one(self.config.get("chest_rewards", []))
+                if reward:
+                    item, qty = reward
+                    auto_drops: Dict[str, int] = {}
+                    dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
+                    result = f"🗝️ Mysterious chest: **{item} x{qty}** {dest} + **{coins:,} coins**!"
+                    if auto_drops:
+                        result += "\n🗑️ Auto-dropped (blacklist):"
+                        for name, q in sorted(auto_drops.items(), key=lambda x: x[0].lower()):
+                            result += f"\n- {name} x{q}"
+                else:
+                    result = f"🗝️ Mysterious chest: **{coins:,} coins** (no special reward this time)."
 
-                if auto_drops:
-                    result += "\n🗑️ Auto-dropped (blacklist):"
-                    for name, q in sorted(auto_drops.items(), key=lambda x: x[0].lower()):
-                        result += f"\n- {name} x{q}"
             else:
-                result = f"🗝️ Chest loot: **{coins} coins** (no special reward this time)."
+                key_name = "Bone key"
+                if p.inventory.get(key_name, 0) < 1:
+                    await ctx.reply(f"You need a **{key_name}** in your inventory.")
+                    return
+
+                self._remove_item(p.inventory, key_name, 1)
+
+                coins = random.randint(5000, 45000)
+                p.coins += coins
+
+                bone_rewards = [
+                    {"item": "Cursed Bone", "min": 1, "max": 1, "chance": "1/50"},
+                    {"item": "Bone Rune", "min": 5, "max": 25, "chance": "1/10"},
+                    {"item": "Dragon platebody", "min": 1, "max": 1, "chance": "1/50"},
+                ]
+                reward = self._roll_pick_one(bone_rewards)
+                if reward:
+                    item, qty = reward
+                    auto_drops: Dict[str, int] = {}
+                    dest = self._try_put_item_with_blacklist(p, item, qty, auto_drops)
+                    result = f"🦴 Bone chest: **{item} x{qty}** {dest} + **{coins:,} coins**!"
+                    if auto_drops:
+                        result += "\n🗑️ Auto-dropped (blacklist):"
+                        for name, q in sorted(auto_drops.items(), key=lambda x: x[0].lower()):
+                            result += f"\n- {name} x{q}"
+                else:
+                    result = f"🦴 Bone chest: **{coins:,} coins** (no special reward this time)."
 
             await self._persist()
 

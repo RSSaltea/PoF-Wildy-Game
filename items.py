@@ -73,6 +73,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Mithril Defender": {"type": "offhand", "def": 2, "stackable": False, "value": 1500, "aliases": "mith def,mithril def,m def"},
     "Adamant Defender": {"type": "offhand", "def": 2, "stackable": False, "value": 1750, "aliases": "addy def,addy defender,a def"},
     "Rune Defender": {"type": "offhand", "def": 2, "atk": 2, "stackable": False, "value": 2000, "aliases": "rune def,r def"},
+    "Bone Defender": {"type": "offhand", "def": 3, "atk": 3, "stackable": False, "value": 4000, "aliases": "bone def,b def"},
 
     # Armour / wearables (non-stackable)
     "Rune platebody": {"type": "body", "def": 3, "stackable": False, "value": 12000, "aliases": "rune plate"},
@@ -94,7 +95,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Ring of Valthyros": {"type": "ring", "def": 5, "atk": 1, "stackable": False, "value": 10000, "aliases": "ring of valth,valth ring"},
 
     # Wearables (effects described in ITEM_EFFECTS)
-    "Bracelet of ethereum": {"type": "gloves", "stackable": False, "value": 12000, "aliases": "ethereum bracelet,bracelet ethereum,bracelet of ethereum"},
+    "Bracelet of ethereum": {"type": "gloves", "stackable": False, "value": 12000, "aliases": "ethereum bracelet,bracelet ethereum,bracelet of ethereum,bracelet of ether,ether bracelet,bracelet ether"},
     "Wristwraps of the Damned": {"type": "gloves", "stackable": False, "value": 54000, "aliases": "wristwraps of damned,wotd,wraps of the damned,wristwraps of the damned"},
 
     # Stackable / misc drops
@@ -120,6 +121,9 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Revenant Totem": {"type": "misc", "stackable": False, "value": 100000, "aliases": "rev totem,revenant totem,totem"},
     "Ancient Effigy": {"type": "misc", "stackable": False, "value": 500000, "aliases": "effigy,ancient effigy"},
     "Ancient Emblem": {"type": "misc", "stackable": False, "value": 1000000, "aliases": "emblem,ancient emblem"},
+    "Cursed Bone": {"type": "misc", "stackable": True, "value": 5000, "aliases": "cursed bone,cursed bones,cbone"},
+    "Bone key": {"type": "misc", "stackable": True, "value": 30000, "aliases": "bone key,bkey,bone keys"},
+    "Bone Rune": {"type": "rune", "multiplier": 0, "stackable": True, "value": 500, "aliases": "bone rune,bone runes"},
     "Mysterious key": {"type": "misc", "stackable": True, "value": 30000, "aliases": "mysterious key,key,keys"},
     # Pets
     "Tiny Revenant": {"type": "misc", "stackable": False, "value": 0, "aliases": "tiny revenant,rev pet"},
