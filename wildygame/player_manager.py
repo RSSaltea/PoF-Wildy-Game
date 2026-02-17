@@ -42,6 +42,7 @@ class PlayerManager:
             if a not in m:
                 m[a] = canonical
 
+        # Items + their aliases
         for canonical, meta in ITEMS.items():
             add(canonical, canonical)
             aliases = meta.get("aliases")
@@ -52,9 +53,16 @@ class PlayerManager:
                 for part in aliases:
                     add(str(part).strip(), canonical)
 
-        # Food aliases
-        for food_name in FOOD.keys():
-            add(food_name, food_name)
+        # Food + their aliases  ✅ (this is the missing bit)
+        for canonical, meta in FOOD.items():
+            add(canonical, canonical)
+            aliases = meta.get("aliases")
+            if isinstance(aliases, str):
+                for part in aliases.split(","):
+                    add(part.strip(), canonical)
+            elif isinstance(aliases, (list, tuple)):
+                for part in aliases:
+                    add(str(part).strip(), canonical)
 
         self._item_alias_map = m
 
@@ -71,11 +79,13 @@ class PlayerManager:
         return None
 
     def resolve_food(self, query: str) -> Optional[str]:
-        """Resolve food item name case-insensitively."""
-        q = self.norm(query)
-        for k in FOOD.keys():
-            if self.norm(k) == q:
-                return k
+        """
+        Resolve food item name (supports aliases).
+        Only returns a canonical food name that exists in FOOD.
+        """
+        canonical = self.resolve_item(query)  # uses the alias map
+        if canonical and canonical in FOOD:
+            return canonical
         return None
 
     def resolve_npc(self, query: str) -> Optional[Tuple[str, int, int, int, str, int, int]]:
