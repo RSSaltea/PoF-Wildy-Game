@@ -82,24 +82,52 @@
 
     <h2 style="margin-top: 3rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">Quick Links</h2>
 
-    <div class="npc-grid" style="margin-top: 1.5rem;">
-      <a class="npc-card" href="npcs/revenant-goblin.html">
-        <div class="npc-card-image"><img src="images/revenant%20goblin.png" alt="Revenant goblin"></div>
-        <div class="npc-card-info"><div class="name">Revenant Goblin</div><div class="meta">Tier 1 &middot; Wildy 1+</div></div>
-      </a>
-      <a class="npc-card" href="npcs/chaos-fanatic.html">
-        <div class="npc-card-image"><img src="images/chaos%20fanatic.png" alt="Chaos fanatic"></div>
-        <div class="npc-card-info"><div class="name">Chaos Fanatic</div><div class="meta">Tier 3 &middot; Wildy 20+</div></div>
-      </a>
-      <a class="npc-card" href="npcs/zarveth-the-veilbreaker.html">
-        <div class="npc-card-image"><img src="images/zarveth%20the%20veilbreaker.png" alt="Zarveth the Veilbreaker"></div>
-        <div class="npc-card-info"><div class="name">Zarveth the Veilbreaker</div><div class="meta">Tier 5 &middot; Wildy 45+</div></div>
-      </a>
-      <a class="npc-card" href="npcs/netharis-the-undying.html">
-        <div class="npc-card-image"><img src="images/netharis%20the%20undying.png" alt="Netharis the Undying"></div>
-        <div class="npc-card-info"><div class="name">Netharis the Undying</div><div class="meta">Tier 5 &middot; Wildy 50+</div></div>
-      </a>
-    </div>
+    <div class="npc-grid" id="quick-links" style="margin-top: 1.5rem;"></div>
+
+    <script>
+    (function () {
+      var pool = [
+        { title: "Revenant Goblin", url: "npcs/revenant-goblin.html", img: "images/revenant%20goblin.png", meta: "Tier 1 \u00b7 Wildy 1+" },
+        { title: "Revenant Knight", url: "npcs/revenant-knight.html", img: "images/revenant%20knight.png", meta: "Tier 2 \u00b7 Wildy 10+" },
+        { title: "Chaos Fanatic", url: "npcs/chaos-fanatic.html", img: "images/chaos%20fanatic.png", meta: "Tier 3 \u00b7 Wildy 20+" },
+        { title: "Revenant Necromancer", url: "npcs/revenant-necromancer.html", img: "images/revenant%20necromancer.png", meta: "Tier 4 \u00b7 Wildy 20+" },
+        { title: "Revenant Abyssal Demon", url: "npcs/revenant-abyssal-demon.html", img: "images/revenant%20abyssal%20demon.png", meta: "Tier 4 \u00b7 Wildy 35+" },
+        { title: "Blighted Cyclops", url: "npcs/blighted-cyclops.html", img: "images/blighted%20cyclops.png", meta: "Tier 4 \u00b7 Wildy 35+" },
+        { title: "Abyssal Overlord", url: "npcs/abyssal-overlord.html", img: "images/abyssal%20overlord.png", meta: "Tier 4 \u00b7 Wildy 35+" },
+        { title: "Lord Valthyros", url: "npcs/lord-valthyros.html", img: "images/lord%20valthyros.png", meta: "Tier 4 \u00b7 Wildy 35+" },
+        { title: "Revenant Archon", url: "npcs/revenant-archon.html", img: "images/revenant%20archon.png", meta: "Tier 4 \u00b7 Wildy 40+" },
+        { title: "Zarveth the Veilbreaker", url: "npcs/zarveth-the-veilbreaker.html", img: "images/zarveth%20the%20veilbreaker.png", meta: "Tier 5 \u00b7 Wildy 45+" },
+        { title: "Masked Figure", url: "npcs/masked-figure.html", img: "images/masked%20figure.png", meta: "Tier 5 \u00b7 Wildy 47+" },
+        { title: "Netharis the Undying", url: "npcs/netharis-the-undying.html", img: "images/netharis%20the%20undying.png", meta: "Tier 5 \u00b7 Wildy 50+" },
+        { title: "Eclipse of the Five", url: "items/eclipse-of-the-five.html", img: "images/items/eclipse%20of%20the%20five.png", meta: "Amulet \u00b7 +6 ATK" },
+        { title: "Omnigem Amulet", url: "items/omnigem-amulet.html", img: "images/items/omnigem%20amulet.png", meta: "Crafting Material" },
+        { title: "Veilbreaker", url: "items/veilbreaker.html", img: "images/items/dragon%202h%20sword.png", meta: "Weapon \u00b7 Best Melee" },
+        { title: "Zarveth's Ascendant Platebody", url: "items/zarveths-ascendant-platebody.html", img: "images/items/Zarveths%20Ascendant%20Platebody.png", meta: "Body \u00b7 Best Armour" },
+        { title: "Slayer Helmet", url: "items/slayer-helmet.html", img: "images/items/rune%20full%20helm.png", meta: "Head \u00b7 Slayer Bonus" },
+        { title: "Dragon Platebody", url: "items/dragon-platebody.html", img: "images/items/dragon%20platebody.png", meta: "Body Armour" },
+        { title: "Abyssal Whip", url: "items/abyssal-whip.html", img: "images/items/dragon%20scimitar.png", meta: "Weapon \u00b7 Mainhand" },
+        { title: "Dragon Boots", url: "items/dragon-boots.html", img: "images/items/dragon%20boots.png", meta: "Feet Armour" }
+      ];
+
+      // Fisher-Yates shuffle
+      for (var i = pool.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+      }
+
+      var picks = pool.slice(0, 4);
+      var container = document.getElementById("quick-links");
+      var html = "";
+      for (var k = 0; k < picks.length; k++) {
+        var p = picks[k];
+        html += '<a class="npc-card" href="' + p.url + '">' +
+                '<div class="npc-card-image"><img src="' + p.img + '" alt="' + p.title + '"></div>' +
+                '<div class="npc-card-info"><div class="name">' + p.title + '</div><div class="meta">' + p.meta + '</div></div>' +
+                '</a>';
+      }
+      container.innerHTML = html;
+    })();
+    </script>
   </div>
 
   <div class="footer">Wilderness Wiki &mdash; Built for the Wilderness</div>
