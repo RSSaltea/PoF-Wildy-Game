@@ -1329,9 +1329,15 @@ class Wilderness(commands.Cog):
         if not p.equipment:
             await ctx.reply("You have nothing equipped.")
             return
-        atk, deff = self._equipped_bonus(p, vs_npc=False)
+        pvp_atk, pvp_def = self._equipped_bonus(p, vs_npc=False)
+        pvm_atk, pvm_def = self._equipped_bonus(p, vs_npc=True)
         lines = [f"- **{slot}**: {item}" for slot, item in p.equipment.items()]
-        await ctx.reply("**Equipped:**\n" + "\n".join(lines) + f"\nBonuses (PvP): **+{atk} atk / +{deff} def**")
+        if pvm_atk != pvp_atk:
+            lines.append(f"PvM: **+{pvm_atk} atk / +{pvm_def} def**")
+            lines.append(f"PvP: **+{pvp_atk} atk / +{pvp_def} def**")
+        else:
+            lines.append(f"Bonuses: **+{pvp_atk} atk / +{pvp_def} def**")
+        await ctx.reply("**Equipped:**\n" + "\n".join(lines))
 
     @w.command(name="equip")
     async def equip(self, ctx: commands.Context, *, item: str):

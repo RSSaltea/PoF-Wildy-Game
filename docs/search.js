@@ -94,6 +94,7 @@
     { title: "Death rune", url: "items/death-rune.html", tags: "death rune runecraft" },
     { title: "Blood rune", url: "items/blood-rune.html", tags: "blood rune runecraft seeping" },
     { title: "Bone Rune", url: "items/bone-rune.html", tags: "bone rune drop" },
+    { title: "Cosmic rune", url: "items/cosmic-rune.html", tags: "cosmic rune runecraft enchant" },
 
     // Materials & Pouches
     { title: "Pure essence", url: "items/pure-essence.html", tags: "pure essence ess runecraft material" },
@@ -120,7 +121,19 @@
     { title: "Uncut sapphire", url: "items/uncut-sapphire.html", tags: "uncut sapphire gem" },
     { title: "Uncut emerald", url: "items/uncut-emerald.html", tags: "uncut emerald gem" },
     { title: "Uncut diamond", url: "items/uncut-diamond.html", tags: "uncut diamond gem" },
+    { title: "Uncut ruby", url: "items/uncut-ruby.html", tags: "uncut ruby gem cut" },
     { title: "Uncut dragonstone", url: "items/uncut-dragonstone.html", tags: "uncut dragonstone gem" },
+
+    // Cut Gems & Crafting
+    { title: "Gold Bar", url: "items/gold-bar.html", tags: "gold bar material craft amulet" },
+    { title: "Sapphire", url: "items/sapphire.html", tags: "sapphire cut gem omnigem craft" },
+    { title: "Emerald", url: "items/emerald.html", tags: "emerald cut gem omnigem craft" },
+    { title: "Ruby", url: "items/ruby.html", tags: "ruby cut gem omnigem craft" },
+    { title: "Diamond", url: "items/diamond.html", tags: "diamond cut gem omnigem craft" },
+    { title: "Dragonstone", url: "items/dragonstone.html", tags: "dragonstone cut gem omnigem craft" },
+    { title: "Omnigem", url: "items/omnigem.html", tags: "omnigem fused gem craft amulet" },
+    { title: "Omnigem Amulet", url: "items/omnigem-amulet.html", tags: "omnigem amulet craft enchant eclipse" },
+    { title: "Eclipse of the Five", url: "items/eclipse-of-the-five.html", tags: "eclipse five amulet enchant attack best necklace" },
 
     // Pets
     { title: "Tiny Revenant", url: "items/tiny-revenant.html", tags: "tiny revenant pet rev" },
