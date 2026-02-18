@@ -144,6 +144,8 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Baby Chaos Fanatic": {"type": "misc", "stackable": False, "value": 0, "aliases": "baby chaos fanatic,fanatic pet"},
     "Mini Overlord": {"type": "misc", "stackable": False, "value": 0, "aliases": "mini overlord,overlord pet"},
     "Lil' Undying": {"type": "misc", "stackable": False, "value": 0, "aliases": "lil undying,undying pet"},
+    "Zarvethy": {"type": "misc", "stackable": False, "value": 0, "aliases": "zarvethy,zarveth pet,veilbreaker pet"},
+    "Splat": {"type": "misc", "stackable": False, "value": 0, "aliases": "splat,valthyros pet"},
 
     # Potions
     "Strength (4)": {"type": "misc", "stackable": False, "value": 5000, "aliases": "strength,str,str pot"},

@@ -127,6 +127,8 @@
     { title: "Baby Chaos Fanatic", url: "items/baby-chaos-fanatic.html", tags: "baby chaos fanatic pet" },
     { title: "Mini Overlord", url: "items/mini-overlord.html", tags: "mini overlord pet abyssal" },
     { title: "Lil' Undying", url: "items/lil-undying.html", tags: "lil undying pet netharis" },
+    { title: "Zarvethy", url: "items/zarvethy.html", tags: "zarvethy pet zarveth veilbreaker" },
+    { title: "Splat", url: "items/splat.html", tags: "splat pet valthyros" },
 
     // Commands index
     { title: "Commands", url: "commands/index.html", tags: "commands list all" },
