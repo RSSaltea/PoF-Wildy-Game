@@ -18,7 +18,9 @@ from .items import (
     STARTER_ITEMS,
     STARTER_SHOP_COOLDOWN_SEC,
     POTIONS,
+    GEM_CUTTING,
 )
+from .enchant import ENCHANTABLES
 
 from .npcs import NPCS
 from .config_default import DEFAULT_CONFIG
@@ -163,19 +165,50 @@ class Wilderness(commands.Cog):
             await ctx.reply("Wilderness is still loading. Try again in a moment.")
             return False
 
-        RC_PASSTHROUGH = {"w stats", "w examine", "w inspect", "w insp", "w npcs",
-                          "w inv", "w inventory", "w deposit", "w bank", "w hp",
-                          "w gear", "w worn", "w pets", "w craftables", "w breakdownitems",
-                          "w kc", "w highscores", "w hs", "w slayer", "w alch"}
-        if cmd_name not in RC_PASSTHROUGH:
+        BUSY_PASSTHROUGH = {"w stats", "w examine", "w inspect", "w insp", "w npcs",
+                            "w inv", "w inventory", "w deposit", "w bank", "w hp",
+                            "w gear", "w worn", "w pets", "w craftables", "w breakdownitems",
+                            "w kc", "w highscores", "w hs", "w slayer", "w alch"}
+        if cmd_name not in BUSY_PASSTHROUGH:
             uid = ctx.author.id
             if uid in self.players:
-                busy, left, rune = self.rc_mgr.is_busy(self.players[uid])
+                p = self.players[uid]
+
+                # Runecrafting busy check
+                busy, left, rune = self.rc_mgr.is_busy(p)
                 if busy:
                     await ctx.reply(
                         f"You are currently crafting **{rune}**. It will take you **{left}s** to return."
                     )
                     return False
+
+                # Gem cutting busy check
+                gc_start = p.cd.get("gem_cutting")
+                if gc_start and cmd_name != "w cut stop":
+                    total = p.cd.get("gem_cutting_total", 0)
+                    elapsed = _now() - int(gc_start)
+                    needed = total * 1.2
+                    if elapsed >= needed:
+                        # Auto-complete: add cut gems to bank, clear state
+                        result_gem = p.cd.get("gem_cutting_result", "")
+                        if result_gem and total > 0:
+                            self._add_item(p.bank, result_gem, total)
+                        p.cd.pop("gem_cutting", None)
+                        p.cd.pop("gem_cutting_gem", None)
+                        p.cd.pop("gem_cutting_total", None)
+                        p.cd.pop("gem_cutting_result", None)
+                        self._touch(p)
+                        await self._persist()
+                    else:
+                        cut_so_far = int(elapsed / 1.2)
+                        left_sec = round(needed - elapsed, 1)
+                        gem_name = p.cd.get("gem_cutting_gem", "gems")
+                        await ctx.reply(
+                            f"You are cutting **{gem_name}**. "
+                            f"**{cut_so_far}/{total}** cut so far, **{left_sec}s** remaining.\n"
+                            f"Use `!w cut stop` to stop early."
+                        )
+                        return False
 
         return True
 
@@ -3225,6 +3258,242 @@ class Wilderness(commands.Cog):
         emb = self._highscores_embed(cat, ctx.guild)
         view = HighscoresView(self, ctx.author.id, ctx.guild, cat)
         await ctx.reply(embed=emb, view=view)
+
+
+    # ── Gem Cutting ────────────────────────────────────────────────
+
+    def _resolve_uncut_gem(self, query: str) -> Optional[str]:
+        """Resolve a user query to an uncut gem name from GEM_CUTTING keys."""
+        norm_q = self._norm(query)
+        for uncut in GEM_CUTTING:
+            if self._norm(uncut) == norm_q:
+                return uncut
+        # Also try matching by cut gem name (e.g. "sapphire" → "Uncut sapphire")
+        for uncut, cut in GEM_CUTTING.items():
+            if self._norm(cut) == norm_q:
+                return uncut
+        # Try resolve through alias system
+        resolved = self._resolve_item(query)
+        if resolved and resolved in GEM_CUTTING:
+            return resolved
+        # Check if they typed the cut gem name and we can find the uncut version
+        if resolved:
+            for uncut, cut in GEM_CUTTING.items():
+                if cut == resolved:
+                    return uncut
+        return None
+
+    @w.group(name="cut", invoke_without_command=True)
+    async def cut_cmd(self, ctx: commands.Context, *, args: str = ""):
+        if not await self._ensure_ready(ctx):
+            return
+
+        if not args:
+            gems = ", ".join(GEM_CUTTING.values())
+            await ctx.reply(
+                f"Usage: `!w cut <gem>`, `!w cut <qty> <gem>`, or `!w cut all <gem>`\n"
+                f"Cuttable gems: {gems}\n"
+                f"Use `!w cut stop` to stop early."
+            )
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+
+            if p.in_wilderness:
+                await ctx.reply("You can't cut gems in the Wilderness. Teleport out first.")
+                return
+
+            # Parse quantity and gem name
+            parts = args.strip().split(None, 1)
+            qty_str = None
+            gem_query = args.strip()
+
+            if len(parts) == 2:
+                if parts[0].lower() == "all":
+                    qty_str = "all"
+                    gem_query = parts[1]
+                elif parts[0].isdigit():
+                    qty_str = parts[0]
+                    gem_query = parts[1]
+
+            uncut_name = self._resolve_uncut_gem(gem_query)
+            if not uncut_name:
+                await ctx.reply(f"**{gem_query}** is not a cuttable gem.")
+                return
+
+            cut_name = GEM_CUTTING[uncut_name]
+            bank_qty = p.bank.get(uncut_name, 0)
+
+            if bank_qty <= 0:
+                await ctx.reply(f"You don't have any **{uncut_name}** in your bank.")
+                return
+
+            if qty_str == "all":
+                quantity = bank_qty
+            elif qty_str:
+                quantity = int(qty_str)
+                if quantity <= 0:
+                    await ctx.reply("Quantity must be at least 1.")
+                    return
+                quantity = min(quantity, bank_qty)
+            else:
+                quantity = 1
+
+            if quantity > bank_qty:
+                quantity = bank_qty
+
+            # Remove uncut gems from bank upfront
+            self._remove_item(p.bank, uncut_name, quantity)
+
+            # Set busy state
+            p.cd["gem_cutting"] = _now()
+            p.cd["gem_cutting_gem"] = uncut_name
+            p.cd["gem_cutting_total"] = quantity
+            p.cd["gem_cutting_result"] = cut_name
+
+            self._touch(p)
+            await self._persist()
+
+        total_time = round(quantity * 1.2, 1)
+        await ctx.reply(
+            f"You begin cutting **{quantity}x {uncut_name}**. "
+            f"This will take **{total_time}s**.\n"
+            f"Use `!w cut stop` to stop early."
+        )
+
+    @cut_cmd.command(name="stop")
+    async def cut_stop_cmd(self, ctx: commands.Context):
+        # Bypass _ensure_ready for this command since it needs to work while busy
+        ch = getattr(ctx, "channel", None)
+        if ch is None:
+            return
+        if ch.id not in ALLOWED_CHANNEL_IDS:
+            return
+        if not self._ready:
+            await ctx.reply("Wilderness is still loading. Try again in a moment.")
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+
+            gc_start = p.cd.get("gem_cutting")
+            if not gc_start:
+                await ctx.reply("You are not currently cutting any gems.")
+                return
+
+            total = p.cd.get("gem_cutting_total", 0)
+            uncut_name = p.cd.get("gem_cutting_gem", "")
+            cut_name = p.cd.get("gem_cutting_result", "")
+            elapsed = _now() - int(gc_start)
+            cut_so_far = min(int(elapsed / 1.2), total)
+            remaining = total - cut_so_far
+
+            # Add cut gems to bank
+            if cut_so_far > 0 and cut_name:
+                self._add_item(p.bank, cut_name, cut_so_far)
+
+            # Return remaining uncut gems to bank
+            if remaining > 0 and uncut_name:
+                self._add_item(p.bank, uncut_name, remaining)
+
+            # Clear busy state
+            p.cd.pop("gem_cutting", None)
+            p.cd.pop("gem_cutting_gem", None)
+            p.cd.pop("gem_cutting_total", None)
+            p.cd.pop("gem_cutting_result", None)
+
+            self._touch(p)
+            await self._persist()
+
+        lines = [f"You stop cutting gems."]
+        if cut_so_far > 0:
+            lines.append(f"**{cut_so_far}x {cut_name}** added to your bank.")
+        if remaining > 0:
+            lines.append(f"**{remaining}x {uncut_name}** returned to your bank.")
+        if cut_so_far == 0:
+            lines.append(f"No gems were cut.")
+
+        await ctx.reply("\n".join(lines))
+
+    # ── Enchant ───────────────────────────────────────────────────
+
+    @w.command(name="enchant")
+    async def enchant_cmd(self, ctx: commands.Context, *, item_query: str = ""):
+        if not await self._ensure_ready(ctx):
+            return
+
+        if not item_query:
+            lines = []
+            for src, data in ENCHANTABLES.items():
+                mats = ", ".join(f"{qty}x {name}" for name, qty in data["materials"].items())
+                lines.append(f"**{src}** -> **{data['result']}** ({mats})")
+            await ctx.reply(f"Usage: `!w enchant <item>`\nRecipes:\n" + "\n".join(lines))
+            return
+
+        # Resolve the item name
+        source_name = None
+        norm_q = self._norm(item_query)
+        for src in ENCHANTABLES:
+            if self._norm(src) == norm_q:
+                source_name = src
+                break
+        if not source_name:
+            resolved = self._resolve_item(item_query)
+            if resolved and resolved in ENCHANTABLES:
+                source_name = resolved
+        if not source_name:
+            await ctx.reply(f"**{item_query}** cannot be enchanted.")
+            return
+
+        recipe = ENCHANTABLES[source_name]
+        result_name = recipe["result"]
+        materials = recipe["materials"]
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+
+            # Check the source item in inventory first, then bank
+            location = None
+            if p.inventory.get(source_name, 0) >= 1:
+                location = "inventory"
+            elif p.bank.get(source_name, 0) >= 1:
+                location = "bank"
+
+            if not location:
+                await ctx.reply(f"You don't have a **{source_name}** in your inventory or bank.")
+                return
+
+            # Check materials (always from bank)
+            missing = []
+            for mat_name, mat_qty in materials.items():
+                have = p.bank.get(mat_name, 0)
+                if have < mat_qty:
+                    missing.append(f"**{mat_qty}x {mat_name}** (have {have})")
+            if missing:
+                await ctx.reply(
+                    f"You need the following materials in your bank:\n" +
+                    "\n".join(f"  - {m}" for m in missing)
+                )
+                return
+
+            # Consume materials from bank
+            for mat_name, mat_qty in materials.items():
+                self._remove_item(p.bank, mat_name, mat_qty)
+
+            # Consume source item, add result to same location
+            bag = p.inventory if location == "inventory" else p.bank
+            self._remove_item(bag, source_name, 1)
+            self._add_item(bag, result_name, 1)
+
+            self._touch(p)
+            await self._persist()
+
+        mat_list = ", ".join(f"{qty}x {name}" for name, qty in materials.items())
+        await ctx.reply(
+            f"You enchant the **{source_name}** and create **{result_name}**! "
+            f"(used {mat_list}) — added to your {location}"
+        )
 
 
 async def setup(bot: commands.Bot):

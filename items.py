@@ -123,10 +123,23 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Death rune": {"type": "rune", "multiplier": 0, "stackable": True, "value": 320, "aliases": "death rune,deaths,death runes"},
     "Blood rune": {"type": "rune", "multiplier": 0, "stackable": True, "value": 320, "aliases": "blood rune,bloods,blood runes"},
     "Chaos rune": {"type": "rune", "multiplier": 1, "stackable": True, "value": 240, "aliases": "chaos rune,chaos runes,chaos"},
-    "Uncut sapphire": {"type": "misc", "stackable": False, "value": 500, "aliases": "uncut sapphire,sapphire,uncut sapphires"},
-    "Uncut emerald": {"type": "misc", "stackable": False, "value": 750, "aliases": "uncut emerald,emerald,uncut emeralds"},
-    "Uncut diamond": {"type": "misc", "stackable": False, "value": 1500, "aliases": "uncut diamond,diamond,uncut diamonds"},
-    "Uncut dragonstone": {"type": "misc", "stackable": False, "value": 3000, "aliases": "uncut dragonstone,dragonstone,uncut dragonstones"},
+    "Cosmic rune": {"type": "rune", "multiplier": 1, "stackable": True, "value": 300, "aliases": "cosmic rune,cosmic runes,cosmics"},
+    "Uncut sapphire": {"type": "misc", "stackable": False, "value": 500, "aliases": "uncut sapphire,uncut sapphires"},
+    "Uncut emerald": {"type": "misc", "stackable": False, "value": 750, "aliases": "uncut emerald,uncut emeralds"},
+    "Uncut ruby": {"type": "misc", "stackable": False, "value": 1000, "aliases": "uncut ruby,uncut rubies"},
+    "Uncut diamond": {"type": "misc", "stackable": False, "value": 1500, "aliases": "uncut diamond,uncut diamonds"},
+    "Uncut dragonstone": {"type": "misc", "stackable": False, "value": 3000, "aliases": "uncut dragonstone,uncut dragonstones"},
+    # Cut gems
+    "Sapphire": {"type": "misc", "stackable": False, "value": 1000, "aliases": "sapphire,sapphires"},
+    "Emerald": {"type": "misc", "stackable": False, "value": 1500, "aliases": "emerald,emeralds"},
+    "Ruby": {"type": "misc", "stackable": False, "value": 2000, "aliases": "ruby,rubies"},
+    "Diamond": {"type": "misc", "stackable": False, "value": 3000, "aliases": "diamond,diamonds"},
+    "Dragonstone": {"type": "misc", "stackable": False, "value": 6000, "aliases": "dragonstone,dragonstones"},
+    # Gem crafting
+    "Gold Bar": {"type": "misc", "stackable": False, "value": 2000, "aliases": "gold bar,gold,gbar"},
+    "Omnigem": {"type": "misc", "stackable": False, "value": 50000, "aliases": "omnigem,omni gem"},
+    "Omnigem Amulet": {"type": "misc", "stackable": False, "value": 60000, "aliases": "omnigem amulet,omni amulet,omnigem ammy"},
+    "Eclipse of the Five": {"type": "amulet", "atk": 6, "def": -1, "stackable": False, "value": 150000, "aliases": "eclipse,eotf,eclipse of the five,eclipse of five,eclipse amulet"},
     "Shadow Veil": {"type": "misc", "stackable": False, "value": 150000, "aliases": "shadow veil,sveil"},
     "Abyssal ash": {"type": "misc", "stackable": True, "value": 40, "aliases": "abyssal ash,ash"},
     "Abyssal charm": {"type": "misc", "stackable": True, "value": 50, "aliases": "abyssal charm,charm"},
@@ -186,4 +199,17 @@ ITEM_EFFECTS = {
     "Large pouch": {"effect": "Holds 9 Pure essence. Increases runes crafted per `!w rc` by the stored amount."},
     "Giant pouch": {"effect": "Holds 12 Pure essence. Increases runes crafted per `!w rc` by the stored amount."},
     "Colossal pouch": {"effect": "Holds 16 Pure essence. Increases runes crafted per `!w rc` by the stored amount."},
+    # Gems & enchanted
+    "Eclipse of the Five": {"effect": "When worn, grants +6 attack but reduces defence by 1. Crafted from an Omnigem Amulet via `!w enchant`."},
+    "Omnigem Amulet": {"effect": "An unenchanted amulet. Use `!w enchant omnigem amulet` to create Eclipse of the Five."},
+    "Omnigem": {"effect": "A fused gem containing all five gem types. Used to craft an Omnigem Amulet."},
 }
+
+GEM_CUTTING = {
+    "Uncut sapphire": "Sapphire",
+    "Uncut emerald": "Emerald",
+    "Uncut ruby": "Ruby",
+    "Uncut diamond": "Diamond",
+    "Uncut dragonstone": "Dragonstone",
+}
+

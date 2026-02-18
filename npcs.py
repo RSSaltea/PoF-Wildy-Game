@@ -195,6 +195,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Veilfruit", "min": 5, "max": 24, "chance": "1/10", "noted": True},
             {"item": "Blood rune", "min": 4, "max": 80, "chance": "1/5"},
             {"item": "Super Strength (4)", "min": 1, "max": 1, "chance": "1/12"},
+            {"item": "Uncut ruby", "min": 1, "max": 3, "chance": "1/5", "noted": True},
         ],
     },
     "revenant archon": {
@@ -226,6 +227,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Uncut sapphire", "min": 1, "max": 3, "chance": "1/4", "noted": True},
             {"item": "Abyssal charm", "min": 5, "max": 15, "chance": "1/4"},
             {"item": "Veilfruit", "min": 2, "max": 5, "chance": "1/5"},
+            {"item": "Gold Bar", "min": 1, "max": 1, "chance": "1/30"},
         ],
     },
     "netharis": {

@@ -40,4 +40,21 @@ CRAFTABLES: Dict[str, Dict[str, Any]] = {
         },
         "description": "An upgraded slayer helmet shrouded in shadow. Increases damage to slayer task targets by 13% and grants +2 DEF.",
     },
+    "Omnigem": {
+        "materials": {
+            "Sapphire": 5,
+            "Emerald": 5,
+            "Ruby": 5,
+            "Diamond": 5,
+            "Dragonstone": 5,
+        },
+        "description": "A fused gem containing the essence of all five gem types. Used to craft an Omnigem Amulet.",
+    },
+    "Omnigem Amulet": {
+        "materials": {
+            "Omnigem": 1,
+            "Gold Bar": 1,
+        },
+        "description": "An unenchanted amulet set with an Omnigem. Enchant it to create the Eclipse of the Five.",
+    },
 }
