@@ -433,6 +433,37 @@ code {
   .search-dropdown { width: 260px; }
 }
 
+/* Collapsible Sections */
+details.drop-section {
+  margin-top: 2rem;
+}
+details.drop-section summary {
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+details.drop-section summary::-webkit-details-marker {
+  display: none;
+}
+details.drop-section summary::marker {
+  display: none;
+  content: '';
+}
+details.drop-section summary h2 {
+  margin-top: 0;
+  padding-left: 1.2rem;
+  position: relative;
+}
+details.drop-section summary h2::before {
+  content: '\25B8';
+  position: absolute;
+  left: 0;
+  color: var(--text-muted);
+}
+details.drop-section[open] summary h2::before {
+  content: '\25BE';
+}
+
 /* Footer */
 .footer {
   text-align: center;

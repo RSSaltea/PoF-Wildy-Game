@@ -1031,7 +1031,7 @@ class Wilderness(commands.Cog):
         if food_key:
             food_meta = FOOD[food_key]
             heal = int(food_meta.get("heal", 0))
-            emb = discord.Embed(title=f"\U0001f356 {food_key}", color=0x3fb950)
+            emb = discord.Embed(title=food_key, color=0x3fb950)
             emb.add_field(name="Heals", value=f"**{heal} HP**", inline=True)
             await ctx.reply(embed=emb)
             return
@@ -1047,7 +1047,7 @@ class Wilderness(commands.Cog):
             is_2h = self._is_twohanded(item_key)
 
             slot_display = "Two-handed" if is_2h else slot.capitalize()
-            emb = discord.Embed(title=f"\U0001f9e9 {item_key}", color=0x58a6ff)
+            emb = discord.Embed(title=item_key, color=0x58a6ff)
             emb.add_field(name="Slot", value=slot_display, inline=True)
 
             stat_text = f"+{atk} atk / +{deff} def"
@@ -1070,7 +1070,7 @@ class Wilderness(commands.Cog):
             return
 
         if item_key and meta:
-            emb = discord.Embed(title=f"\U0001f4e6 {item_key}", color=0xd29922)
+            emb = discord.Embed(title=item_key, color=0xd29922)
             stackable = bool(meta.get("stackable", False))
             emb.add_field(name="Stackable", value="Yes" if stackable else "No", inline=True)
             sell_value = int(meta.get("value", 0))
@@ -1092,7 +1092,7 @@ class Wilderness(commands.Cog):
                 effect_key = k
                 break
         if effect_key:
-            emb = discord.Embed(title=f"\u2728 {effect_key}", color=0xbc8cff)
+            emb = discord.Embed(title=effect_key, color=0xbc8cff)
             emb.add_field(name="Effect", value=effects[effect_key].get("effect", ""), inline=False)
             ek_meta = ITEMS.get(effect_key, {})
             image_url = ek_meta.get("image")
