@@ -22,6 +22,60 @@
     { title: "Masked Figure", url: "npcs/masked-figure.html", tags: "tier 5 wildy 47 masked figure black mask shadow veil" },
     { title: "Netharis the Undying", url: "npcs/netharis-the-undying.html", tags: "tier 5 wildy 50 netharis undying boss curse" },
 
+    // Items index
+    { title: "Items", url: "items/index.html", tags: "items weapons armour armor gear equipment" },
+
+    // Weapons
+    { title: "Starter Sword", url: "items/starter-sword.html", tags: "starter sword mainhand weapon melee free" },
+    { title: "Rune dagger", url: "items/rune-dagger.html", tags: "rune dagger mainhand weapon melee" },
+    { title: "Rune scimitar", url: "items/rune-scimitar.html", tags: "rune scimitar scimmy mainhand weapon melee" },
+    { title: "Dragon dagger", url: "items/dragon-dagger.html", tags: "dragon dagger dds mainhand weapon melee" },
+    { title: "Dragon scimitar", url: "items/dragon-scimitar.html", tags: "dragon scimitar dscim mainhand weapon melee" },
+    { title: "Dragon 2h sword", url: "items/dragon-2h-sword.html", tags: "dragon 2h sword d2h two-handed weapon melee" },
+    { title: "Abyssal Whip", url: "items/abyssal-whip.html", tags: "abyssal whip mainhand weapon melee" },
+    { title: "Abyssal Scourge", url: "items/abyssal-scourge.html", tags: "abyssal scourge mainhand weapon melee" },
+    { title: "Veilbreaker", url: "items/veilbreaker.html", tags: "veilbreaker mainhand weapon melee zarveth best" },
+    { title: "Death Guard", url: "items/death-guard.html", tags: "death guard mainhand weapon necro necromancy" },
+    { title: "Viggora's Chainmace", url: "items/viggoras-chainmace.html", tags: "viggora chainmace mainhand weapon melee ether npc bonus" },
+    { title: "Abyssal Chainmace", url: "items/abyssal-chainmace.html", tags: "abyssal chainmace mainhand weapon melee ether npc bonus craft" },
+
+    // Offhands
+    { title: "Rune sq shield", url: "items/rune-sq-shield.html", tags: "rune sq shield offhand defence melee" },
+    { title: "Skull Lantern", url: "items/skull-lantern.html", tags: "skull lantern offhand necro necromancy" },
+    { title: "Bronze Defender", url: "items/bronze-defender.html", tags: "bronze defender offhand cyclops" },
+    { title: "Iron Defender", url: "items/iron-defender.html", tags: "iron defender offhand cyclops" },
+    { title: "Steel Defender", url: "items/steel-defender.html", tags: "steel defender offhand cyclops" },
+    { title: "Black Defender", url: "items/black-defender.html", tags: "black defender offhand cyclops" },
+    { title: "Mithril Defender", url: "items/mithril-defender.html", tags: "mithril defender offhand cyclops" },
+    { title: "Adamant Defender", url: "items/adamant-defender.html", tags: "adamant addy defender offhand cyclops" },
+    { title: "Rune Defender", url: "items/rune-defender.html", tags: "rune defender offhand cyclops" },
+    { title: "Bone Defender", url: "items/bone-defender.html", tags: "bone defender offhand craft cursed" },
+
+    // Armour
+    { title: "Starter Platebody", url: "items/starter-platebody.html", tags: "starter platebody body armour free" },
+    { title: "Rune platebody", url: "items/rune-platebody.html", tags: "rune platebody body armour plate" },
+    { title: "Rune chainbody", url: "items/rune-chainbody.html", tags: "rune chainbody body armour chain" },
+    { title: "Dragon platebody", url: "items/dragon-platebody.html", tags: "dragon platebody body armour plate" },
+    { title: "Zarveth's Ascendant Platebody", url: "items/zarveths-ascendant-platebody.html", tags: "zarveth ascendant platebody body armour boss" },
+    { title: "Rune platelegs", url: "items/rune-platelegs.html", tags: "rune platelegs legs armour" },
+    { title: "Dragon platelegs", url: "items/dragon-platelegs.html", tags: "dragon platelegs legs armour" },
+    { title: "Zarveth's Ascendant Platelegs", url: "items/zarveths-ascendant-platelegs.html", tags: "zarveth ascendant platelegs legs armour boss" },
+    { title: "Rune full helm", url: "items/rune-full-helm.html", tags: "rune full helm head armour" },
+    { title: "Rune med helm", url: "items/rune-med-helm.html", tags: "rune med helm head armour" },
+    { title: "Zarveth's Ascendant Mask", url: "items/zarveths-ascendant-mask.html", tags: "zarveth ascendant mask helm head armour boss" },
+    { title: "Dragon boots", url: "items/dragon-boots.html", tags: "dragon boots feet armour dboots" },
+    { title: "Black Mask", url: "items/black-mask.html", tags: "black mask helm slayer masked figure" },
+    { title: "Slayer Helmet", url: "items/slayer-helmet.html", tags: "slayer helmet helm craft damage bonus" },
+    { title: "Shady Slayer Helm", url: "items/shady-slayer-helm.html", tags: "shady slayer helm helmet shadow veil upgrade" },
+
+    // Accessories
+    { title: "Amulet of Seeping", url: "items/amulet-of-seeping.html", tags: "amulet seeping necklace heal lifesteal blood rune valthyros" },
+    { title: "Ring of Valthyros", url: "items/ring-of-valthyros.html", tags: "ring valthyros defence attack" },
+    { title: "Shroud of the Undying", url: "items/shroud-of-the-undying.html", tags: "shroud undying cape nullify damage netharis" },
+    { title: "Bracelet of ethereum", url: "items/bracelet-of-ethereum.html", tags: "bracelet ethereum gloves revenant damage reduction" },
+    { title: "Wristwraps of the Damned", url: "items/wristwraps-of-the-damned.html", tags: "wristwraps damned gloves bleed overlord" },
+    { title: "Bracelet of Slayer Aggression", url: "items/bracelet-of-slayer-aggression.html", tags: "bracelet slayer aggression gloves guarantee task chaos rune" },
+
     // Commands index
     { title: "Commands", url: "commands/index.html", tags: "commands list all" },
 

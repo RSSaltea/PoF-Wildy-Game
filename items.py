@@ -30,17 +30,19 @@ FOOD: Dict[str, Dict[str, int]] = {
     "Veilfruit": {"heal": 28},
 }
 
+_IMG_BASE = "https://github.com/RSSaltea/PoF-Wildy-Game/blob/main/docs/images/items/"
+
 ITEMS: Dict[str, Dict[str, Any]] = {
     # Starter gear (non-stackable)
-    "Starter Sword": {"type": "mainhand", "style": "melee", "atk": 2, "stackable": False, "value": 0, "aliases": "start sword,starter sword"}, #
-    "Starter Platebody": {"type": "body", "def": 2, "stackable": False, "value": 0, "aliases": "starter plate,start body,starter body"}, #
+    "Starter Sword": {"type": "mainhand", "style": "melee", "atk": 2, "stackable": False, "value": 0, "aliases": "start sword,starter sword", "image": _IMG_BASE + "starter%20sword.png?raw=true"}, #
+    "Starter Platebody": {"type": "body", "def": 2, "stackable": False, "value": 0, "aliases": "starter plate,start body,starter body", "image": _IMG_BASE + "starter%20platebody.png?raw=true"}, #
 
     # Weapons (non-stackable)
-    "Rune dagger": {"type": "mainhand", "style": "melee", "atk": 3, "def": 1, "stackable": False, "value": 5000, "aliases": "rune dag,rdagger,r dagger,r dag"}, #
-    "Rune scimitar": {"type": "mainhand", "style": "melee", "atk": 3, "stackable": False, "value": 5000, "aliases": "rune scim,rune scimmy,runescim"}, #
-    "Dragon dagger": {"type": "mainhand", "style": "melee", "atk": 4, "stackable": False, "value": 17000, "aliases": "dds,dragon dagger,d dagger"}, #
-    "Dragon scimitar": {"type": "mainhand", "style": "melee", "atk": 5, "stackable": False, "value": 32000, "aliases": "d scim,dscim,dragon scim,d scimitar"}, #
-    "Dragon 2h sword": {"type": "mainhand,offhand", "style": "melee", "atk": 8, "stackable": False, "value": 54000, "aliases": "d2h,dragon 2h"}, #
+    "Rune dagger": {"type": "mainhand", "style": "melee", "atk": 3, "def": 1, "stackable": False, "value": 5000, "aliases": "rune dag,rdagger,r dagger,r dag", "image": _IMG_BASE + "rune%20dagger.png?raw=true"}, #
+    "Rune scimitar": {"type": "mainhand", "style": "melee", "atk": 3, "stackable": False, "value": 5000, "aliases": "rune scim,rune scimmy,runescim", "image": _IMG_BASE + "rune%20scimitar.png?raw=true"}, #
+    "Dragon dagger": {"type": "mainhand", "style": "melee", "atk": 4, "stackable": False, "value": 17000, "aliases": "dds,dragon dagger,d dagger", "image": _IMG_BASE + "dragon%20dagger.png?raw=true"}, #
+    "Dragon scimitar": {"type": "mainhand", "style": "melee", "atk": 5, "stackable": False, "value": 32000, "aliases": "d scim,dscim,dragon scim,d scimitar", "image": _IMG_BASE + "dragon%20scimitar.png?raw=true"}, #
+    "Dragon 2h sword": {"type": "mainhand,offhand", "style": "melee", "atk": 8, "stackable": False, "value": 54000, "aliases": "d2h,dragon 2h", "image": _IMG_BASE + "dragon%202h%20sword.png?raw=true"}, #
     "Abyssal Whip": {"type": "mainhand", "style": "melee", "atk": 11, "stackable": False, "value": 60000, "aliases": "whip,abby whip,abyssal whip"},
     "Abyssal Scourge": {"type": "mainhand", "style": "melee", "atk": 15, "stackable": False, "value": 72000, "aliases": "scourge,abby scourge,abyssal scourge"},
     "Veilbreaker": {"type": "mainhand", "style": "melee", "atk": 28, "stackable": False, "value": 142000, "aliases": "veil"},
@@ -66,7 +68,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     },
 
     # Offhands
-    "Rune sq shield": {"type": "offhand", "style": "melee", "def": 3, "stackable": False, "value": 7000, "aliases": "rune sq"}, #
+    "Rune sq shield": {"type": "offhand", "style": "melee", "def": 3, "stackable": False, "value": 7000, "aliases": "rune sq", "image": _IMG_BASE + "rune%20sq%20shield.png?raw=true"}, #
     "Skull Lantern": {"type": "offhand", "style": "necro", "atk": 4, "stackable": False, "value": 142000, "aliases": "lantern"},
     "Bronze Defender": {"type": "offhand", "style": "melee", "def": 1, "stackable": False, "value": 500, "aliases": "bronze def"},
     "Iron Defender": {"type": "offhand", "style": "melee", "def": 1, "stackable": False, "value": 750, "aliases": "iron def,i def"},
@@ -78,17 +80,17 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Bone Defender": {"type": "offhand", "style": "melee", "def": 3, "atk": 3, "stackable": False, "value": 4000, "aliases": "bone def,b def"},
 
     # Armour / wearables (non-stackable)
-    "Rune platebody": {"type": "body", "def": 3, "stackable": False, "value": 12000, "aliases": "rune plate"}, #
-    "Rune chainbody": {"type": "body", "def": 2, "stackable": False, "value": 8000, "aliases": "rune chain"}, #
-    "Rune platelegs": {"type": "legs", "def": 2, "stackable": False, "value": 9000, "aliases": "rune legs"}, #
-    "Rune full helm": {"type": "helm", "def": 2, "stackable": False, "value": 8000, "aliases": "rune helm"}, #
-    "Rune med helm": {"type": "helm", "def": 1, "stackable": False, "value": 5000, "aliases": "rune med"}, #
-    "Dragon boots": {"type": "boots", "def": 3, "atk": 1, "stackable": False, "value": 24000, "aliases": "dboots,dragon boot,d boots,dragon boots"}, #
-    "Dragon platebody": {"type": "body", "def": 8, "stackable": False, "value": 42000, "aliases": "d plate,dplate,dragon plate,d pbody,dragon platebody"}, #
-    "Dragon platelegs": {"type": "legs", "def": 6, "stackable": False, "value": 32000, "aliases": "d legs,dlegs,dragon leg"},
-    "Zarveth's Ascendant Platebody": {"type": "body", "def": 5, "atk": 4, "stackable": False, "value": 142000, "aliases": "zarveth plate,zarveths plate,zarveths platebody,zarveths body"},
-    "Zarveth's Ascendant Platelegs": {"type": "legs", "def": 4, "atk": 3, "stackable": False, "value": 72000, "aliases": "zarveth legs,zarveths platelegs,zarveths legs"},
-    "Zarveth's Ascendant Mask": {"type": "helm", "def": 3, "atk": 1, "stackable": False, "value": 62000, "aliases": "zarveth mask,zarveths mask"},
+    "Rune platebody": {"type": "body", "def": 3, "stackable": False, "value": 12000, "aliases": "rune plate", "image": _IMG_BASE + "rune%20platebody.png?raw=true"}, #
+    "Rune chainbody": {"type": "body", "def": 2, "stackable": False, "value": 8000, "aliases": "rune chain", "image": _IMG_BASE + "rune%20chainbody.png?raw=true"}, #
+    "Rune platelegs": {"type": "legs", "def": 2, "stackable": False, "value": 9000, "aliases": "rune legs", "image": _IMG_BASE + "rune%20platelegs.png?raw=true"}, #
+    "Rune full helm": {"type": "helm", "def": 2, "stackable": False, "value": 8000, "aliases": "rune helm", "image": _IMG_BASE + "rune%20full%20helm.png?raw=true"}, #
+    "Rune med helm": {"type": "helm", "def": 1, "stackable": False, "value": 5000, "aliases": "rune med", "image": _IMG_BASE + "rune%20med%20helm.png?raw=true"}, #
+    "Dragon boots": {"type": "boots", "def": 3, "atk": 1, "stackable": False, "value": 24000, "aliases": "dboots,dragon boot,d boots,dragon boots", "image": _IMG_BASE + "dragon%20boots.png?raw=true"}, #
+    "Dragon platebody": {"type": "body", "def": 8, "stackable": False, "value": 42000, "aliases": "d plate,dplate,dragon plate,d pbody,dragon platebody", "image": _IMG_BASE + "dragon%20platebody.png?raw=true"}, #
+    "Dragon platelegs": {"type": "legs", "def": 6, "stackable": False, "value": 32000, "aliases": "d legs,dlegs,dragon leg", "image": _IMG_BASE + "dragon%20platelegs.png?raw=true"},
+    "Zarveth's Ascendant Platebody": {"type": "body", "def": 5, "atk": 4, "stackable": False, "value": 142000, "aliases": "zarveth plate,zarveths plate,zarveths platebody,zarveths body", "image": _IMG_BASE + "Zarveths%20Ascendant%20Platebody.png?raw=true"},
+    "Zarveth's Ascendant Platelegs": {"type": "legs", "def": 4, "atk": 3, "stackable": False, "value": 72000, "aliases": "zarveth legs,zarveths platelegs,zarveths legs", "image": _IMG_BASE + "Zarveths%20Ascendant%20Platelegs.png?raw=true"},
+    "Zarveth's Ascendant Mask": {"type": "helm", "def": 3, "atk": 1, "stackable": False, "value": 62000, "aliases": "zarveth mask,zarveths mask", "image": _IMG_BASE + "Zarveths%20Ascendant%20Mask.png?raw=true"},
     "Black Mask": {"type": "helm", "stackable": False, "value": 100000, "aliases": "black mask,bmask"},
     "Slayer Helmet": {"type": "helm", "stackable": False, "value": 25000, "aliases": "slayer helm,slayer helmet"},
     "Shady Slayer Helm": {"type": "helm", "def": 2, "stackable": False, "value": 40000, "aliases": "shady slayer helm,shady helm,shady slayer helmet"},
@@ -165,5 +167,3 @@ ITEM_EFFECTS = {
     "Shady Slayer Helm": {"effect": "When worn, increases damage dealt to your current slayer task NPC by 27%."},
     "Bracelet of Slayer Aggression": {"effect": "When worn, guarantees finding your slayer task NPC when using !w fight <npc>. Costs 20 Chaos runes per fight."},
 }
-
-

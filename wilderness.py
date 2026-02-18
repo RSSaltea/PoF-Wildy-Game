@@ -1029,8 +1029,11 @@ class Wilderness(commands.Cog):
 
         food_key = self._resolve_food(raw)
         if food_key:
-            heal = int(FOOD[food_key].get("heal", 0))
-            await ctx.reply(f"🍖 **{food_key}**\nHeals: **{heal} HP**")
+            food_meta = FOOD[food_key]
+            heal = int(food_meta.get("heal", 0))
+            emb = discord.Embed(title=f"\U0001f356 {food_key}", color=0x3fb950)
+            emb.add_field(name="Heals", value=f"**{heal} HP**", inline=True)
+            await ctx.reply(embed=emb)
             return
 
         item_key = self._resolve_item(raw)
@@ -1040,37 +1043,46 @@ class Wilderness(commands.Cog):
             atk = int(meta.get("atk", 0))
             deff = int(meta.get("def", 0))
             atk_vs_npc = int(meta.get("atk_vs_npc", 0))
-            stackable = bool(meta.get("stackable", False))
             sell_value = int(meta.get("value", 0))
+            is_2h = self._is_twohanded(item_key)
 
-            parts = [
-                f"🧩 **{item_key}**",
-                f"Slot: **{slot}**",
-                f"Stackable: **{stackable}**",
-            ]
+            slot_display = "Two-handed" if is_2h else slot.capitalize()
+            emb = discord.Embed(title=f"\U0001f9e9 {item_key}", color=0x58a6ff)
+            emb.add_field(name="Slot", value=slot_display, inline=True)
 
-            stat_line = f"Stats: **+{atk} atk / +{deff} def**"
+            stat_text = f"+{atk} atk / +{deff} def"
             if atk_vs_npc:
-                stat_line += f" | **+{atk_vs_npc} atk vs NPCs**"
-            parts.append(stat_line)
+                stat_text += f"\n+{atk_vs_npc} atk vs NPCs"
+            emb.add_field(name="Stats", value=stat_text, inline=True)
 
             if sell_value > 0:
-                parts.append(f"💰 Sell value: **{sell_value:,} coins**")
+                emb.add_field(name="Value", value=f"{sell_value:,} coins", inline=True)
 
             effect = (self.config.get("item_effects", {}) or {}).get(item_key, {}).get("effect")
             if effect:
-                parts.append(f"Effect: {effect}")
+                emb.add_field(name="Effect", value=effect, inline=False)
 
-            await ctx.reply("\n".join(parts))
+            image_url = meta.get("image")
+            if image_url:
+                emb.set_thumbnail(url=image_url)
+
+            await ctx.reply(embed=emb)
             return
 
         if item_key and meta:
+            emb = discord.Embed(title=f"\U0001f4e6 {item_key}", color=0xd29922)
             stackable = bool(meta.get("stackable", False))
+            emb.add_field(name="Stackable", value="Yes" if stackable else "No", inline=True)
+            sell_value = int(meta.get("value", 0))
+            if sell_value > 0:
+                emb.add_field(name="Value", value=f"{sell_value:,} coins", inline=True)
             effect = (self.config.get("item_effects", {}) or {}).get(item_key, {}).get("effect")
-            lines = [f"📦 **{item_key}**", f"Stackable: **{stackable}**"]
             if effect:
-                lines.append(f"Effect: {effect}")
-            await ctx.reply("\n".join(lines))
+                emb.add_field(name="Effect", value=effect, inline=False)
+            image_url = meta.get("image")
+            if image_url:
+                emb.set_thumbnail(url=image_url)
+            await ctx.reply(embed=emb)
             return
 
         effects = (self.config.get("item_effects", {}) or {})
@@ -1080,7 +1092,13 @@ class Wilderness(commands.Cog):
                 effect_key = k
                 break
         if effect_key:
-            await ctx.reply(f"✨ **{effect_key}**\nEffect: {effects[effect_key].get('effect', '')}")
+            emb = discord.Embed(title=f"\u2728 {effect_key}", color=0xbc8cff)
+            emb.add_field(name="Effect", value=effects[effect_key].get("effect", ""), inline=False)
+            ek_meta = ITEMS.get(effect_key, {})
+            image_url = ek_meta.get("image")
+            if image_url:
+                emb.set_thumbnail(url=image_url)
+            await ctx.reply(embed=emb)
             return
 
         await ctx.reply(f"**{raw}**\nThis item has no use currently.")
