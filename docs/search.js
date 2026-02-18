@@ -34,7 +34,7 @@
     { title: "Dragon 2h sword", url: "items/dragon-2h-sword.html", tags: "dragon 2h sword d2h two-handed weapon melee" },
     { title: "Abyssal Whip", url: "items/abyssal-whip.html", tags: "abyssal whip mainhand weapon melee" },
     { title: "Abyssal Scourge", url: "items/abyssal-scourge.html", tags: "abyssal scourge mainhand weapon melee" },
-    { title: "Veilbreaker", url: "items/veilbreaker.html", tags: "veilbreaker mainhand weapon melee zarveth best" },
+    { title: "Veilbreaker", url: "items/veilbreaker.html", tags: "veilbreaker mainhand weapon melee zarveth" },
     { title: "Death Guard", url: "items/death-guard.html", tags: "death guard mainhand weapon necro necromancy" },
     { title: "Viggora's Chainmace", url: "items/viggoras-chainmace.html", tags: "viggora chainmace mainhand weapon melee ether npc bonus" },
     { title: "Abyssal Chainmace", url: "items/abyssal-chainmace.html", tags: "abyssal chainmace mainhand weapon melee ether npc bonus craft" },
@@ -133,7 +133,7 @@
     { title: "Dragonstone", url: "items/dragonstone.html", tags: "dragonstone cut gem omnigem craft" },
     { title: "Omnigem", url: "items/omnigem.html", tags: "omnigem fused gem craft amulet" },
     { title: "Omnigem Amulet", url: "items/omnigem-amulet.html", tags: "omnigem amulet craft enchant eclipse" },
-    { title: "Eclipse of the Five", url: "items/eclipse-of-the-five.html", tags: "eclipse five amulet enchant attack best necklace" },
+    { title: "Eclipse of the Five", url: "items/eclipse-of-the-five.html", tags: "eclipse five amulet enchant attack necklace" },
 
     // Pets
     { title: "Tiny Revenant", url: "items/tiny-revenant.html", tags: "tiny revenant pet rev" },
