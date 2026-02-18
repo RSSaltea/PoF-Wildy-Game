@@ -111,9 +111,17 @@ class InventoryManager:
         if not meta:
             return None
         slot = str(meta.get("type", "")).strip().lower()
+        if slot == "mainhand,offhand":
+            return "mainhand"
         if slot in EQUIP_SLOT_SET:
             return slot
         return None
+
+    def is_twohanded(self, item_name: str) -> bool:
+        meta = ITEMS.get(item_name)
+        if not meta:
+            return False
+        return str(meta.get("type", "")).strip().lower() == "mainhand,offhand"
 
     def next_defender_drop(self, p: PlayerState) -> Optional[str]:
         """Returns the next defender tier based on currently equipped offhand."""

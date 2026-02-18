@@ -210,6 +210,7 @@ class Wilderness(commands.Cog):
         return self.player_mgr.spend_coins(p, amount)
 
     def _item_slot(self, item_name): return self.inv_mgr.item_slot(item_name)
+    def _is_twohanded(self, item_name): return self.inv_mgr.is_twohanded(item_name)
     def _next_defender_drop(self, p): return self.inv_mgr.next_defender_drop(p)
     def _equipped_bonus(self, p, *, vs_npc, chainmace_charged=None): return self.inv_mgr.equipped_bonus(p, vs_npc=vs_npc, chainmace_charged=chainmace_charged)
     def _consume_buffs_on_hit(self, p): return self.inv_mgr.consume_buffs_on_hit(p)
@@ -1312,6 +1313,16 @@ class Wilderness(commands.Cog):
                     await ctx.reply(f"You don’t have **{item_key}** in your inventory or bank.")
                     return
 
+            # Block equipping an offhand if a 2h weapon is in mainhand
+            if slot == "offhand":
+                mh = p.equipment.get("mainhand")
+                if mh and self._is_twohanded(mh):
+                    await ctx.reply(
+                        f"You can't equip an offhand while wielding **{mh}** (two-handed). "
+                        f"Unequip your mainhand first."
+                    )
+                    return
+
             # Style compatibility check for mainhand/offhand
             new_style = ITEMS.get(item_key, {}).get("style")
             if new_style and new_style != "all" and slot in ("mainhand", "offhand"):
@@ -1326,13 +1337,26 @@ class Wilderness(commands.Cog):
                         )
                         return
 
-            old = p.equipment.get(slot)
-            if old:
-                if self._inv_free_slots(p.inventory) < 1:
-                    await ctx.reply("No inventory space to swap gear (need 1 free slot).")
-                    return
-                self._add_item(p.inventory, old, 1)
+            # Work out how many free slots we need for the swap
+            is_2h = self._is_twohanded(item_key)
+            old_mh = p.equipment.get(slot)          # item currently in the target slot
+            old_oh = p.equipment.get("offhand") if is_2h else None  # offhand to clear for 2h
+            slots_needed = (1 if old_mh else 0) + (1 if old_oh else 0)
 
+            if slots_needed > 0 and self._inv_free_slots(p.inventory) < slots_needed:
+                await ctx.reply(f"No inventory space to swap gear (need **{slots_needed}** free slot(s)).")
+                return
+
+            # Return old items to inventory
+            removed_extra = None
+            if old_mh:
+                self._add_item(p.inventory, old_mh, 1)
+            if old_oh:
+                self._add_item(p.inventory, old_oh, 1)
+                p.equipment.pop("offhand", None)
+                removed_extra = old_oh
+
+            # Take the new item from inventory or bank
             if p.in_wilderness:
                 self._remove_item(p.inventory, inv_key, 1)
             else:
@@ -1344,7 +1368,10 @@ class Wilderness(commands.Cog):
             p.equipment[slot] = item_key
             await self._persist()
 
-        await ctx.reply(f"✅ Equipped **{item_key}** in slot **{slot}**.")
+        msg = f"✅ Equipped **{item_key}** in slot **{slot}**."
+        if removed_extra:
+            msg += f"\n↩️ **{removed_extra}** was unequipped from your offhand."
+        await ctx.reply(msg)
 
     @w.command(name="unequip")
     async def unequip(self, ctx: commands.Context, slot: str):
