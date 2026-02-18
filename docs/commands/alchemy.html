@@ -3,17 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alchemy — Paws of Fury Wiki</title>
+  <title>Alchemy — Wilderness Wiki</title>
   <link rel="stylesheet" href="../style.css">
 </head>
 <body>
   <div class="navbar">
-    <div class="logo"><span>Paws of Fury</span> Wiki</div>
+    <div class="logo"><span>Wilderness</span> Wiki</div>
     <nav>
       <a href="../index.html">Home</a>
       <a href="../npcs/index.html">NPCs</a>
       <a href="index.html" class="active">Commands</a>
     </nav>
+      <div class="search-wrapper">
+      <input type="text" class="search-input" placeholder="Search wiki...">
+      <div class="search-dropdown"></div>
+    </div>
   </div>
   <div class="container">
     <div class="breadcrumb"><a href="../index.html">Home</a><span class="sep">/</span><a href="index.html">Commands</a><span class="sep">/</span>Alchemy</div>
@@ -31,6 +35,7 @@
       <p>Toggle auto-alch for an item. When toggled on, that item will automatically be alched when received as a combat drop (including noted items). View your auto-alch list with <code>!w alch auto</code> (no item).</p>
     </div>
   </div>
-  <div class="footer">Paws of Fury Wiki</div>
+  <div class="footer">Wilderness Wiki</div>
+  <script src="../search.js"></script>
 </body>
 </html>

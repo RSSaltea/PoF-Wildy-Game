@@ -3,34 +3,106 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Getting Started — Paws of Fury Wiki</title>
+  <title>Getting Started — Wilderness Wiki</title>
   <link rel="stylesheet" href="../style.css">
 </head>
 <body>
   <div class="navbar">
-    <div class="logo"><span>Paws of Fury</span> Wiki</div>
+    <div class="logo"><span>Wilderness</span> Wiki</div>
     <nav>
       <a href="../index.html">Home</a>
       <a href="../npcs/index.html">NPCs</a>
       <a href="index.html" class="active">Commands</a>
     </nav>
+      <div class="search-wrapper">
+      <input type="text" class="search-input" placeholder="Search wiki...">
+      <div class="search-dropdown"></div>
+    </div>
   </div>
   <div class="container">
     <div class="breadcrumb"><a href="../index.html">Home</a><span class="sep">/</span><a href="index.html">Commands</a><span class="sep">/</span>Getting Started</div>
 
-    <h1>Getting Started</h1>
-    <p>These commands help you create your wilderness profile and begin your adventure.</p>
-
-    <div class="command-block">
-      <h3><code>!w start</code></h3>
-      <p>Create your wilderness profile. You'll receive a Starter Sword and Starter Platebody.</p>
+    <div class="page-header">
+      <h1>Getting Started</h1>
+      <div class="subtitle">New to the Wilderness? Follow these steps to get up and running.</div>
     </div>
 
-    <div class="command-block">
-      <h3><code>!w reset</code></h3>
-      <p>Wipe your profile and start fresh. This cannot be undone.</p>
+    <div class="content">
+      <h2>1. Create Your Profile</h2>
+      <div class="command-block">
+        <h3><code>!w start</code></h3>
+        <p>Create your wilderness profile. You'll receive a <strong>Starter Sword</strong> (+2 ATK) and <strong>Starter Platebody</strong> (+2 DEF) along with some starting coins and full HP.</p>
+      </div>
+
+      <h2>2. Equip Your Gear</h2>
+      <p>Before you can fight, you need to equip your weapons and armour.</p>
+      <div class="command-block">
+        <h3><code>!w equip &lt;item&gt;</code></h3>
+        <p>Equip an item from your inventory to the appropriate slot.</p>
+        <ul>
+          <li><code>!w equip starter sword</code></li>
+          <li><code>!w equip starter platebody</code></li>
+        </ul>
+      </div>
+      <div class="command-block">
+        <h3><code>!w gear</code></h3>
+        <div class="aliases">Aliases: <code>worn</code></div>
+        <p>View your currently equipped items.</p>
+      </div>
+
+      <h2>3. Venture Into the Wilderness</h2>
+      <p>Use <code>!w venture</code> to enter the Wilderness. Start low — <strong>Wilderness level 1–5</strong> is safest for beginners. Higher levels unlock stronger NPCs with better drops, but the danger increases too.</p>
+      <div class="command-block">
+        <h3><code>!w venture &lt;level&gt;</code></h3>
+        <p>Enter or move to a wilderness level. Example: <code>!w venture 5</code></p>
+      </div>
+
+      <h2>4. Fight NPCs</h2>
+      <p>Once you're in the Wilderness, battle creatures to earn coins, loot, and slayer XP. Start with the <a href="../npcs/revenant-goblin.html">Revenant Goblin</a> (Tier 1, Wildy 1+).</p>
+      <div class="command-block">
+        <h3><code>!w fight &lt;npc&gt;</code></h3>
+        <p>Fight an NPC at your current wilderness level. Example: <code>!w fight revenant goblin</code></p>
+      </div>
+
+      <h2>5. Stay Alive</h2>
+      <p>Keep an eye on your health and bank your loot often. If you die, you lose items in your inventory!</p>
+      <div class="command-block">
+        <h3><code>!w eat [qty] [food]</code></h3>
+        <p>Eat food to restore HP. Buy food from the <code>!w shop</code>.</p>
+      </div>
+      <div class="command-block">
+        <h3><code>!w hp</code></h3>
+        <div class="aliases">Aliases: <code>health</code></div>
+        <p>Check your current health.</p>
+      </div>
+      <div class="command-block">
+        <h3><code>!w tele</code></h3>
+        <div class="aliases">Aliases: <code>teleport</code>, <code>tp</code></div>
+        <p>Teleport out of the Wilderness to safety.</p>
+      </div>
+      <div class="command-block">
+        <h3><code>!w deposit</code></h3>
+        <p>Deposit your inventory to the bank. Use <code>!w deposit all</code> to deposit everything including coins.</p>
+      </div>
+
+      <h2>6. Progress Further</h2>
+      <ul>
+        <li><strong>Slayer</strong> — Use <code>!w slayer task</code> to get assignments for bonus XP and points. See the <a href="slayer.html">Slayer Guide</a>.</li>
+        <li><strong>Crafting</strong> — Combine drops into better gear with <code>!w craft</code>. Check <code>!w craftables</code> for recipes.</li>
+        <li><strong>Shopping</strong> — Buy better weapons, armour, and food from <code>!w shop list</code>.</li>
+        <li><strong>Banking</strong> — Keep your valuables safe with <code>!w deposit</code> and <code>!w bank</code>.</li>
+        <li><strong>Alchemy</strong> — Convert drops to coins with <code>!w alch</code> or set up auto-alch with <code>!w alch auto</code>.</li>
+      </ul>
+      <p>As you grow stronger, venture deeper into the Wilderness to face <a href="../npcs/index.html">higher-tier NPCs and bosses</a> with powerful unique drops and pets.</p>
+
+      <h2>Reset Your Profile</h2>
+      <div class="command-block">
+        <h3><code>!w reset</code></h3>
+        <p>Wipe your profile and start fresh. <strong>This cannot be undone.</strong></p>
+      </div>
     </div>
   </div>
-  <div class="footer">Paws of Fury Wiki</div>
+  <div class="footer">Wilderness Wiki</div>
+  <script src="../search.js"></script>
 </body>
 </html>

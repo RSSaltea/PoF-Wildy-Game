@@ -1,4 +1,4 @@
-/* Paws of Fury Wiki — Dark Theme */
+/* Wilderness Wiki — Dark Theme */
 :root {
   --bg-primary: #0d1117;
   --bg-secondary: #161b22;
@@ -362,6 +362,61 @@ code {
   border-radius: 4px;
   font-size: 0.85rem;
   color: var(--accent);
+}
+
+/* Search */
+.search-wrapper {
+  position: relative;
+  margin-left: auto;
+}
+.search-input {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  width: 220px;
+  outline: none;
+  transition: border-color 0.2s, width 0.2s;
+}
+.search-input::placeholder { color: var(--text-muted); }
+.search-input:focus {
+  border-color: var(--accent);
+  width: 280px;
+}
+.search-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  width: 320px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  z-index: 200;
+}
+.search-item {
+  display: block;
+  padding: 0.6rem 1rem;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.search-item:last-child { border-bottom: none; }
+.search-item:hover,
+.search-item.active {
+  background: var(--bg-tertiary);
+  text-decoration: none;
+}
+.search-item-title { font-weight: 500; }
+@media (max-width: 768px) {
+  .search-input { width: 140px; }
+  .search-input:focus { width: 180px; }
+  .search-dropdown { width: 260px; }
 }
 
 /* Footer */
