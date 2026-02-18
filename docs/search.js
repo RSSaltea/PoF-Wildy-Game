@@ -39,22 +39,22 @@
     { title: "Miscellaneous", url: "commands/misc.html", tags: "stats profile kc killcount highscores pets pet chest open misc" }
   ];
 
-  /* Resolve relative URLs based on current page depth */
+  /* Resolve URLs relative to the wiki root.
+     We detect the base by finding our own <script> tag's src —
+     if src="../search.js" we are one level deep, if "search.js" we are at root. */
+  var baseUrl = (function () {
+    var scripts = document.querySelectorAll("script[src]");
+    for (var i = 0; i < scripts.length; i++) {
+      var src = scripts[i].getAttribute("src");
+      if (src.indexOf("search.js") >= 0) {
+        return src.replace("search.js", "");
+      }
+    }
+    return "";
+  })();
+
   function resolveUrl(rel) {
-    var depth = 0;
-    var path = location.pathname.replace(/\\/g, "/");
-    /* count how many dirs deep from the docs root */
-    var parts = path.split("/");
-    var docsIdx = -1;
-    for (var i = 0; i < parts.length; i++) {
-      if (parts[i] === "docs") { docsIdx = i; break; }
-    }
-    if (docsIdx >= 0) {
-      depth = parts.length - docsIdx - 2; /* subtract docs/ and filename */
-    }
-    var prefix = "";
-    for (var j = 0; j < depth; j++) prefix += "../";
-    return prefix + rel;
+    return baseUrl + rel;
   }
 
   function search(query) {
