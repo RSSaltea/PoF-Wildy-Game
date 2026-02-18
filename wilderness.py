@@ -2156,11 +2156,17 @@ class Wilderness(commands.Cog):
                     f"⚠️ **Ambush!** You tried to teleport but were attacked by **{chosen['name']}** (Wildy {p.wildy_level})."
                 ]
 
-                won, npc_name, events, lost_items, bank_loss, loot_lines, _, _, broadcasts, slayer_task_info = \
+                won, npc_name, events, lost_items, bank_loss, loot_lines, ground_drops, eaten_food, broadcasts, slayer_task_info = \
                     self._simulate_pvm_fight_and_loot(p, chosen, header_lines=header)
 
+                npc_image = chosen.get("image")
+
                 if not won:
+                    food_lines = self._food_summary_lines(eaten_food, lost_items)
+
                     p.deaths += 1
+                    p.wildy_run_id = int(p.wildy_run_id) + 1
+                    p.ground_items = []
                     p.in_wilderness = False
                     p.skulled = False
                     p.wildy_level = 1
@@ -2168,22 +2174,49 @@ class Wilderness(commands.Cog):
                     self._full_heal(p)
                     await self._persist()
 
-                    await ctx.reply(
-                        "\n".join(events[-12:])
-                        + f"\n\n☠️ You died during the ambush.\n"
-                        + f"📉 Lost from inventory:\n{self._format_items_short(lost_items, 18)}\n"
-                        + f"🏦 Lost bank coins: **{bank_loss:,}** (10%)."
+                    pages = self._build_pages(events, per_page=10)
+                    summary = (
+                        f"☠️ **You died during the ambush.**\n"
+                        f"📉 **Lost from inventory:**\n{self._format_items_short(lost_items, max_lines=18)}\n"
+                        f"🏦 Lost bank coins: **{bank_loss:,}** (10%)"
+                        + (("\n\n" + "\n".join(food_lines)) if food_lines else "")
                     )
+                    pages.append(summary)
+
+                    view = FightLogView(
+                        author_id=ctx.author.id,
+                        pages=pages,
+                        title=f"Ambush! {ctx.author.display_name} vs {npc_name}",
+                        cog=self,
+                        ground_drops=ground_drops,
+                        start_on_last=True,
+                        npc_image=npc_image,
+                    )
+                    await ctx.reply(embed=view._render_embed(), view=view)
                     return
 
+                self._touch(p)
                 await self._persist()
 
-                await ctx.reply(
-                    "\n".join(events[-12:])
-                    + f"\n\n✅ **You have killed {npc_name}!** Your teleport was interrupted.\n"
-                    + "\n".join(loot_lines)
+                pages = self._build_pages(events, per_page=10)
+                summary = (
+                    f"✅ **You have killed {npc_name}!** Your teleport was interrupted.\n"
+                    f"End HP: **{p.hp}/{self.config['max_hp']}**\n"
+                    + ("\n".join(loot_lines) if loot_lines else "(no loot)")
                     + f"\n\nYou are still in the Wilderness (level {p.wildy_level}). Try `!w tele` again."
                 )
+                pages.append(summary)
+
+                view = FightLogView(
+                    author_id=ctx.author.id,
+                    pages=pages,
+                    title=f"Ambush! {ctx.author.display_name} vs {npc_name}",
+                    cog=self,
+                    ground_drops=ground_drops,
+                    start_on_last=True,
+                    npc_image=npc_image,
+                )
+                await ctx.reply(embed=view._render_embed(), view=view)
 
                 if slayer_task_info:
                     emb = discord.Embed(
@@ -2196,6 +2229,22 @@ class Wilderness(commands.Cog):
                             f"Use `!w slayer task` to get a new assignment!"
                         ),
                         color=0x00FF00,
+                    )
+                    await ctx.send(embed=emb)
+
+                # Low HP / no food warning
+                has_food = any(p.inventory.get(f, 0) > 0 for f in FOOD)
+                warnings = []
+                if p.hp < 20:
+                    warnings.append(f"Your HP is critically low (**{p.hp}/{self.config['max_hp']}**)")
+                if not has_food:
+                    warnings.append("You have **no food** remaining in your inventory")
+                if warnings:
+                    emb = discord.Embed(
+                        title="⚠️ Warning!",
+                        description="\n".join(f"- {w}" for w in warnings)
+                            + "\n\nConsider using `!w eat`, `!w tele`, or restocking before your next fight!",
+                        color=0xFF4444,
                     )
                     await ctx.send(embed=emb)
 
