@@ -24,7 +24,7 @@
     <div class="breadcrumb"><a href="../index.html">Home</a><span class="sep">/</span><a href="index.html">Commands</a><span class="sep">/</span>Crafting</div>
 
     <h1>Crafting</h1>
-    <p>Commands for crafting items, breaking them down, and runecrafting.</p>
+    <p>Commands for crafting items, breaking them down, runecrafting, gem cutting, enchanting, and consuming.</p>
 
     <div class="command-block">
       <h3><code>!w craftables</code></h3>
@@ -50,6 +50,26 @@
       <h3><code>!w rc &lt;rune&gt;</code></h3>
       <div class="aliases">Aliases: <code>!w runecraft</code></div>
       <p>Runecraft runes using pure essence and pouches.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w cut [qty] &lt;gem&gt;</code></h3>
+      <p>Cut uncut gems from your bank into cut gems. Each gem takes 1.2 seconds to cut. You can specify a quantity (<code>!w cut 5 sapphire</code>) or cut all (<code>!w cut all sapphire</code>). Cannot be done in the Wilderness.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w cut stop</code></h3>
+      <p>Stop cutting gems early. Any gems already cut are added to your bank and remaining uncut gems are returned.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w enchant &lt;item&gt;</code></h3>
+      <p>Enchant an item using runes from your bank. For example, <code>!w enchant omnigem amulet</code> creates the <a href="../items/eclipse-of-the-five.html">Eclipse of the Five</a>. Run <code>!w enchant</code> with no arguments to see all recipes.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w consume &lt;item&gt;</code></h3>
+      <p>Consume an item for its effect. For example, <code>!w consume ancient effigy</code> grants Slayer XP based on your Slayer level. See the <a href="../items/ancient-effigy.html">Ancient Effigy</a> page for the full XP table. Run <code>!w consume</code> with no arguments to see all consumables.</p>
     </div>
   </div>
   <div class="footer">Wilderness Wiki</div>

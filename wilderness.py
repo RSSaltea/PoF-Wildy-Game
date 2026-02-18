@@ -1542,7 +1542,15 @@ class Wilderness(commands.Cog):
 
         raw = args.strip()
         bank_all = raw.lower() == "all"
-        specific_item = None if (not raw or bank_all) else raw
+        specific_item = None
+        specific_qty = None  # None = deposit all of that item
+        if raw and not bank_all:
+            parts = raw.split(None, 1)
+            if len(parts) == 2 and parts[0].isdigit():
+                specific_qty = int(parts[0])
+                specific_item = parts[1]
+            else:
+                specific_item = raw
 
         async with self._mem_lock:
             p = self._get_player(ctx.author)
@@ -1580,11 +1588,15 @@ class Wilderness(commands.Cog):
                     await ctx.reply("That item isn't in your inventory.")
                     return
 
-                qty = int(p.inventory[inv_key])
+                have = int(p.inventory[inv_key])
+                qty = min(specific_qty, have) if specific_qty is not None else have
+                if qty <= 0:
+                    await ctx.reply("That item isn't in your inventory.")
+                    return
                 bank_name = self._unnote(inv_key) if self._is_noted(inv_key) else inv_key
                 self._add_item(p.bank, bank_name, qty)
                 banked_items[inv_key] = qty
-                p.inventory.pop(inv_key, None)
+                self._remove_item(p.inventory, inv_key, qty)
                 banked_coins = 0  # don't bank coins on specific deposit
 
             else:
@@ -3563,7 +3575,7 @@ class Wilderness(commands.Cog):
 
     # ── Consume ───────────────────────────────────────────────────
 
-    @w.command(name="consume")
+    @w.group(name="consume", invoke_without_command=True)
     async def consume_cmd(self, ctx: commands.Context, *, item_query: str = ""):
         if not await self._ensure_ready(ctx):
             return
@@ -3572,7 +3584,8 @@ class Wilderness(commands.Cog):
             lines = []
             for name, data in CONSUMABLES.items():
                 lines.append(f"**{name}** — {data['description']}")
-            await ctx.reply("Usage: `!w consume <item>`\nConsumables:\n" + "\n".join(lines))
+            await ctx.reply("Usage: `!w consume <item>`\nConsumables:\n" + "\n".join(lines) +
+                            "\n\n`!w consume auto <item>` — Toggle auto-consume on drops")
             return
 
         # Resolve the item name
@@ -3639,6 +3652,45 @@ class Wilderness(commands.Cog):
             msg += f"\n🎉 **Slayer level up! {old_level} → {new_level}**"
 
         await ctx.reply(msg)
+
+    @consume_cmd.command(name="auto")
+    async def consume_auto_cmd(self, ctx: commands.Context, *, item_name: str = ""):
+        if not await self._ensure_ready(ctx):
+            return
+
+        if not item_name.strip():
+            async with self._mem_lock:
+                p = self._get_player(ctx.author)
+                auto_list = getattr(p, "consume_auto", None) or []
+            if not auto_list:
+                await ctx.reply("Your auto-consume list is empty.\nUsage: `!w consume auto <item>` to toggle.")
+                return
+            lines = [f"• **{i}**" for i in sorted(auto_list)]
+            await ctx.reply("🔮 **Auto-consume list:**\n" + "\n".join(lines))
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+            resolved = self._resolve_item(item_name.strip())
+            if not resolved:
+                await ctx.reply(f"Unknown item: **{item_name.strip()}**")
+                return
+
+            if resolved not in CONSUMABLES:
+                await ctx.reply(f"**{resolved}** is not a consumable item.")
+                return
+
+            if p.consume_auto is None:
+                p.consume_auto = []
+
+            if resolved in p.consume_auto:
+                p.consume_auto.remove(resolved)
+                await self._persist()
+                await ctx.reply(f"🔮 Removed **{resolved}** from auto-consume.")
+            else:
+                p.consume_auto.append(resolved)
+                await self._persist()
+                await ctx.reply(f"🔮 Added **{resolved}** to auto-consume. Drops will be auto-consumed for XP.")
 
     # ── Enchant ───────────────────────────────────────────────────
 

@@ -6,6 +6,7 @@ from typing import Dict, Any, Optional, Tuple, List, TYPE_CHECKING
 from .models import PlayerState, DuelState, clamp, parse_chance, _now
 from .npcs import NPCS, NPC_SLAYER
 from .items import FOOD, ITEMS
+from .consume import CONSUMABLES
 
 if TYPE_CHECKING:
     from .wilderness import Wilderness
@@ -672,6 +673,34 @@ class CombatManager:
             loot_lines.append(f"🔥 Auto-alch: **{item} x{qty}** → **{total_gp:,} coins** (-{qty} Nature rune)")
             return True
 
+        def try_auto_consume(item: str, qty: int) -> bool:
+            consume_list = getattr(p, "consume_auto", None) or []
+            base_item = item[len("Noted "):] if item.startswith("Noted ") else item
+            if base_item not in consume_list:
+                return False
+            recipe = CONSUMABLES.get(base_item)
+            if not recipe:
+                return False
+            xp_table = recipe["xp_table"]
+            xp_skill = recipe["xp_skill"]
+            skill_for_level = recipe["skill"]
+            if skill_for_level == "slayer":
+                level = self.cog.slayer_mgr.get_slayer_level(p)
+            else:
+                level = 1
+            level = max(1, min(level, max(xp_table.keys())))
+            xp_per = xp_table[level]
+            total_xp = xp_per * qty
+            old_level = level
+            if xp_skill == "slayer":
+                p.slayer_xp = (p.slayer_xp or 0) + total_xp
+                new_level = self.cog.slayer_mgr.get_slayer_level(p)
+            msg = f"🔮 Auto-consume: **{item} x{qty}** → **+{total_xp:,.1f} {xp_skill} XP**"
+            if xp_skill == "slayer" and new_level > old_level:
+                msg += f" (Level up! {old_level} → {new_level})"
+            loot_lines.append(msg)
+            return True
+
         coins = self.cog._npc_coin_roll(npc_type)
         if coins > 0:
             p.coins += coins
@@ -686,7 +715,7 @@ class CombatManager:
             w_roll = self.cog._loot_for_level(p.wildy_level)
             if w_roll:
                 item, qty = w_roll
-                if not try_auto_alch(item, qty):
+                if not try_auto_consume(item, qty) and not try_auto_alch(item, qty):
                     dest, on_ground = self.cog._try_put_item_or_ground_with_blacklist(p, item, qty, auto_drops)
                     loot_lines.append(f"🎁 Wildy loot: **{item} x{qty}** {dest}".rstrip())
                     if on_ground > 0:
@@ -697,7 +726,7 @@ class CombatManager:
             npc_loot = self.cog._npc_roll_table(npc_type, "loot")
             if npc_loot:
                 item, qty = npc_loot
-                if not try_auto_alch(item, qty):
+                if not try_auto_consume(item, qty) and not try_auto_alch(item, qty):
                     dest, on_ground = self.cog._try_put_item_or_ground_with_blacklist(p, item, qty, auto_drops)
                     loot_lines.append(f"👹 {npc_name} loot: **{item} x{qty}** {dest}".rstrip())
                     if on_ground > 0:
@@ -708,15 +737,20 @@ class CombatManager:
             npc_unique = self.cog._npc_roll_table_for_player(p, npc_type, "unique")
             if npc_unique:
                 item, qty = npc_unique
-                dest, on_ground = self.cog._try_put_item_or_ground_with_blacklist(p, item, qty, auto_drops)
 
-                if not self.cog._is_blacklisted(p, item):
+                if try_auto_consume(item, qty):
                     p.uniques[item] = p.uniques.get(item, 0) + qty
                     p.unique_drops += 1
+                else:
+                    dest, on_ground = self.cog._try_put_item_or_ground_with_blacklist(p, item, qty, auto_drops)
 
-                loot_lines.append(f"✨ UNIQUE: **{item} x{qty}** {dest}".rstrip())
-                if on_ground > 0:
-                    ground_drops.append((item, on_ground, int(p.wildy_run_id)))
+                    if not self.cog._is_blacklisted(p, item):
+                        p.uniques[item] = p.uniques.get(item, 0) + qty
+                        p.unique_drops += 1
+
+                    loot_lines.append(f"✨ UNIQUE: **{item} x{qty}** {dest}".rstrip())
+                    if on_ground > 0:
+                        ground_drops.append((item, on_ground, int(p.wildy_run_id)))
                 items_dropped += 1
                 broadcasts.append(("Unique", item, npc_name))
 

@@ -147,17 +147,17 @@
     { title: "Commands", url: "commands/index.html", tags: "commands list all" },
 
     // Command pages
-    { title: "Getting Started", url: "commands/getting-started.html", tags: "start reset profile create new beginner" },
+    { title: "Getting Started", url: "commands/getting-started.html", tags: "start reset profile create new beginner consume" },
     { title: "Combat", url: "commands/combat.html", tags: "fight venture attack tele teleport eat drink hp health combat pvp" },
     { title: "Inventory", url: "commands/inventory.html", tags: "inv inventory equip unequip gear drop inspect examine ground pickup blacklist lock" },
-    { title: "Banking", url: "commands/banking.html", tags: "bank deposit withdraw banking" },
+    { title: "Banking", url: "commands/banking.html", tags: "bank deposit depo withdraw banking noted" },
     { title: "Trading", url: "commands/trading.html", tags: "trade trading accept add remove cancel" },
     { title: "Shop", url: "commands/shop.html", tags: "shop buy sell list store" },
-    { title: "Crafting", url: "commands/crafting.html", tags: "craft craftables breakdown runecraft rc rune" },
+    { title: "Crafting", url: "commands/crafting.html", tags: "craft craftables breakdown runecraft rc rune cut gem enchant consume effigy" },
     { title: "Slayer", url: "commands/slayer.html", tags: "slayer task skip shop buy npcs block points xp" },
     { title: "Alchemy", url: "commands/alchemy.html", tags: "alch alchemy auto high alch nature rune coins" },
     { title: "Presets", url: "commands/presets.html", tags: "preset presets create load delete override check" },
-    { title: "Miscellaneous", url: "commands/misc.html", tags: "stats profile kc killcount highscores pets pet chest open misc" }
+    { title: "Miscellaneous", url: "commands/misc.html", tags: "stats profile kc killcount highscores pets pet chest open mysterious bone key misc" }
   ];
 
   /* Resolve URLs relative to the wiki root.

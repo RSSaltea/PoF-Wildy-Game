@@ -33,8 +33,14 @@
     </div>
 
     <div class="command-block">
-      <h3><code>!w deposit [item] [qty]</code></h3>
-      <p>Deposit items into your bank. Use <code>!w deposit all</code> to deposit everything. Noted items become unnoted in bank.</p>
+      <h3><code>!w deposit</code></h3>
+      <div class="aliases">Aliases: <code>!w depo</code></div>
+      <p>Deposit all inventory items into your bank. Respects locked items (they stay in inventory). Noted items are automatically converted to unnoted. Use <code>!w deposit all</code> to also deposit coins.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w depo &lt;item&gt;</code></h3>
+      <p>Deposit all of a specific item from your inventory into your bank. This overrides deposit locks, so locked items can be deposited by name. Example: <code>!w depo manta</code></p>
     </div>
 
     <div class="command-block">
