@@ -97,6 +97,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
 
     # Amulets
     "Amulet of Seeping": {"type": "amulet", "def": 0, "atk": 2, "stackable": False, "value": 12000, "aliases": "ammy of seeping,seeping"},
+    "Eclipse of the Five": {"type": "amulet", "atk": 6, "def": -1, "stackable": False, "value": 64000, "aliases": "eclipse,eotf,eclipse of the five,eclipse of five,eclipse amulet"},
 
     # Rings
     "Ring of Valthyros": {"type": "ring", "def": 5, "atk": 1, "stackable": False, "value": 10000, "aliases": "ring of valth,valth ring"},
@@ -139,7 +140,6 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Gold Bar": {"type": "misc", "stackable": False, "value": 2000, "aliases": "gold bar,gold,gbar"},
     "Omnigem": {"type": "misc", "stackable": False, "value": 50000, "aliases": "omnigem,omni gem"},
     "Omnigem Amulet": {"type": "misc", "stackable": False, "value": 60000, "aliases": "omnigem amulet,omni amulet,omnigem ammy"},
-    "Eclipse of the Five": {"type": "amulet", "atk": 6, "def": -1, "stackable": False, "value": 150000, "aliases": "eclipse,eotf,eclipse of the five,eclipse of five,eclipse amulet"},
     "Shadow Veil": {"type": "misc", "stackable": False, "value": 150000, "aliases": "shadow veil,sveil"},
     "Abyssal ash": {"type": "misc", "stackable": True, "value": 40, "aliases": "abyssal ash,ash"},
     "Abyssal charm": {"type": "misc", "stackable": True, "value": 50, "aliases": "abyssal charm,charm"},
