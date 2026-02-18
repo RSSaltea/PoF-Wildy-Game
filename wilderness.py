@@ -1501,7 +1501,21 @@ class Wilderness(commands.Cog):
         if not await self._ensure_ready(ctx):
             return
 
-        p = self._get_player(ctx.author)
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+            # Failsafe: convert any noted items in the bank to unnoted
+            changed = False
+            for item, qty in list(p.bank.items()):
+                if qty <= 0:
+                    continue
+                if self._is_noted(item):
+                    unnoted = self._unnote(item)
+                    self._add_item(p.bank, unnoted, qty)
+                    p.bank.pop(item, None)
+                    changed = True
+            if changed:
+                await self._persist()
+
         has_any = bool(p.bank) or bool(p.bank_coins)
         if not has_any:
             await ctx.reply("Your bank is empty.")
