@@ -76,6 +76,58 @@
     { title: "Wristwraps of the Damned", url: "items/wristwraps-of-the-damned.html", tags: "wristwraps damned gloves bleed overlord" },
     { title: "Bracelet of Slayer Aggression", url: "items/bracelet-of-slayer-aggression.html", tags: "bracelet slayer aggression gloves guarantee task chaos rune" },
 
+    // Food
+    { title: "Lobster", url: "items/lobster.html", tags: "lobster food heal 12" },
+    { title: "Shark", url: "items/shark.html", tags: "shark food heal 20" },
+    { title: "Manta Ray", url: "items/manta-ray.html", tags: "manta ray food heal 22" },
+    { title: "Anglerfish", url: "items/anglerfish.html", tags: "anglerfish angler food heal 24" },
+    { title: "Veilfruit", url: "items/veilfruit.html", tags: "veilfruit food heal 28" },
+
+    // Potions
+    { title: "Strength (4)", url: "items/strength-4.html", tags: "strength potion str pot attack boost" },
+    { title: "Super Strength (4)", url: "items/super-strength-4.html", tags: "super strength potion sup str attack boost" },
+
+    // Runes
+    { title: "Nature rune", url: "items/nature-rune.html", tags: "nature rune nat alchemy runecraft" },
+    { title: "Chaos rune", url: "items/chaos-rune.html", tags: "chaos rune runecraft slayer aggression" },
+    { title: "Law rune", url: "items/law-rune.html", tags: "law rune runecraft" },
+    { title: "Death rune", url: "items/death-rune.html", tags: "death rune runecraft" },
+    { title: "Blood rune", url: "items/blood-rune.html", tags: "blood rune runecraft seeping" },
+    { title: "Bone Rune", url: "items/bone-rune.html", tags: "bone rune drop" },
+
+    // Materials & Pouches
+    { title: "Pure essence", url: "items/pure-essence.html", tags: "pure essence ess runecraft material" },
+    { title: "Small pouch", url: "items/small-pouch.html", tags: "small pouch essence runecraft" },
+    { title: "Medium pouch", url: "items/medium-pouch.html", tags: "medium pouch essence runecraft" },
+    { title: "Large pouch", url: "items/large-pouch.html", tags: "large pouch essence runecraft" },
+    { title: "Giant pouch", url: "items/giant-pouch.html", tags: "giant pouch essence runecraft netharis" },
+    { title: "Colossal pouch", url: "items/colossal-pouch.html", tags: "colossal pouch essence runecraft" },
+    { title: "Revenant ether", url: "items/revenant-ether.html", tags: "revenant ether rev ether chainmace fuel material" },
+    { title: "Cyclops Eye", url: "items/cyclops-eye.html", tags: "cyclops eye material craft" },
+    { title: "Abyssal ash", url: "items/abyssal-ash.html", tags: "abyssal ash material craft chainmace" },
+    { title: "Abyssal charm", url: "items/abyssal-charm.html", tags: "abyssal charm material craft slayer helmet" },
+    { title: "Overlord core fragment", url: "items/overlord-core-fragment.html", tags: "overlord core fragment material craft chainmace" },
+    { title: "Revenant Relic Shard", url: "items/revenant-relic-shard.html", tags: "revenant relic shard material craft defender" },
+    { title: "Revenant Totem", url: "items/revenant-totem.html", tags: "revenant totem material craft defender" },
+    { title: "Cursed Bone", url: "items/cursed-bone.html", tags: "cursed bone material craft defender archon" },
+    { title: "Shadow Veil", url: "items/shadow-veil.html", tags: "shadow veil material craft shady slayer masked figure" },
+
+    // Valuables & Keys
+    { title: "Mysterious key", url: "items/mysterious-key.html", tags: "mysterious key chest open shop loot" },
+    { title: "Bone key", url: "items/bone-key.html", tags: "bone key archon" },
+    { title: "Ancient Effigy", url: "items/ancient-effigy.html", tags: "ancient effigy valuable alch" },
+    { title: "Ancient Emblem", url: "items/ancient-emblem.html", tags: "ancient emblem valuable alch rare" },
+    { title: "Uncut sapphire", url: "items/uncut-sapphire.html", tags: "uncut sapphire gem" },
+    { title: "Uncut emerald", url: "items/uncut-emerald.html", tags: "uncut emerald gem" },
+    { title: "Uncut diamond", url: "items/uncut-diamond.html", tags: "uncut diamond gem" },
+    { title: "Uncut dragonstone", url: "items/uncut-dragonstone.html", tags: "uncut dragonstone gem" },
+
+    // Pets
+    { title: "Tiny Revenant", url: "items/tiny-revenant.html", tags: "tiny revenant pet rev" },
+    { title: "Baby Chaos Fanatic", url: "items/baby-chaos-fanatic.html", tags: "baby chaos fanatic pet" },
+    { title: "Mini Overlord", url: "items/mini-overlord.html", tags: "mini overlord pet abyssal" },
+    { title: "Lil' Undying", url: "items/lil-undying.html", tags: "lil undying pet netharis" },
+
     // Commands index
     { title: "Commands", url: "commands/index.html", tags: "commands list all" },
 
