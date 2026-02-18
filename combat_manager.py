@@ -650,9 +650,10 @@ class CombatManager:
 
         def try_auto_alch(item: str, qty: int) -> bool:
             alch_list = getattr(p, "alch_auto", None) or []
-            if item not in alch_list:
+            base_item = item[len("Noted "):] if item.startswith("Noted ") else item
+            if base_item not in alch_list:
                 return False
-            value = ITEMS.get(item, {}).get("value", 0)
+            value = ITEMS.get(base_item, {}).get("value", 0)
             if value <= 0:
                 return False
             nats = p.inventory.get("Nature rune", 0)
