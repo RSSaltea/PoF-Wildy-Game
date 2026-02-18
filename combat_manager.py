@@ -623,6 +623,13 @@ class CombatManager:
                     netharis_debuff_hits = 5
                     events.append("💀 **Netharis the Undying** curses you! Your defence is reduced by **4** for **5** hits.")
 
+            # Lord Valthyros 10% life steal - heals 100% of damage dealt
+            if npc_name == "Lord Valthyros" and your_hp > 0 and npc_hp > 0 and npc_hit > 0:
+                if random.random() < 0.10:
+                    heal_amt = npc_hit
+                    npc_hp = min(npc_hp + heal_amt, npc_max)
+                    events.append(f"🩸 **Lord Valthyros** drains your blood! Heals **{heal_amt} HP** | {npc_name}: **{npc_hp}/{npc_max}**")
+
         if your_hp <= 0:
             lost_items = dict(p.inventory)
             p.inventory.clear()

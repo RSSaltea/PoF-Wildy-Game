@@ -168,4 +168,22 @@ ITEM_EFFECTS = {
     "Slayer Helmet": {"effect": "When worn, increases damage dealt to your current slayer task NPC by 20%."},
     "Shady Slayer Helm": {"effect": "When worn, increases damage dealt to your current slayer task NPC by 27%."},
     "Bracelet of Slayer Aggression": {"effect": "When worn, guarantees finding your slayer task NPC when using !w fight <npc>. Costs 20 Chaos runes per fight."},
+    # Potions
+    "Strength (4)": {"effect": "Drink with `!w drink`. Grants +2 attack for 10 hits. 4 doses."},
+    "Strength (3)": {"effect": "Drink with `!w drink`. Grants +2 attack for 10 hits. 3 doses remaining."},
+    "Strength (2)": {"effect": "Drink with `!w drink`. Grants +2 attack for 10 hits. 2 doses remaining."},
+    "Strength (1)": {"effect": "Drink with `!w drink`. Grants +2 attack for 10 hits. 1 dose remaining."},
+    "Super Strength (4)": {"effect": "Drink with `!w drink`. Grants +4 attack for 20 hits. 4 doses."},
+    "Super Strength (3)": {"effect": "Drink with `!w drink`. Grants +4 attack for 20 hits. 3 doses remaining."},
+    "Super Strength (2)": {"effect": "Drink with `!w drink`. Grants +4 attack for 20 hits. 2 doses remaining."},
+    "Super Strength (1)": {"effect": "Drink with `!w drink`. Grants +4 attack for 20 hits. 1 dose remaining."},
+    # Keys
+    "Mysterious key": {"effect": "Used to open the Wilderness Chest via `!w chest open mysterious`. Grants coins and a chance at rare loot."},
+    "Bone key": {"effect": "Used to open the Bone Chest via `!w chest open bone`. Grants coins and a chance at Cursed Bones, Bone Runes, or Dragon platebody."},
+    # Pouches
+    "Small pouch": {"effect": "Holds 4 Pure essence. Increases runes crafted per `!w rc` by the stored amount."},
+    "Medium pouch": {"effect": "Holds 6 Pure essence. Increases runes crafted per `!w rc` by the stored amount."},
+    "Large pouch": {"effect": "Holds 9 Pure essence. Increases runes crafted per `!w rc` by the stored amount."},
+    "Giant pouch": {"effect": "Holds 12 Pure essence. Increases runes crafted per `!w rc` by the stored amount."},
+    "Colossal pouch": {"effect": "Holds 16 Pure essence. Increases runes crafted per `!w rc` by the stored amount."},
 }
