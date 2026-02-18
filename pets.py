@@ -43,6 +43,10 @@ PET_ALIASES: Dict[str, str] = {
     "veil pet": "Zarvethy",
 
     "valth pet": "Splat",
+
+    "lil undying": "Lil' Undying",
+    "undying pet": "Lil' Undying",
+    "netharis pet": "Lil' Undying",
 }
 
 def resolve_pet(query: str) -> Optional[str]:

@@ -4,7 +4,7 @@ import random
 from typing import Dict, Any, Optional, Tuple, List, TYPE_CHECKING
 
 from .models import PlayerState, DuelState, clamp, parse_chance, _now
-from .npcs import NPCS
+from .npcs import NPCS, NPC_SLAYER
 from .items import FOOD, ITEMS
 
 if TYPE_CHECKING:
@@ -165,7 +165,7 @@ class CombatManager:
     
     def npc_info_embed(self, npc_name: str, guild: Optional[discord.Guild]) -> discord.Embed:
         npc = self.cog._resolve_npc(npc_name) or NPCS[0]
-        name, base_hp, tier, min_wildy, npc_type, atk_bonus, def_bonus = npc
+        name, base_hp, tier, min_wildy, npc_type, atk_bonus, def_bonus = npc["name"], npc["hp"], npc["tier"], npc["min_wildy"], npc["npc_type"], npc["atk"], npc["def"]
 
         drops = (self.cog.config.get("npc_drops", {}) or {}).get(npc_type, {}) or {}
         coins_range = drops.get("coins_range", [0, 0])
@@ -186,9 +186,13 @@ class CombatManager:
                     continue
             return "\n".join(lines) if lines else "(none)"
 
+        slayer_info = NPC_SLAYER.get(npc_type)
+        desc = f"Min Wilderness level: **{min_wildy}**\nType: **{npc_type}**\nTier: **{tier}**"
+        if slayer_info:
+            desc += f"\n\n🗡️ **Slayer**\nLevel required: **{slayer_info['level']}**\nXP per kill: **{slayer_info['xp']}**"
         emb = discord.Embed(
             title=f"👹 NPC: {name}",
-            description=f"Min Wilderness level: **{min_wildy}**\nType: **{npc_type}**\nTier: **{tier}**",
+            description=desc,
         )
         emb.add_field(
             name="Base Stats",
@@ -490,7 +494,7 @@ class CombatManager:
     def simulate_pvm_fight_and_loot(
         self,
         p: PlayerState,
-        chosen_npc: Tuple[str, int, int, int, str, int, int],
+        chosen_npc: Dict[str, Any],
         *,
         header_lines: Optional[List[str]] = None,
     ) -> Tuple[bool, str, List[str], Dict[str, int], int, List[str], List[Tuple[str, int, int]], Dict[str, int], List[Tuple[str, str, str]]]:
@@ -500,7 +504,7 @@ class CombatManager:
          loot_lines_on_win, ground_drops, eaten_food, broadcasts)
         broadcasts: [(drop_type, item_name, npc_name), ...] for unique/special/pet
         """
-        npc_name, npc_hp, npc_tier, _, npc_type, npc_atk_bonus, npc_def_bonus = chosen_npc
+        npc_name, npc_hp, npc_tier, npc_type, npc_atk_bonus, npc_def_bonus = chosen_npc["name"], chosen_npc["hp"], chosen_npc["tier"], chosen_npc["npc_type"], chosen_npc["atk"], chosen_npc["def"]
 
         npc_hp += int(p.wildy_level / 8)
         npc_max = npc_hp
@@ -521,6 +525,7 @@ class CombatManager:
 
         force_zero_next_hit = False
         bleed_hits = 0
+        netharis_debuff_hits = 0
 
         while npc_hp > 0 and your_hp > 0:
             charged = False
@@ -556,6 +561,14 @@ class CombatManager:
                 hit += 2
                 events.append(f"🩸 Bleed deals +2 damage. ({bleed_hits} hits remaining)")
 
+            # Slayer Helm bonus - 20%/27% damage on task
+            helm = p.equipment.get("helm", "")
+            if helm in ("Slayer Helmet", "Shady Slayer Helm") and hit > 0:
+                task = getattr(p, "slayer_task", None)
+                if task and task.get("npc_type") == npc_type and int(task.get("remaining", 0)) > 0:
+                    mult = 1.27 if helm == "Shady Slayer Helm" else 1.20
+                    hit = int(hit * mult)
+
             npc_hp = max(0, npc_hp - hit)
             events.append(f"🗡️ You hit **{hit}** | You: **{your_hp}/{self.cog.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**")
             events.extend(self.cog._consume_buffs_on_hit(p))
@@ -568,12 +581,23 @@ class CombatManager:
             if npc_hp <= 0:
                 break
 
+            def_for_roll = your_def
+            if netharis_debuff_hits > 0:
+                def_for_roll = max(0, your_def - 4)
+                netharis_debuff_hits -= 1
+
             roll_na = random.randint(0, npc_atk)
-            roll_nd = random.randint(0, your_def)
+            roll_nd = random.randint(0, def_for_roll)
             npc_hit = max(0, roll_na - roll_nd)
 
             if npc_type in REVENANT_TYPES and p.equipment.get("amulet") == "Bracelet of ethereum":
                 npc_hit = int(npc_hit * 0.5)
+
+            # Shroud of the Undying - 2% chance to nullify incoming hit
+            if p.equipment.get("cape") == "Shroud of the Undying" and npc_hit > 0:
+                if random.random() < 0.02:
+                    npc_hit = 0
+                    events.append("🛡️ **Shroud of the Undying** nullifies the hit!")
 
             your_hp = clamp(your_hp - npc_hit, 0, int(self.cog.config["max_hp"]))
             events.append(f"💥 {npc_name} hits **{npc_hit}** | You: **{your_hp}/{self.cog.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**")
@@ -593,6 +617,12 @@ class CombatManager:
                     force_zero_next_hit = True
                     events.append("🌀 **Zarveth the Veilbreaker** shatters the veil! Your **next hit will deal 0**.")
 
+            # Netharis 15% proc - reduces player DEF by 4 for 5 hits
+            if npc_name == "Netharis the Undying" and your_hp > 0 and npc_hp > 0:
+                if random.random() < 0.15:
+                    netharis_debuff_hits = 5
+                    events.append("💀 **Netharis the Undying** curses you! Your defence is reduced by **4** for **5** hits.")
+
         if your_hp <= 0:
             lost_items = dict(p.inventory)
             p.inventory.clear()
@@ -607,6 +637,9 @@ class CombatManager:
         p.npc_kills[npc_name] = p.npc_kills.get(npc_name, 0) + 1
         p.hp = your_hp
 
+        # Slayer XP and task progress
+        slayer_xp, task_done, slayer_pts = self.cog.slayer_mgr.on_npc_kill(p, npc_type)
+
         loot_lines: List[str] = []
         auto_drops: Dict[str, int] = {}
         ground_drops: List[Tuple[str, int, int]] = []  # (item, qty, run_id)
@@ -614,6 +647,22 @@ class CombatManager:
 
         max_items = 3
         items_dropped = 0
+
+        def try_auto_alch(item: str, qty: int) -> bool:
+            alch_list = getattr(p, "alch_auto", None) or []
+            if item not in alch_list:
+                return False
+            value = ITEMS.get(item, {}).get("value", 0)
+            if value <= 0:
+                return False
+            nats = p.inventory.get("Nature rune", 0)
+            if nats < qty:
+                return False
+            total_gp = value * qty
+            p.coins += total_gp
+            self.cog._remove_item(p.inventory, "Nature rune", qty)
+            loot_lines.append(f"🔥 Auto-alch: **{item} x{qty}** → **{total_gp:,} coins** (-{qty} Nature rune)")
+            return True
 
         coins = self.cog._npc_coin_roll(npc_type)
         if coins > 0:
@@ -629,20 +678,22 @@ class CombatManager:
             w_roll = self.cog._loot_for_level(p.wildy_level)
             if w_roll:
                 item, qty = w_roll
-                dest, on_ground = self.cog._try_put_item_or_ground_with_blacklist(p, item, qty, auto_drops)
-                loot_lines.append(f"🎁 Wildy loot: **{item} x{qty}** {dest}".rstrip())
-                if on_ground > 0:
-                    ground_drops.append((item, on_ground, int(p.wildy_run_id)))
+                if not try_auto_alch(item, qty):
+                    dest, on_ground = self.cog._try_put_item_or_ground_with_blacklist(p, item, qty, auto_drops)
+                    loot_lines.append(f"🎁 Wildy loot: **{item} x{qty}** {dest}".rstrip())
+                    if on_ground > 0:
+                        ground_drops.append((item, on_ground, int(p.wildy_run_id)))
                 items_dropped += 1
 
         if can_drop():
             npc_loot = self.cog._npc_roll_table(npc_type, "loot")
             if npc_loot:
                 item, qty = npc_loot
-                dest, on_ground = self.cog._try_put_item_or_ground_with_blacklist(p, item, qty, auto_drops)
-                loot_lines.append(f"👹 {npc_name} loot: **{item} x{qty}** {dest}".rstrip())
-                if on_ground > 0:
-                    ground_drops.append((item, on_ground, int(p.wildy_run_id)))
+                if not try_auto_alch(item, qty):
+                    dest, on_ground = self.cog._try_put_item_or_ground_with_blacklist(p, item, qty, auto_drops)
+                    loot_lines.append(f"👹 {npc_name} loot: **{item} x{qty}** {dest}".rstrip())
+                    if on_ground > 0:
+                        ground_drops.append((item, on_ground, int(p.wildy_run_id)))
                 items_dropped += 1
 
         if can_drop():
@@ -683,6 +734,12 @@ class CombatManager:
                 p.pet_drops += 1
             loot_lines.append(f"🐾 PET: **{pet}**")
             broadcasts.append(("Pet", pet, npc_name))
+
+        if slayer_xp > 0 or task_done:
+            slayer_lvl = self.cog.slayer_mgr.get_slayer_level(p)
+            loot_lines.append(f"🗡️ Slayer XP: **+{slayer_xp}** (Level {slayer_lvl})")
+            if task_done:
+                loot_lines.append(f"✅ **Slayer task complete!** +**{slayer_pts}** points (Total: **{int(p.slayer_points or 0)}**)")
 
         if auto_drops:
             loot_lines.append("🗑️ Auto-dropped (blacklist):")

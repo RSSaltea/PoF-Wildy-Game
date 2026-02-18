@@ -87,6 +87,9 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Zarveth's Ascendant Platebody": {"type": "body", "def": 5, "atk": 4, "stackable": False, "value": 142000, "aliases": "zarveth plate,zarveths plate,zarveths platebody,zarveths body"},
     "Zarveth's Ascendant Platelegs": {"type": "legs", "def": 4, "atk": 3, "stackable": False, "value": 72000, "aliases": "zarveth legs,zarveths platelegs,zarveths legs"},
     "Zarveth's Ascendant Mask": {"type": "helm", "def": 3, "atk": 1, "stackable": False, "value": 62000, "aliases": "zarveth mask,zarveths mask"},
+    "Black Mask": {"type": "helm", "stackable": False, "value": 100000, "aliases": "black mask,bmask"},
+    "Slayer Helmet": {"type": "helm", "stackable": False, "value": 250000, "aliases": "slayer helm,slayer helmet"},
+    "Shady Slayer Helm": {"type": "helm", "def": 2, "stackable": False, "value": 400000, "aliases": "shady slayer helm,shady helm,shady slayer helmet"},
 
     # Amulets
     "Amulet of Seeping": {"type": "amulet", "def": 0, "atk": 2, "stackable": False, "value": 12000, "aliases": "ammy of seeping,seeping"},
@@ -94,9 +97,13 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     # Rings
     "Ring of Valthyros": {"type": "ring", "def": 5, "atk": 1, "stackable": False, "value": 10000, "aliases": "ring of valth,valth ring"},
 
+    # Capes
+    "Shroud of the Undying": {"type": "cape", "def": 5, "stackable": False, "value": 200000, "aliases": "shroud,undying shroud,undying cape"},
+
     # Wearables (effects described in ITEM_EFFECTS)
     "Bracelet of ethereum": {"type": "gloves", "stackable": False, "value": 12000, "aliases": "ethereum bracelet,bracelet ethereum,bracelet of ethereum,bracelet of ether,ether bracelet,bracelet ether"},
     "Wristwraps of the Damned": {"type": "gloves", "stackable": False, "value": 54000, "aliases": "wristwraps of damned,wotd,wraps of the damned,wristwraps of the damned"},
+    "Bracelet of Slayer Aggression": {"type": "gloves", "stackable": False, "value": 80000, "aliases": "brace of slayer,brace of aggro,brace of aggression,slayer bracelet,slayer brace,aggro bracelet,aggro brace,bracelet of aggression,bracelet of aggro"},
 
     # Stackable / misc drops
     "Small pouch": {"type": "esspouch", "essstorage": 4, "stackable": False, "value": 0, "aliases": "spouch"},
@@ -112,8 +119,11 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Death rune": {"type": "rune", "multiplier": 0, "stackable": True, "value": 320, "aliases": "death rune,deaths,death runes"},
     "Blood rune": {"type": "rune", "multiplier": 0, "stackable": True, "value": 320, "aliases": "blood rune,bloods,blood runes"},
     "Chaos rune": {"type": "rune", "multiplier": 1, "stackable": True, "value": 240, "aliases": "chaos rune,chaos runes,chaos"},
-    "Uncut sapphire": {"type": "misc", "stackable": False, "value": 5000, "aliases": "uncut sapphire,sapphire,uncut sapphires"},
-    "Uncut emerald": {"type": "misc", "stackable": False, "value": 7500, "aliases": "uncut emerald,emerald,uncut emeralds"},
+    "Uncut sapphire": {"type": "misc", "stackable": False, "value": 500, "aliases": "uncut sapphire,sapphire,uncut sapphires"},
+    "Uncut emerald": {"type": "misc", "stackable": False, "value": 750, "aliases": "uncut emerald,emerald,uncut emeralds"},
+    "Uncut diamond": {"type": "misc", "stackable": False, "value": 1500, "aliases": "uncut diamond,diamond,uncut diamonds"},
+    "Uncut dragonstone": {"type": "misc", "stackable": False, "value": 3000, "aliases": "uncut dragonstone,dragonstone,uncut dragonstones"},
+    "Shadow Veil": {"type": "misc", "stackable": False, "value": 150000, "aliases": "shadow veil,sveil"},
     "Abyssal ash": {"type": "misc", "stackable": True, "value": 40, "aliases": "abyssal ash,ash"},
     "Abyssal charm": {"type": "misc", "stackable": True, "value": 50, "aliases": "abyssal charm,charm"},
     "Overlord core fragment": {"type": "misc", "stackable": False, "value": 500000, "aliases": "core fragment,overlord fragment,overlord core fragment"},
@@ -129,6 +139,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Tiny Revenant": {"type": "misc", "stackable": False, "value": 0, "aliases": "tiny revenant,rev pet"},
     "Baby Chaos Fanatic": {"type": "misc", "stackable": False, "value": 0, "aliases": "baby chaos fanatic,fanatic pet"},
     "Mini Overlord": {"type": "misc", "stackable": False, "value": 0, "aliases": "mini overlord,overlord pet"},
+    "Lil' Undying": {"type": "misc", "stackable": False, "value": 0, "aliases": "lil undying,undying pet"},
 
     # Potions
     "Strength (4)": {"type": "misc", "stackable": False, "value": 5000, "aliases": "strength,str,str pot"},
@@ -147,6 +158,10 @@ ITEM_EFFECTS = {
     "Viggora's Chainmace": {"effect": "Grants +16 attack against ALL NPCs at a cost of 3 Revenant ether per hit (no bonus in PvP)."},
     "Abyssal Chainmace": {"effect": "Grants +28 attack against ALL NPCs at a cost of 3 Revenant ether per hit (no bonus in PvP)."},
     "Amulet of Seeping": {"effect": "Heals 1 + 2% of damage dealt at the cost of 5 Blood runes per successful hit."},
+    "Shroud of the Undying": {"effect": "2% chance to completely nullify incoming damage on any hit."},
+    "Slayer Helmet": {"effect": "When worn, increases damage dealt to your current slayer task NPC by 20%."},
+    "Shady Slayer Helm": {"effect": "When worn, increases damage dealt to your current slayer task NPC by 27%."},
+    "Bracelet of Slayer Aggression": {"effect": "When worn, guarantees finding your slayer task NPC when using !w fight <npc>. Costs 20 Chaos runes per fight."},
 }
 
 

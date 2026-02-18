@@ -212,12 +212,12 @@ class NPCInfoSelect(discord.ui.Select):
         self.cog = cog
         self.author_id = author_id
         options = []
-        for (name, base_hp, tier, min_wildy, npc_type, atk_bonus, def_bonus) in NPCS:
+        for npc in NPCS:
             options.append(
                 discord.SelectOption(
-                    label=name,
-                    description=f"Min wildy {min_wildy} • Tier {tier}",
-                    value=name,
+                    label=npc["name"],
+                    description=f"Min wildy {npc['min_wildy']} • Tier {npc['tier']}",
+                    value=npc["name"],
                 )
             )
         super().__init__(
@@ -583,4 +583,66 @@ class KillCountView(discord.ui.View):
     async def on_timeout(self):
         for child in self.children:
             if isinstance(child, discord.ui.Button):
+                child.disabled = True
+
+
+# ── Highscores dropdown ─────────────────────────────────────────
+
+HIGHSCORE_CATEGORIES = [
+    ("overall", "🏆 Overall"),
+    ("kills", "⚔️ Kills"),
+    ("deaths", "💀 Deaths"),
+    ("coins", "💰 Wealth"),
+    ("slayer", "🗡️ Slayer"),
+    ("unique", "✨ Unique Drops"),
+    ("pets", "🐾 Pets"),
+    ("tasks", "🗡️ Slayer Tasks"),
+]
+
+
+class HighscoresSelect(discord.ui.Select):
+
+    def __init__(self, cog: "Wilderness", author_id: int, guild: Optional[discord.Guild], current: str):
+        self.cog = cog
+        self.author_id = author_id
+        self.guild = guild
+
+        opts = []
+        for key, label in HIGHSCORE_CATEGORIES:
+            opts.append(discord.SelectOption(label=label, value=key, default=(key == current)))
+
+        super().__init__(
+            placeholder="Select a category…",
+            min_values=1,
+            max_values=1,
+            options=opts,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the command user can use this menu.", ephemeral=True)
+            return
+
+        cat = self.values[0]
+        emb = self.cog._highscores_embed(cat, self.guild)
+        view = HighscoresView(self.cog, self.author_id, self.guild, cat)
+        await interaction.response.edit_message(embed=emb, view=view)
+
+
+class HighscoresView(discord.ui.View):
+
+    def __init__(self, cog: "Wilderness", author_id: int, guild: Optional[discord.Guild], current: str):
+        super().__init__(timeout=180)
+        self.author_id = author_id
+        self.add_item(HighscoresSelect(cog, author_id, guild, current))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the command user can use this menu.", ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self):
+        for child in self.children:
+            if isinstance(child, discord.ui.Select):
                 child.disabled = True

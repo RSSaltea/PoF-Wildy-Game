@@ -1,18 +1,42 @@
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List
 
-# name, base_hp, tier, min_wildy, npc_type, atk_bonus, def_bonus
-NPCS: List[Tuple[str, int, int, int, str, int, int]] = [
-    ("Revenant goblin", 50, 1, 1, "revenant", 3, 1),
-    ("Revenant knight", 50, 2, 10, "revenant knight", 5, 3),
-    ("Chaos fanatic", 90, 3, 20, "chaos_fanatic", 7, 5),
-    ("Revenant necromancer", 140, 4, 20, "revenant necro", 10, 0),
-    ("Revenant abyssal demon", 140, 4, 35, "revenant demon", 9, 3),
-    ("Blighted Cyclops", 120, 4, 35, "blight cyclops", 7, 4),
-    ("Abyssal Overlord", 280, 4, 35, "overlord", 11, 7),
-    ("Lord Valthyros", 250, 4, 35, "valthyros", 6, 12),
-    ("Revenant Archon", 200, 4, 40, "revenant archon", 13, 8),
-    ("Zarveth the Veilbreaker", 420, 5, 45, "veilbreaker", 22, 4),
+# Optional slayer keys: slayer_level, slayer_xp, task_range
+NPCS: List[Dict[str, Any]] = [
+    {"name": "Revenant goblin", "hp": 50, "tier": 1, "min_wildy": 1, "npc_type": "revenant",
+     "atk": 3, "def": 1, "slayer_level": 1, "slayer_xp": 15, "task_range": [15, 30]},
+    {"name": "Revenant knight", "hp": 50, "tier": 2, "min_wildy": 10, "npc_type": "revenant knight",
+     "atk": 5, "def": 3, "slayer_level": 10, "slayer_xp": 30, "task_range": [15, 25]},
+    {"name": "Chaos fanatic", "hp": 90, "tier": 3, "min_wildy": 20, "npc_type": "chaos_fanatic",
+     "atk": 7, "def": 5, "slayer_level": 15, "slayer_xp": 50, "task_range": [10, 20]},
+    {"name": "Revenant necromancer", "hp": 140, "tier": 4, "min_wildy": 20, "npc_type": "revenant necro",
+     "atk": 10, "def": 0, "slayer_level": 25, "slayer_xp": 75, "task_range": [10, 20]},
+    {"name": "Revenant abyssal demon", "hp": 140, "tier": 4, "min_wildy": 35, "npc_type": "revenant demon",
+     "atk": 9, "def": 3, "slayer_level": 30, "slayer_xp": 75, "task_range": [10, 20]},
+    {"name": "Blighted Cyclops", "hp": 120, "tier": 4, "min_wildy": 35, "npc_type": "blight cyclops",
+     "atk": 7, "def": 4, "slayer_level": 25, "slayer_xp": 60, "task_range": [10, 20]},
+    {"name": "Abyssal Overlord", "hp": 280, "tier": 4, "min_wildy": 35, "npc_type": "overlord",
+     "atk": 11, "def": 7, "slayer_level": 40, "slayer_xp": 150, "task_range": [8, 15]},
+    {"name": "Lord Valthyros", "hp": 250, "tier": 4, "min_wildy": 35, "npc_type": "valthyros",
+     "atk": 6, "def": 12, "slayer_level": 40, "slayer_xp": 130, "task_range": [8, 15]},
+    {"name": "Revenant Archon", "hp": 200, "tier": 4, "min_wildy": 40, "npc_type": "revenant archon",
+     "atk": 13, "def": 8, "slayer_level": 45, "slayer_xp": 110, "task_range": [8, 15]},
+    {"name": "Zarveth the Veilbreaker", "hp": 420, "tier": 5, "min_wildy": 45, "npc_type": "veilbreaker",
+     "atk": 22, "def": 4, "slayer_level": 55, "slayer_xp": 220, "task_range": [5, 12]},
+    {"name": "Masked Figure", "hp": 460, "tier": 5, "min_wildy": 47, "npc_type": "masked_figure",
+     "atk": 16, "def": 10, "slayer_level": 70, "slayer_xp": 240, "task_range": [6, 14]},
+    {"name": "Netharis the Undying", "hp": 550, "tier": 5, "min_wildy": 50, "npc_type": "netharis",
+     "atk": 18, "def": 14, "slayer_level": 85, "slayer_xp": 300, "task_range": [3, 10]},
 ]
+
+# Auto-generated from NPCS — do not edit manually
+NPC_SLAYER: Dict[str, Dict[str, Any]] = {}
+for _npc in NPCS:
+    if "slayer_level" in _npc:
+        NPC_SLAYER[_npc["npc_type"]] = {
+            "level": _npc["slayer_level"],
+            "xp": _npc["slayer_xp"],
+            "task_range": _npc["task_range"],
+        }
 
 NPC_DROPS: Dict[str, Dict[str, Any]] = {
     "revenant": {
@@ -88,6 +112,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
         "unique": [
             {"item": "Dragon 2h sword", "min": 1, "max": 1, "chance": "1/100"},
             {"item": "Ancient Effigy", "min": 1, "max": 1, "chance": "1/300"},
+            {"item": "Bracelet of Slayer Aggression", "min": 1, "max": 1, "chance": "1/850", "on_task_chance": "1/250"},
         ],
         "pet": [
             {"item": "Baby Chaos Fanatic", "min": 1, "max": 1, "chance": "1/1000"},
@@ -174,6 +199,34 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Cursed Bone", "min": 1, "max": 1, "chance": "1/20"},
             {"item": "Bracelet of ethereum", "min": 1, "max": 1, "chance": "1/150"},
             {"item": "Ancient Emblem", "min": 1, "max": 1, "chance": "1/400", "noted": True},
+        ],
+    },
+    "masked_figure": {
+        "coins_range": [0, 30000],
+        "unique": [
+            {"item": "Black Mask", "min": 1, "max": 1, "chance": "1/1000", "on_task_chance": "1/250"},
+            {"item": "Shadow Veil", "min": 1, "max": 1, "chance": "1/400"},
+        ],
+        "loot": [
+            {"item": "Death rune", "min": 20, "max": 100, "chance": "1/2"},
+            {"item": "Uncut sapphire", "min": 1, "max": 3, "chance": "1/4", "noted": True},
+            {"item": "Abyssal charm", "min": 5, "max": 15, "chance": "1/4"},
+            {"item": "Veilfruit", "min": 2, "max": 5, "chance": "1/5"},
+        ],
+    },
+    "netharis": {
+        "coins_range": [0, 50000],
+        "unique": [
+            {"item": "Shroud of the Undying", "min": 1, "max": 1, "chance": "1/500"},
+            {"item": "Giant pouch", "min": 1, "max": 1, "chance": "1/100"},
+        ],
+        "pet": [
+            {"item": "Lil' Undying", "min": 1, "max": 1, "chance": "1/3000"},
+        ],
+        "loot": [
+            {"item": "Pure essence", "min": 30, "max": 150, "chance": "1/5", "noted": True},
+            {"item": "Uncut diamond", "min": 1, "max": 3, "chance": "1/15", "noted": True},
+            {"item": "Uncut dragonstone", "min": 1, "max": 2, "chance": "1/20", "noted": True},
         ],
     },
     "valthyros": {

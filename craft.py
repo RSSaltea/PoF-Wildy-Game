@@ -75,6 +75,10 @@ class CraftManager:
             remaining = CRAFT_COOLDOWN_SEC - elapsed
             return False, f"Crafting on cooldown — **{remaining}s** remaining."
 
+        unlock = recipe.get("requires_unlock")
+        if unlock and unlock not in (p.slayer_unlocks or []):
+            return False, f"You haven't unlocked the ability to craft **{item_name}**."
+
         ok, msg = self.check_materials(p, item_name)
         if not ok:
             return False, msg

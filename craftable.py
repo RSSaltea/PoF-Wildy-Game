@@ -23,4 +23,21 @@ CRAFTABLES: Dict[str, Dict[str, Any]] = {
         },
         "description": "A devastating mace forged from abyssal remnants. Consumes 3 Revenant ether per hit for a massive NPC attack bonus.",
     },
+    "Slayer Helmet": {
+        "materials": {
+            "Black Mask": 1,
+            "Chaos rune": 25000,
+            "Cyclops Eye": 5,
+            "Abyssal charm": 500,
+        },
+        "description": "A helmet infused with slayer knowledge. Increases damage to slayer task targets by 10%.",
+        "requires_unlock": "slayer_helmet",
+    },
+    "Shady Slayer Helm": {
+        "materials": {
+            "Slayer Helmet": 1,
+            "Shadow Veil": 1,
+        },
+        "description": "An upgraded slayer helmet shrouded in shadow. Increases damage to slayer task targets by 13% and grants +2 DEF.",
+    },
 }

@@ -43,6 +43,7 @@ from .ui_components import (
     InventoryView,
     GroundView,
     KillCountView,
+    HighscoresView,
 )
 
 from .player_manager import PlayerManager
@@ -55,6 +56,8 @@ from .breakdown import BreakdownManager
 from .breakdownitems import BREAKDOWNS
 from .runecraft import RunecraftManager
 from .preset import PresetManager
+from .slayer import SlayerManager, SLAYER_SHOP, SLAYER_BLOCK_COST, MAX_SLAYER_BLOCKS
+from .npcs import NPC_SLAYER
 
 ALLOWED_CHANNEL_IDS = {1465451116803391529, 1472610522313523323, 1472942650381570171, 1472986472700448768, 1473103361862664338}
 TRADE_ONLY_CHANNEL_IDS = {1472986668695814277}
@@ -62,7 +65,7 @@ INFO_ONLY_CHANNEL_IDS = {1472997615766343740}
 BROADCAST_CHANNEL_ID = 1473373945729126641
 
 TRADE_CHANNEL_CMDS = {"w trade", "w deposit", "w bank", "w inv", "w inventory"}
-INFO_CHANNEL_CMDS = {"w stats", "w examine", "w inspect", "w insp", "w npcs", "w bank", "w inv", "w kc", "w killcount"}
+INFO_CHANNEL_CMDS = {"w stats", "w examine", "w inspect", "w insp", "w npcs", "w bank", "w inv", "w kc", "w killcount", "w highscores", "w hs", "w slayer"}
 
 REVENANT_TYPES = {"revenant", "revenant knight", "revenant demon", "revenant necro", "revenant archon"}
 
@@ -92,6 +95,7 @@ class Wilderness(commands.Cog):
         self.breakdown_mgr = BreakdownManager(self)
         self.rc_mgr = RunecraftManager(self)
         self.preset_mgr = PresetManager(self)
+        self.slayer_mgr = SlayerManager(self)
 
 
     def _norm(self, s: str) -> str:
@@ -109,7 +113,7 @@ class Wilderness(commands.Cog):
     def _resolve_food(self, query: str) -> Optional[str]:
         return self.player_mgr.resolve_food(query)
 
-    def _resolve_npc(self, query: str) -> Optional[Tuple[str, int, int, int, str, int, int]]:
+    def _resolve_npc(self, query: str) -> Optional[Dict[str, Any]]:
         return self.player_mgr.resolve_npc(query)
 
     def _hp_line_pvm(self, your_hp, npc_name, npc_hp, npc_max): return self.combat_mgr.hp_line_pvm(your_hp, npc_name, npc_hp, npc_max)
@@ -162,7 +166,7 @@ class Wilderness(commands.Cog):
         RC_PASSTHROUGH = {"w stats", "w examine", "w inspect", "w insp", "w npcs",
                           "w inv", "w inventory", "w deposit", "w bank", "w hp",
                           "w gear", "w worn", "w pets", "w craftables", "w breakdownitems",
-                          "w kc"}
+                          "w kc", "w highscores", "w hs", "w slayer", "w alch"}
         if cmd_name not in RC_PASSTHROUGH:
             uid = ctx.author.id
             if uid in self.players:
@@ -333,6 +337,74 @@ class Wilderness(commands.Cog):
     def _build_pages(self, lines, per_page=10): return self.combat_mgr.build_pages(lines, per_page)
     def _simulate_pvm_fight_and_loot(self, p, chosen_npc, *, header_lines=None): return self.combat_mgr.simulate_pvm_fight_and_loot(p, chosen_npc, header_lines=header_lines)
 
+    def _highscores_embed(self, category: str, guild: Optional[discord.Guild]) -> discord.Embed:
+        CATS = {
+            "kills": ("⚔️ Highscores — Kills", lambda p: int(p.kills), lambda uid, v: f"{v:,} kills"),
+            "deaths": ("💀 Highscores — Deaths", lambda p: int(p.deaths), lambda uid, v: f"{v:,} deaths"),
+            "coins": ("💰 Highscores — Wealth", lambda p: int(p.coins) + int(p.bank_coins), lambda uid, v: f"{v:,} coins"),
+            "slayer": ("🗡️ Highscores — Slayer", lambda p: int(p.slayer_xp or 0),
+                       lambda uid, v: f"Level {self.slayer_mgr.level_for_xp(v)} ({v:,} XP)"),
+            "unique": ("✨ Highscores — Unique Drops", lambda p: int(p.unique_drops), lambda uid, v: f"{v:,} uniques"),
+            "pets": ("🐾 Highscores — Pets", lambda p: len(getattr(p, "pets", []) or []), lambda uid, v: f"{v} pets"),
+            "tasks": ("🗡️ Highscores — Slayer Tasks", lambda p: int(p.slayer_tasks_done or 0), lambda uid, v: f"{v:,} tasks"),
+        }
+
+        if category == "overall":
+            # Rank by total actions, show top 5 with all stats
+            scored = []
+            for uid, p in self.players.items():
+                total = int(p.kills) + int(p.deaths) + int(p.escapes)
+                if total > 0:
+                    scored.append((uid, total, p))
+            scored.sort(key=lambda x: x[1], reverse=True)
+            top = scored[:5]
+
+            emb = discord.Embed(title="🏆 Highscores — Overall", color=0xFFD700)
+            if not top:
+                emb.description = "No data to display."
+                return emb
+
+            for rank, (uid, total, p) in enumerate(top, 1):
+                member = guild.get_member(uid) if guild else None
+                name = member.display_name if member else f"User#{uid}"
+                medal = {1: "🥇", 2: "🥈", 3: "🥉"}.get(rank, f"**{rank}.**")
+                slayer_lvl = self.slayer_mgr.level_for_xp(int(p.slayer_xp or 0))
+                slayer_xp = int(p.slayer_xp or 0)
+                wealth = int(p.coins) + int(p.bank_coins)
+                pets = len(getattr(p, "pets", []) or [])
+                lines = (
+                    f"⚔️ {int(p.kills):,} kills · 💀 {int(p.deaths):,} deaths\n"
+                    f"💰 {wealth:,} coins · ✨ {int(p.unique_drops):,} uniques\n"
+                    f"🗡️ Slayer Level {slayer_lvl} ({slayer_xp:,} XP) · {int(p.slayer_tasks_done or 0):,} tasks\n"
+                    f"🐾 {pets} pets"
+                )
+                emb.add_field(name=f"{medal} {name}", value=lines, inline=False)
+            return emb
+
+        title, score_fn, fmt_fn = CATS.get(category, CATS["kills"])
+
+        scored = []
+        for uid, p in self.players.items():
+            score = score_fn(p)
+            if score > 0:
+                scored.append((uid, score))
+        scored.sort(key=lambda x: x[1], reverse=True)
+        top = scored[:50]
+
+        emb = discord.Embed(title=title, color=0xFFD700)
+        if not top:
+            emb.description = "No data to display."
+            return emb
+
+        lines = []
+        for rank, (uid, score) in enumerate(top, 1):
+            member = guild.get_member(uid) if guild else None
+            name = member.display_name if member else f"User#{uid}"
+            medal = {1: "🥇", 2: "🥈", 3: "🥉"}.get(rank, f"**{rank}.**")
+            lines.append(f"{medal} {name} — {fmt_fn(uid, score)}")
+        emb.description = "\n".join(lines)
+        return emb
+
     async def _send_broadcasts(self, user: discord.abc.User, broadcasts: List):
         if not broadcasts:
             return
@@ -408,7 +480,19 @@ class Wilderness(commands.Cog):
             "`!w craftables` — Browse craftable items\n"
             "`!w breakdown <item>` — Break down an item\n"
             "`!w breakdownitems` — Browse breakdowns\n"
-            "`!w rc <rune>` — Craft runes"
+            "`!w rc <rune>` — Craft runes\n"
+            "`!w alch <item>` — High alch an item\n"
+            "`!w alch auto <item>` — Toggle auto-alch on drops"
+        ), inline=False)
+        emb.add_field(name="Slayer", value=(
+            "`!w slayer` — View slayer level and info\n"
+            "`!w slayer task` — View or get a slayer task\n"
+            "`!w slayer skip` — Skip task (30 points)\n"
+            "`!w slayer npcs` — List slayer NPCs\n"
+            "`!w slayer shop` — View slayer shop\n"
+            "`!w slayer buy <item>` — Buy from slayer shop\n"
+            "`!w slayer block [npc]` — View or block an NPC\n"
+            "`!w slayer block remove <npc>` — Unblock"
         ), inline=False)
         emb.add_field(name="Trading & Shop", value=(
             "`!w trade @player` — Start a trade\n"
@@ -630,7 +714,7 @@ class Wilderness(commands.Cog):
         if not await self._ensure_ready(ctx):
             return
 
-        emb = self._npc_info_embed(NPCS[0][0], ctx.guild)
+        emb = self._npc_info_embed(NPCS[0]["name"], ctx.guild)
         view = NPCInfoView(self, author_id=ctx.author.id)
         await ctx.reply(embed=emb, view=view)
 
@@ -1600,6 +1684,21 @@ class Wilderness(commands.Cog):
             inline=True,
         )
 
+        slayer_lvl = self.slayer_mgr.get_slayer_level(p)
+        slayer_xp = int(p.slayer_xp or 0)
+        slayer_pts = int(p.slayer_points or 0)
+        slayer_done = int(p.slayer_tasks_done or 0)
+        emb.add_field(
+            name="🗡️ Slayer",
+            value=(
+                f"Level: **{slayer_lvl}**\n"
+                f"XP: **{slayer_xp:,}**\n"
+                f"Points: **{slayer_pts:,}**\n"
+                f"Tasks done: **{slayer_done}**"
+            ),
+            inline=True,
+        )
+
         if member.display_avatar:
             emb.set_thumbnail(url=member.display_avatar.url)
 
@@ -1782,25 +1881,36 @@ class Wilderness(commands.Cog):
 
             self._touch(p)
 
-            eligible = [n for n in NPCS if p.wildy_level >= n[3]] or [NPCS[0]]
+            eligible = [n for n in NPCS if p.wildy_level >= n["min_wildy"]] or [NPCS[0]]
 
             if npcname:
                 forced_npc = self._resolve_npc(npcname)
                 if not forced_npc:
                     await ctx.reply("Unknown NPC. Use `!w npcs` to see the list.")
                     return
-                if p.wildy_level < int(forced_npc[3]):
+                if p.wildy_level < int(forced_npc["min_wildy"]):
                     await ctx.reply(
-                        f"That NPC requires Wilderness level **{forced_npc[3]}**. "
+                        f"That NPC requires Wilderness level **{forced_npc['min_wildy']}**. "
                         f"You're currently **{p.wildy_level}**."
                     )
                     return
 
-                forced_success = (random.random() <= 0.75)
+                # Bracelet of Slayer Aggression: 100% if targeting slayer task, costs 20 Chaos rune
+                aggro_brace = p.equipment.get("gloves") == "Bracelet of Slayer Aggression"
+                task = p.slayer_task
+                on_task_target = (
+                    aggro_brace and task
+                    and task.get("npc_type") == forced_npc["npc_type"]
+                    and int(task.get("remaining", 0)) > 0
+                    and p.inventory.get("Chaos rune", 0) >= 20
+                )
+                if on_task_target:
+                    self._remove_item(p.inventory, "Chaos rune", 20)
+                forced_success = on_task_target or (random.random() <= 0.75)
                 if forced_success:
                     chosen = forced_npc
                 else:
-                    pool = [n for n in eligible if self._norm(n[0]) != self._norm(forced_npc[0])]
+                    pool = [n for n in eligible if self._norm(n["name"]) != self._norm(forced_npc["name"])]
                     chosen = random.choice(pool) if pool else random.choice(eligible)
             else:
                 chosen = random.choice(eligible)
@@ -1809,9 +1919,9 @@ class Wilderness(commands.Cog):
             header_lines: List[str] = []
             if forced_npc:
                 if forced_success:
-                    header_lines.append(f"🎯 Targeted fight: **{forced_npc[0]}** — **SUCCESS**")
+                    header_lines.append(f"🎯 Targeted fight: **{forced_npc['name']}** — **SUCCESS**")
                 else:
-                    header_lines.append(f"🎯 Targeted fight: **{forced_npc[0]}** — **FAILED**, random encounter instead…")
+                    header_lines.append(f"🎯 Targeted fight: **{forced_npc['name']}** — **FAILED**, random encounter instead…")
 
             won, npc_name, events, lost_items, bank_loss, loot_lines, ground_drops, eaten_food, broadcasts = \
                 self._simulate_pvm_fight_and_loot(p, chosen, header_lines=header_lines or None)
@@ -1946,11 +2056,11 @@ class Wilderness(commands.Cog):
             self._set_cd(p, "tele")
 
             if random.random() < 0.20:
-                eligible = [n for n in NPCS if p.wildy_level >= n[3]] or [NPCS[0]]
+                eligible = [n for n in NPCS if p.wildy_level >= n["min_wildy"]] or [NPCS[0]]
                 chosen = random.choice(eligible)
 
                 header = [
-                    f"⚠️ **Ambush!** You tried to teleport but were attacked by **{chosen[0]}** (Wildy {p.wildy_level})."
+                    f"⚠️ **Ambush!** You tried to teleport but were attacked by **{chosen['name']}** (Wildy {p.wildy_level})."
                 ]
 
                 won, npc_name, events, lost_items, bank_loss, loot_lines, _, _, broadcasts = \
@@ -2643,6 +2753,320 @@ class Wilderness(commands.Cog):
             emb.set_thumbnail(url=ctx.author.display_avatar.url)
 
         await ctx.reply(embed=emb)
+
+    # ── Alchemy ──────────────────────────────────────────────────────
+
+    @w.group(name="alch", invoke_without_command=True)
+    async def alch_cmd(self, ctx: commands.Context, *, item_name: str = ""):
+        if not await self._ensure_ready(ctx):
+            return
+
+        if not item_name.strip():
+            await ctx.reply("Usage: `!w alch <item>` — High-alch an item for coins (costs 1 Nature rune per item).\n"
+                            "`!w alch auto <item>` — Toggle auto-alch on drops.")
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+            resolved = self._resolve_item(item_name.strip())
+            if not resolved:
+                await ctx.reply(f"Unknown item: **{item_name.strip()}**")
+                return
+
+            value = ITEMS.get(resolved, {}).get("value", 0)
+            if value <= 0:
+                await ctx.reply(f"**{resolved}** has no alch value.")
+                return
+
+            inv_qty = p.inventory.get(resolved, 0)
+            if inv_qty <= 0:
+                await ctx.reply(f"You don't have any **{resolved}** in your inventory.")
+                return
+
+            nats = p.inventory.get("Nature rune", 0)
+            if nats <= 0:
+                await ctx.reply("You need at least **1 Nature rune** to alch.")
+                return
+
+            alch_qty = min(inv_qty, nats)
+            total_gp = value * alch_qty
+
+            self._remove_item(p.inventory, resolved, alch_qty)
+            self._remove_item(p.inventory, "Nature rune", alch_qty)
+            p.coins += total_gp
+            await self._persist()
+
+        await ctx.reply(f"🔥 Alched **{resolved} x{alch_qty}** → **{total_gp:,} coins** (-{alch_qty} Nature rune)")
+
+    @alch_cmd.command(name="auto")
+    async def alch_auto_cmd(self, ctx: commands.Context, *, item_name: str = ""):
+        if not await self._ensure_ready(ctx):
+            return
+
+        if not item_name.strip():
+            async with self._mem_lock:
+                p = self._get_player(ctx.author)
+                auto_list = getattr(p, "alch_auto", None) or []
+            if not auto_list:
+                await ctx.reply("Your auto-alch list is empty.\nUsage: `!w alch auto <item>` to toggle.")
+                return
+            lines = [f"• **{i}**" for i in sorted(auto_list)]
+            await ctx.reply("🔥 **Auto-alch list:**\n" + "\n".join(lines))
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+            resolved = self._resolve_item(item_name.strip())
+            if not resolved:
+                await ctx.reply(f"Unknown item: **{item_name.strip()}**")
+                return
+
+            if p.alch_auto is None:
+                p.alch_auto = []
+
+            if resolved in p.alch_auto:
+                p.alch_auto.remove(resolved)
+                await self._persist()
+                await ctx.reply(f"🔥 Removed **{resolved}** from auto-alch.")
+            else:
+                value = ITEMS.get(resolved, {}).get("value", 0)
+                if value <= 0:
+                    await ctx.reply(f"**{resolved}** has no alch value.")
+                    return
+                p.alch_auto.append(resolved)
+                await self._persist()
+                await ctx.reply(f"🔥 Added **{resolved}** to auto-alch. Drops will be auto-alched for **{value:,} coins** each (costs 1 Nature rune per item).")
+
+    # ── Slayer ───────────────────────────────────────────────────────
+
+    @w.group(name="slayer", invoke_without_command=True)
+    async def slayer_cmd(self, ctx: commands.Context):
+        if not await self._ensure_ready(ctx):
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+
+        slayer_lvl = self.slayer_mgr.get_slayer_level(p)
+        current_xp, next_xp = self.slayer_mgr.xp_to_next(p)
+        pts = int(p.slayer_points or 0)
+        done = int(p.slayer_tasks_done or 0)
+
+        emb = discord.Embed(title=f"🗡️ {ctx.author.display_name}'s Slayer Info", color=0x8B0000)
+        emb.add_field(name="Level", value=f"**{slayer_lvl}**", inline=True)
+        if slayer_lvl < 120:
+            emb.add_field(name="XP", value=f"**{current_xp:,}** / **{next_xp:,}**", inline=True)
+        else:
+            emb.add_field(name="XP", value=f"**{current_xp:,}**", inline=True)
+        emb.add_field(name="Points", value=f"**{pts:,}**", inline=True)
+        emb.add_field(name="Tasks Done", value=f"**{done}**", inline=True)
+
+        task = p.slayer_task
+        if task and int(task.get("remaining", 0)) > 0:
+            killed = int(task["total"]) - int(task["remaining"])
+            emb.add_field(
+                name="Current Task",
+                value=f"Kill **{task['npc']}** — **{killed}/{task['total']}** ({task['remaining']} remaining)",
+                inline=False,
+            )
+        else:
+            emb.add_field(
+                name="Current Task",
+                value="No active task. Use `!w slayer task` to get one.",
+                inline=False,
+            )
+
+        if ctx.author.display_avatar:
+            emb.set_thumbnail(url=ctx.author.display_avatar.url)
+
+        await ctx.reply(embed=emb)
+
+    @slayer_cmd.command(name="task")
+    async def slayer_task_cmd(self, ctx: commands.Context):
+        if not await self._ensure_ready(ctx):
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+
+            task = p.slayer_task
+            if task and int(task.get("remaining", 0)) > 0:
+                await ctx.reply(f"🗡️ Current task: Kill **{task['remaining']}/{task['total']} {task['npc']}**.")
+                return
+
+            ok, result = self.slayer_mgr.assign_task(p)
+            if not ok:
+                await ctx.reply(result)
+                return
+
+            task = p.slayer_task
+            npc_type = task["npc_type"]
+            info = NPC_SLAYER.get(npc_type, {})
+            xp_per = info.get("xp", 0)
+            total_xp = xp_per * task["total"]
+
+            # Find min wildy level for this NPC
+            npc_data = self._resolve_npc(task["npc"])
+            min_wildy = npc_data["min_wildy"] if npc_data else "?"
+
+            await self._persist()
+
+        emb = discord.Embed(title="🗡️ New Slayer Task!", color=0x8B0000)
+        emb.description = (
+            f"Kill **{task['total']} {task['npc']}**\n\n"
+            f"XP per kill: **{xp_per}**\n"
+            f"Total XP: **{total_xp:,}**\n"
+            f"Min wilderness level: **{min_wildy}**"
+        )
+        await ctx.reply(embed=emb)
+
+    @slayer_cmd.command(name="skip")
+    async def slayer_skip_cmd(self, ctx: commands.Context):
+        if not await self._ensure_ready(ctx):
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+            ok, msg = self.slayer_mgr.skip_task(p)
+            if ok:
+                await self._persist()
+
+        await ctx.reply(f"🗡️ {msg}")
+
+    @slayer_cmd.command(name="shop")
+    async def slayer_shop_cmd(self, ctx: commands.Context):
+        if not await self._ensure_ready(ctx):
+            return
+
+        emb = discord.Embed(title="🗡️ Slayer Shop", color=0x8B0000)
+        for key, item in SLAYER_SHOP.items():
+            emb.add_field(
+                name=f"{item['name']} — {item['cost']} pts",
+                value=item["description"],
+                inline=False,
+            )
+        emb.add_field(
+            name=f"Block NPC — {SLAYER_BLOCK_COST} pts",
+            value=f"Block an NPC from task assignments (max {MAX_SLAYER_BLOCKS}). Use `!w slayer block <npc>`.",
+            inline=False,
+        )
+        emb.set_footer(text="Use !w slayer buy <item> to purchase.")
+        await ctx.reply(embed=emb)
+
+    @slayer_cmd.command(name="buy")
+    async def slayer_buy_cmd(self, ctx: commands.Context, *, item_name: str = ""):
+        if not await self._ensure_ready(ctx):
+            return
+
+        if not item_name.strip():
+            await ctx.reply("Usage: `!w slayer buy <item>`")
+            return
+
+        query = item_name.strip().lower()
+        matched_key = None
+        for key, shop_item in SLAYER_SHOP.items():
+            if query == key.lower() or query == shop_item["name"].lower():
+                matched_key = key
+                break
+        if not matched_key:
+            for key, shop_item in SLAYER_SHOP.items():
+                if query in key.lower() or query in shop_item["name"].lower():
+                    matched_key = key
+                    break
+
+        if not matched_key:
+            await ctx.reply(f"Item not found in slayer shop: **{item_name.strip()}**")
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+            ok, msg = self.slayer_mgr.buy_shop_item(p, matched_key)
+            if ok:
+                await self._persist()
+
+        await ctx.reply(f"🗡️ {msg}")
+
+    @slayer_cmd.command(name="npcs")
+    async def slayer_npcs_cmd(self, ctx: commands.Context):
+        if not await self._ensure_ready(ctx):
+            return
+
+        lines = []
+        for npc in NPCS:
+            info = NPC_SLAYER.get(npc["npc_type"])
+            if not info:
+                continue
+            lines.append(f"**{npc['name']}** — Slayer {info['level']} | {info['xp']} XP | Wildy {npc['min_wildy']}+")
+
+        emb = discord.Embed(title="🗡️ Slayer NPCs", color=0x8B0000)
+        emb.description = "\n".join(lines) if lines else "No slayer NPCs found."
+        await ctx.reply(embed=emb)
+
+    @slayer_cmd.group(name="block", invoke_without_command=True)
+    async def slayer_block_cmd(self, ctx: commands.Context, *, npc_name: str = ""):
+        if not await self._ensure_ready(ctx):
+            return
+
+        if not npc_name.strip():
+            async with self._mem_lock:
+                p = self._get_player(ctx.author)
+                blocked = list(p.slayer_blocked or [])
+
+            if not blocked:
+                await ctx.reply(f"🗡️ Your block list is empty (**0/{MAX_SLAYER_BLOCKS}**). Use `!w slayer block <npc>` to block one.")
+                return
+
+            lines = []
+            for npc_type in blocked:
+                name = npc_type
+                for npc in NPCS:
+                    if npc["npc_type"] == npc_type:
+                        name = npc["name"]
+                        break
+                lines.append(f"• **{name}**")
+            await ctx.reply(f"🗡️ **Block list ({len(blocked)}/{MAX_SLAYER_BLOCKS}):**\n" + "\n".join(lines))
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+            ok, msg = self.slayer_mgr.block_npc(p, npc_name.strip())
+            if ok:
+                await self._persist()
+
+        await ctx.reply(f"🗡️ {msg}")
+
+    @slayer_block_cmd.command(name="remove")
+    async def slayer_block_remove_cmd(self, ctx: commands.Context, *, npc_name: str = ""):
+        if not await self._ensure_ready(ctx):
+            return
+
+        if not npc_name.strip():
+            await ctx.reply("Usage: `!w slayer block remove <npc>`")
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+            ok, msg = self.slayer_mgr.unblock_npc(p, npc_name.strip())
+            if ok:
+                await self._persist()
+
+        await ctx.reply(f"🗡️ {msg}")
+
+    # ── Highscores ───────────────────────────────────────────────────
+
+    @w.command(name="highscores", aliases=["hs"])
+    async def highscores_cmd(self, ctx: commands.Context, *, category: str = ""):
+        if not await self._ensure_ready(ctx):
+            return
+
+        cat = category.strip().lower() if category.strip() else "overall"
+        valid_cats = {"overall", "kills", "deaths", "coins", "slayer", "unique", "pets", "tasks"}
+        if cat not in valid_cats:
+            cat = "overall"
+
+        emb = self._highscores_embed(cat, ctx.guild)
+        view = HighscoresView(self, ctx.author.id, ctx.guild, cat)
+        await ctx.reply(embed=emb, view=view)
 
 
 async def setup(bot: commands.Bot):

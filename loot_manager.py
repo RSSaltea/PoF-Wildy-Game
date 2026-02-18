@@ -77,6 +77,22 @@ class LootManager:
 
             return self.roll_pick_one([chosen_entry])
 
+        # On-task chance boost: if player is on a slayer task for this NPC,
+        # swap in the boosted drop rate for items that have one
+        on_task = (
+            hasattr(p, "slayer_task") and p.slayer_task
+            and p.slayer_task.get("npc_type") == npc_type
+            and int(p.slayer_task.get("remaining", 0)) > 0
+        )
+        if on_task:
+            adjusted = []
+            for e in entries:
+                if e.get("on_task_chance"):
+                    e = dict(e)
+                    e["chance"] = e["on_task_chance"]
+                adjusted.append(e)
+            entries = adjusted
+
         return self.roll_pick_one(entries)
 
     def npc_roll_table(self, npc_type: str, key: str) -> Optional[Tuple[str, int]]:

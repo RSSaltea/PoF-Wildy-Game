@@ -66,10 +66,10 @@ class PlayerManager:
             return canonical
         return None
 
-    def resolve_npc(self, query: str) -> Optional[Tuple[str, int, int, int, str, int, int]]:
+    def resolve_npc(self, query: str) -> Optional[Dict[str, Any]]:
         q = self.norm(query)
         for n in NPCS:
-            if self.norm(n[0]) == q:
+            if self.norm(n["name"]) == q:
                 return n
         return None
 

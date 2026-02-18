@@ -87,6 +87,13 @@ class PlayerState:
     ground_items: List[List] = None  # [[item, qty, unix_timestamp], ...]
     npc_kills: Dict[str, int] = None  # {"NPC Name": kill_count, ...}
     presets: Dict[str, Dict[str, Any]] = None  # {"name": {"equipment": {...}, "inventory": {...}}}
+    slayer_xp: int = 0
+    slayer_points: int = 0
+    slayer_tasks_done: int = 0
+    slayer_task: Optional[Dict[str, Any]] = None  # {"npc": name, "npc_type": type, "total": N, "remaining": N}
+    slayer_unlocks: List[str] = None
+    slayer_blocked: List[str] = None
+    alch_auto: List[str] = None
 
     def __post_init__(self):
         if self.inventory is None:
@@ -117,6 +124,12 @@ class PlayerState:
             self.npc_kills = {}
         if self.presets is None:
             self.presets = {}
+        if self.slayer_unlocks is None:
+            self.slayer_unlocks = []
+        if self.slayer_blocked is None:
+            self.slayer_blocked = []
+        if self.alch_auto is None:
+            self.alch_auto = []
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
