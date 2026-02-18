@@ -1,0 +1,377 @@
+/* Paws of Fury Wiki — Dark Theme */
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #1c2128;
+  --bg-infobox: #1a1f2b;
+  --border: #30363d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --red: #f85149;
+  --green: #3fb950;
+  --orange: #d29922;
+  --purple: #bc8cff;
+  --gold: #f0c040;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-hover); text-decoration: underline; }
+
+/* Navigation */
+.navbar {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.navbar .logo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+.navbar .logo span { color: var(--text-primary); }
+.navbar nav { display: flex; gap: 1.5rem; }
+.navbar nav a {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 0.25rem 0;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.navbar nav a:hover,
+.navbar nav a.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent);
+  text-decoration: none;
+}
+
+/* Main Content */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Page Header */
+.page-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.page-header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+.page-header .subtitle {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* NPC Page Layout */
+.npc-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 2rem;
+  align-items: start;
+}
+@media (max-width: 768px) {
+  .npc-layout { grid-template-columns: 1fr; }
+  .infobox { order: -1; }
+}
+
+/* Infobox */
+.infobox {
+  background: var(--bg-infobox);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: sticky;
+  top: 70px;
+}
+.infobox-image {
+  background: var(--bg-tertiary);
+  padding: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+.infobox-image img {
+  max-width: 180px;
+  max-height: 180px;
+  image-rendering: pixelated;
+}
+.infobox-name {
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.infobox-stats {
+  padding: 0;
+}
+.infobox-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.infobox-row:last-child { border-bottom: none; }
+.infobox-label { color: var(--text-secondary); }
+.infobox-value { font-weight: 600; }
+.infobox-value.danger { color: var(--red); }
+.infobox-value.moderate { color: var(--orange); }
+.infobox-value.safe { color: var(--green); }
+.infobox-value.legendary { color: var(--purple); }
+
+/* Content Sections */
+.content h2 {
+  font-size: 1.4rem;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+.content h3 {
+  font-size: 1.1rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+}
+.content p {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.content ul, .content ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+.content li {
+  margin-bottom: 0.35rem;
+  color: var(--text-secondary);
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+th {
+  background: var(--bg-secondary);
+  text-align: left;
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border);
+}
+td {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+tr:hover td { background: var(--bg-tertiary); }
+.drop-unique { color: var(--gold); font-weight: 600; }
+.drop-special { color: var(--red); font-weight: 600; }
+.drop-pet { color: var(--purple); font-weight: 600; }
+
+/* Ability Box */
+.ability-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--orange);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.ability-box .ability-name {
+  font-weight: 700;
+  color: var(--orange);
+  margin-bottom: 0.35rem;
+}
+.ability-box p {
+  margin-bottom: 0;
+  font-size: 0.9rem;
+}
+
+/* NPC Grid */
+.npc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+.npc-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s;
+  text-decoration: none;
+  display: block;
+}
+.npc-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+.npc-card-image {
+  background: var(--bg-tertiary);
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+  min-height: 120px;
+  align-items: center;
+}
+.npc-card-image img {
+  max-width: 100px;
+  max-height: 100px;
+  image-rendering: pixelated;
+}
+.npc-card-info {
+  padding: 0.75rem 1rem;
+}
+.npc-card-info .name {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+.npc-card-info .meta {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
+}
+
+/* Command Sections */
+.command-block {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.command-block h3 {
+  margin-top: 0;
+  color: var(--text-primary);
+}
+.command-block code {
+  background: var(--bg-tertiary);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+.command-block .aliases {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+.command-block p {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+/* Command Grid */
+.cmd-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.cmd-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  transition: border-color 0.2s;
+  display: block;
+}
+.cmd-card:hover { border-color: var(--accent); text-decoration: none; }
+.cmd-card .title { font-weight: 600; color: var(--text-primary); font-size: 1rem; }
+.cmd-card .desc { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.35rem; }
+
+/* Home Page */
+.hero {
+  text-align: center;
+  padding: 3rem 0;
+}
+.hero h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+.hero h1 span { color: var(--gold); }
+.hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto 2rem; }
+.hero-links { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.hero-links a {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  transition: all 0.2s;
+}
+.hero-links a:hover {
+  border-color: var(--accent);
+  background: var(--bg-tertiary);
+  text-decoration: none;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+.breadcrumb a { color: var(--text-muted); }
+.breadcrumb a:hover { color: var(--accent); }
+.breadcrumb .sep { margin: 0 0.4rem; }
+
+/* Tier Badges */
+.tier { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
+.tier-1 { background: #1a3d1a; color: #3fb950; }
+.tier-2 { background: #2d2a1a; color: #d29922; }
+.tier-3 { background: #2d1a1a; color: #f85149; }
+.tier-4 { background: #1a1a2d; color: #bc8cff; }
+.tier-5 { background: #2d1a2d; color: #f778ba; }
+
+code {
+  background: var(--bg-tertiary);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 2rem;
+  margin-top: 3rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Banking — Paws of Fury Wiki</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="navbar">
+    <div class="logo"><span>Paws of Fury</span> Wiki</div>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../npcs/index.html">NPCs</a>
+      <a href="index.html" class="active">Commands</a>
+    </nav>
+  </div>
+  <div class="container">
+    <div class="breadcrumb"><a href="../index.html">Home</a><span class="sep">/</span><a href="index.html">Commands</a><span class="sep">/</span>Banking</div>
+
+    <h1>Banking</h1>
+    <p>Commands for storing and retrieving items from your bank.</p>
+
+    <div class="command-block">
+      <h3><code>!w bank</code></h3>
+      <div class="aliases">Aliases: <code>!w bankview</code></div>
+      <p>View your bank contents. Uses a dropdown menu to switch between categories.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w deposit [item] [qty]</code></h3>
+      <p>Deposit items into your bank. Use <code>!w deposit all</code> to deposit everything. Noted items become unnoted in bank.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w withdraw [qty] &lt;item&gt; [noted]</code></h3>
+      <p>Withdraw items from your bank. Add <code>noted</code> at the end to withdraw as noted.</p>
+    </div>
+  </div>
+  <div class="footer">Paws of Fury Wiki</div>
+</body>
+</html>

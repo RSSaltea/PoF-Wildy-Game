@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory — Paws of Fury Wiki</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="navbar">
+    <div class="logo"><span>Paws of Fury</span> Wiki</div>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../npcs/index.html">NPCs</a>
+      <a href="index.html" class="active">Commands</a>
+    </nav>
+  </div>
+  <div class="container">
+    <div class="breadcrumb"><a href="../index.html">Home</a><span class="sep">/</span><a href="index.html">Commands</a><span class="sep">/</span>Inventory</div>
+
+    <h1>Inventory Management</h1>
+    <p>Commands for viewing, equipping, dropping, and managing items in your inventory.</p>
+
+    <div class="command-block">
+      <h3><code>!w inv</code></h3>
+      <div class="aliases">Aliases: <code>!w inventory</code></div>
+      <p>View your inventory.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w equip &lt;item&gt;</code></h3>
+      <p>Equip an item to its slot. Mainhand/offhand must have matching combat styles. Items can be equipped from inventory or bank (bank only when not in wilderness).</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w unequip &lt;slot&gt;</code></h3>
+      <p>Remove an equipped item. Use <code>!w unequip all</code> to unequip everything.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w gear</code></h3>
+      <div class="aliases">Aliases: <code>!w worn</code></div>
+      <p>View your currently equipped gear.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w drop &lt;item&gt; [qty]</code></h3>
+      <p>Drop items from your inventory.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w inspect &lt;item&gt;</code></h3>
+      <div class="aliases">Aliases: <code>!w insp</code></div>
+      <p>View detailed item stats and effects.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w examine [@player]</code></h3>
+      <div class="aliases">Aliases: <code>!w look</code>, <code>!w inspectplayer</code></div>
+      <p>View another player's equipped gear.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w ground</code></h3>
+      <p>View items on the ground from your current wilderness run.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w ground pickup &lt;item&gt; [qty]</code></h3>
+      <div class="aliases">Aliases: <code>!w ground pick</code></div>
+      <p>Pick up items from the ground.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w blacklist [item]</code></h3>
+      <p>View your blacklist or add an item. Blacklisted items are auto-dropped on loot.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w blacklist remove &lt;item&gt;</code></h3>
+      <p>Remove an item from your blacklist.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w blacklist clear</code></h3>
+      <p>Clear your entire blacklist.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w lock &lt;item&gt;</code></h3>
+      <p>Lock an item so it stays in inventory during deposit all.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w lock remove &lt;item&gt;</code></h3>
+      <p>Remove a lock.</p>
+    </div>
+  </div>
+  <div class="footer">Paws of Fury Wiki</div>
+</body>
+</html>

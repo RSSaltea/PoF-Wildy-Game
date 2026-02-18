@@ -2006,6 +2006,22 @@ class Wilderness(commands.Cog):
                 )
                 await ctx.send(embed=emb)
 
+            # Low HP / no food warning
+            has_food = any(p.inventory.get(f, 0) > 0 for f in FOOD)
+            warnings = []
+            if p.hp < 20:
+                warnings.append(f"Your HP is critically low (**{p.hp}/{self.config['max_hp']}**)")
+            if not has_food:
+                warnings.append("You have **no food** remaining in your inventory")
+            if warnings:
+                emb = discord.Embed(
+                    title="⚠️ Warning!",
+                    description="\n".join(f"- {w}" for w in warnings)
+                        + "\n\nConsider using `!w eat`, `!w tele`, or restocking before your next fight!",
+                    color=0xFF4444,
+                )
+                await ctx.send(embed=emb)
+
         await self._send_broadcasts(ctx.author, broadcasts)
 
     @w.command(name="attack")
