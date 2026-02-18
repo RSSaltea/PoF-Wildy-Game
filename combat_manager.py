@@ -739,8 +739,13 @@ class CombatManager:
         if pet:
             if pet not in p.pets:
                 p.pets.append(pet)
-                p.pet_drops += 1
-            loot_lines.append(f"🐾 PET: **{pet}**")
+            p.pet_drops += 1
+            p.pet_counts[pet] = p.pet_counts.get(pet, 0) + 1
+            count = p.pet_counts[pet]
+            if count > 1:
+                loot_lines.append(f"🐾 PET: **{pet}** (x{count})")
+            else:
+                loot_lines.append(f"🐾 PET: **{pet}**")
             broadcasts.append(("Pet", pet, npc_name))
 
         if slayer_xp > 0 or task_done:

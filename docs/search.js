@@ -116,7 +116,7 @@
     // Valuables & Keys
     { title: "Mysterious key", url: "items/mysterious-key.html", tags: "mysterious key chest open shop loot" },
     { title: "Bone key", url: "items/bone-key.html", tags: "bone key archon" },
-    { title: "Ancient Effigy", url: "items/ancient-effigy.html", tags: "ancient effigy valuable alch" },
+    { title: "Ancient Effigy", url: "items/ancient-effigy.html", tags: "ancient effigy valuable alch consumable consume slayer xp lamp" },
     { title: "Ancient Emblem", url: "items/ancient-emblem.html", tags: "ancient emblem valuable alch rare" },
     { title: "Uncut sapphire", url: "items/uncut-sapphire.html", tags: "uncut sapphire gem" },
     { title: "Uncut emerald", url: "items/uncut-emerald.html", tags: "uncut emerald gem" },

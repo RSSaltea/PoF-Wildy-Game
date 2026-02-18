@@ -94,6 +94,7 @@ class PlayerState:
     slayer_unlocks: List[str] = None
     slayer_blocked: List[str] = None
     alch_auto: List[str] = None
+    pet_counts: Dict[str, int] = None
 
     def __post_init__(self):
         if self.inventory is None:
@@ -130,6 +131,8 @@ class PlayerState:
             self.slayer_blocked = []
         if self.alch_auto is None:
             self.alch_auto = []
+        if self.pet_counts is None:
+            self.pet_counts = {}
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)

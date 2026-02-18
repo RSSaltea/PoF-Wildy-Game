@@ -21,6 +21,7 @@ from .items import (
     GEM_CUTTING,
 )
 from .enchant import ENCHANTABLES
+from .consume import CONSUMABLES
 
 from .npcs import NPCS
 from .config_default import DEFAULT_CONFIG
@@ -1223,6 +1224,8 @@ class Wilderness(commands.Cog):
         all_pets = get_all_pets()
         pet_sources = get_pet_sources()
 
+        pet_counts = getattr(p, "pet_counts", None) or {}
+
         if pet:
             canonical = resolve_pet(pet)
             if not canonical:
@@ -1230,6 +1233,7 @@ class Wilderness(commands.Cog):
                 return
 
             is_owned = (self._norm(canonical) in owned_norm)
+            count = pet_counts.get(canonical, 0)
 
             src_lines = []
             for npc_type, chance in pet_sources.get(canonical, []):
@@ -1237,10 +1241,11 @@ class Wilderness(commands.Cog):
 
             emb = discord.Embed(
                 title=f"🐾 Pet: {canonical}",
-                description=("✅ You own this pet." if is_owned else "❌ You don’t own this pet."),
+                description=("✅ You own this pet." if is_owned else "❌ You don't own this pet."),
             )
 
-            emb.add_field(name="Owned", value="✅ Yes" if is_owned else "❌ No", inline=True)
+            owned_val = f"✅ Yes (x{count})" if count > 1 else ("✅ Yes" if is_owned else "❌ No")
+            emb.add_field(name="Owned", value=owned_val, inline=True)
             emb.add_field(name="Your total pets", value=str(len(owned)), inline=True)
 
             emb.add_field(
@@ -1257,13 +1262,16 @@ class Wilderness(commands.Cog):
             description=f"Owned: **{len(owned)} / {len(all_pets)}**",
         )
 
-        if not owned:
-            emb.add_field(name="Pets", value="(none)", inline=False)
-            await ctx.reply(embed=emb)
-            return
-
-        owned_sorted = sorted(owned, key=lambda s: s.lower())
-        lines = [f"• {x}" for x in owned_sorted]
+        lines = []
+        for x in all_pets:
+            if self._norm(x) in owned_norm:
+                count = pet_counts.get(x, 0)
+                if count > 1:
+                    lines.append(f"• {x} (x{count})")
+                else:
+                    lines.append(f"• {x}")
+            else:
+                lines.append(f"• ~~{x}~~")
         chunks = self._chunk_lines(lines, max_chars=950)
 
         if len(chunks) == 1:
@@ -1301,6 +1309,7 @@ class Wilderness(commands.Cog):
             p.equipment.clear()
             p.uniques.clear()
             p.pets.clear()
+            p.pet_counts.clear()
             p.kills = p.deaths = p.ventures = p.escapes = 0
             p.biggest_win = p.biggest_loss = 0
             p.unique_drops = p.pet_drops = 0
@@ -3551,6 +3560,85 @@ class Wilderness(commands.Cog):
             lines.append(f"No gems were cut.")
 
         await ctx.reply("\n".join(lines))
+
+    # ── Consume ───────────────────────────────────────────────────
+
+    @w.command(name="consume")
+    async def consume_cmd(self, ctx: commands.Context, *, item_query: str = ""):
+        if not await self._ensure_ready(ctx):
+            return
+
+        if not item_query:
+            lines = []
+            for name, data in CONSUMABLES.items():
+                lines.append(f"**{name}** — {data['description']}")
+            await ctx.reply("Usage: `!w consume <item>`\nConsumables:\n" + "\n".join(lines))
+            return
+
+        # Resolve the item name
+        source_name = None
+        norm_q = self._norm(item_query)
+        for src in CONSUMABLES:
+            if self._norm(src) == norm_q:
+                source_name = src
+                break
+        if not source_name:
+            resolved = self._resolve_item(item_query)
+            if resolved and resolved in CONSUMABLES:
+                source_name = resolved
+        if not source_name:
+            await ctx.reply(f"**{item_query}** is not a consumable item.")
+            return
+
+        recipe = CONSUMABLES[source_name]
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+
+            # Check inventory first, then bank
+            location = None
+            if p.inventory.get(source_name, 0) >= 1:
+                location = "inventory"
+            elif p.bank.get(source_name, 0) >= 1:
+                location = "bank"
+
+            if not location:
+                await ctx.reply(f"You don't have a **{source_name}** in your inventory or bank.")
+                return
+
+            # Remove the item
+            bag = p.inventory if location == "inventory" else p.bank
+            self._remove_item(bag, source_name, 1)
+
+            # Grant XP based on the skill level and table
+            xp_table = recipe["xp_table"]
+            xp_skill = recipe["xp_skill"]
+            skill_for_level = recipe["skill"]
+
+            if skill_for_level == "slayer":
+                level = self.slayer_mgr.get_slayer_level(p)
+            else:
+                level = 1
+
+            level = max(1, min(level, max(xp_table.keys())))
+            xp_gained = xp_table[level]
+
+            old_level = level
+            if xp_skill == "slayer":
+                p.slayer_xp = (p.slayer_xp or 0) + xp_gained
+                new_level = self.slayer_mgr.get_slayer_level(p)
+
+            self._touch(p)
+            await self._persist()
+
+        msg = (
+            f"You consume the **{source_name}** and gain **{xp_gained:,.1f} {xp_skill} XP**! "
+            f"(from your {location})"
+        )
+        if xp_skill == "slayer" and new_level > old_level:
+            msg += f"\n🎉 **Slayer level up! {old_level} → {new_level}**"
+
+        await ctx.reply(msg)
 
     # ── Enchant ───────────────────────────────────────────────────
 

@@ -86,6 +86,7 @@ class PlayerManager:
         p.equipment = p.equipment or {}
         p.uniques = p.uniques or {}
         p.pets = p.pets or []
+        p.pet_counts = getattr(p, "pet_counts", None) or {}
         p.cd = p.cd or {}
         p.locked = getattr(p, "locked", None) or []
         p.blacklist = getattr(p, "blacklist", None) or []
