@@ -32,22 +32,23 @@ FOOD: Dict[str, Dict[str, int]] = {
 
 ITEMS: Dict[str, Dict[str, Any]] = {
     # Starter gear (non-stackable)
-    "Starter Sword": {"type": "mainhand", "atk": 2, "stackable": False, "value": 0, "aliases": "start sword,starter sword"},
+    "Starter Sword": {"type": "mainhand", "style": "melee", "atk": 2, "stackable": False, "value": 0, "aliases": "start sword,starter sword"},
     "Starter Platebody": {"type": "body", "def": 2, "stackable": False, "value": 0, "aliases": "starter plate,start body,starter body"},
 
     # Weapons (non-stackable)
-    "Rune dagger": {"type": "mainhand", "atk": 3, "def": 1, "stackable": False, "value": 5000, "aliases": "rune dag,rdagger,r dagger,r dag"},
-    "Rune scimitar": {"type": "mainhand", "atk": 3, "stackable": False, "value": 5000, "aliases": "rune scim,rune scimmy,runescim"},
-    "Dragon dagger": {"type": "mainhand", "atk": 4, "stackable": False, "value": 17000, "aliases": "dds,dragon dagger,d dagger"},
-    "Dragon scimitar": {"type": "mainhand", "atk": 5, "stackable": False, "value": 32000, "aliases": "d scim,dscim,dragon scim,d scimitar"},
-    "Dragon 2h sword": {"type": "mainhand", "atk": 8, "stackable": False, "value": 54000, "aliases": "d2h,dragon 2h"},
-    "Abyssal Whip": {"type": "mainhand", "atk": 11, "stackable": False, "value": 60000, "aliases": "whip,abby whip,abyssal whip"},
-    "Abyssal Scourge": {"type": "mainhand", "atk": 15, "stackable": False, "value": 72000, "aliases": "scourge,abby scourge,abyssal scourge"},
-    "Veilbreaker": {"type": "mainhand", "atk": 28, "stackable": False, "value": 142000, "aliases": "veil"},
-    "Death Guard": {"type": "mainhand", "atk": 5, "stackable": False, "value": 142000, "aliases": "deathguard"},
+    "Rune dagger": {"type": "mainhand", "style": "melee", "atk": 3, "def": 1, "stackable": False, "value": 5000, "aliases": "rune dag,rdagger,r dagger,r dag"},
+    "Rune scimitar": {"type": "mainhand", "style": "melee", "atk": 3, "stackable": False, "value": 5000, "aliases": "rune scim,rune scimmy,runescim"},
+    "Dragon dagger": {"type": "mainhand", "style": "melee", "atk": 4, "stackable": False, "value": 17000, "aliases": "dds,dragon dagger,d dagger"},
+    "Dragon scimitar": {"type": "mainhand", "style": "melee", "atk": 5, "stackable": False, "value": 32000, "aliases": "d scim,dscim,dragon scim,d scimitar"},
+    "Dragon 2h sword": {"type": "mainhand", "style": "melee", "atk": 8, "stackable": False, "value": 54000, "aliases": "d2h,dragon 2h"},
+    "Abyssal Whip": {"type": "mainhand", "style": "melee", "atk": 11, "stackable": False, "value": 60000, "aliases": "whip,abby whip,abyssal whip"},
+    "Abyssal Scourge": {"type": "mainhand", "style": "melee", "atk": 15, "stackable": False, "value": 72000, "aliases": "scourge,abby scourge,abyssal scourge"},
+    "Veilbreaker": {"type": "mainhand", "style": "melee", "atk": 28, "stackable": False, "value": 142000, "aliases": "veil"},
+    "Death Guard": {"type": "mainhand", "style": "necro", "atk": 5, "stackable": False, "value": 142000, "aliases": "deathguard"},
 
     "Viggora's Chainmace": {
         "type": "mainhand",
+        "style": "melee",
         "atk": 4,
         "atk_vs_npc": 20,
         "stackable": False,
@@ -56,6 +57,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     },
     "Abyssal Chainmace": {
         "type": "mainhand",
+        "style": "melee",
         "atk": 6,
         "atk_vs_npc": 34,
         "stackable": False,
@@ -64,16 +66,16 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     },
 
     # Offhands
-    "Rune sq shield": {"type": "offhand", "def": 3, "stackable": False, "value": 7000, "aliases": "rune sq"},
-    "Skull Lantern": {"type": "offhand", "atk": 4, "stackable": False, "value": 142000, "aliases": "lantern"},
-    "Bronze Defender": {"type": "offhand", "def": 1, "stackable": False, "value": 500, "aliases": "bronze def"},
-    "Iron Defender": {"type": "offhand", "def": 1, "stackable": False, "value": 750, "aliases": "iron def,i def"},
-    "Steel Defender": {"type": "offhand", "def": 1, "stackable": False, "value": 1000, "aliases": "steel def,s def"},
-    "Black Defender": {"type": "offhand", "def": 2, "stackable": False, "value": 1250, "aliases": "black def"},
-    "Mithril Defender": {"type": "offhand", "def": 2, "stackable": False, "value": 1500, "aliases": "mith def,mithril def,m def"},
-    "Adamant Defender": {"type": "offhand", "def": 2, "stackable": False, "value": 1750, "aliases": "addy def,addy defender,a def"},
-    "Rune Defender": {"type": "offhand", "def": 2, "atk": 2, "stackable": False, "value": 2000, "aliases": "rune def,r def"},
-    "Bone Defender": {"type": "offhand", "def": 3, "atk": 3, "stackable": False, "value": 4000, "aliases": "bone def,b def"},
+    "Rune sq shield": {"type": "offhand", "style": "melee", "def": 3, "stackable": False, "value": 7000, "aliases": "rune sq"},
+    "Skull Lantern": {"type": "offhand", "style": "necro", "atk": 4, "stackable": False, "value": 142000, "aliases": "lantern"},
+    "Bronze Defender": {"type": "offhand", "style": "melee", "def": 1, "stackable": False, "value": 500, "aliases": "bronze def"},
+    "Iron Defender": {"type": "offhand", "style": "melee", "def": 1, "stackable": False, "value": 750, "aliases": "iron def,i def"},
+    "Steel Defender": {"type": "offhand", "style": "melee", "def": 1, "stackable": False, "value": 1000, "aliases": "steel def,s def"},
+    "Black Defender": {"type": "offhand", "style": "melee", "def": 2, "stackable": False, "value": 1250, "aliases": "black def"},
+    "Mithril Defender": {"type": "offhand", "style": "melee", "def": 2, "stackable": False, "value": 1500, "aliases": "mith def,mithril def,m def"},
+    "Adamant Defender": {"type": "offhand", "style": "melee", "def": 2, "stackable": False, "value": 1750, "aliases": "addy def,addy defender,a def"},
+    "Rune Defender": {"type": "offhand", "style": "melee", "def": 2, "atk": 2, "stackable": False, "value": 2000, "aliases": "rune def,r def"},
+    "Bone Defender": {"type": "offhand", "style": "melee", "def": 3, "atk": 3, "stackable": False, "value": 4000, "aliases": "bone def,b def"},
 
     # Armour / wearables (non-stackable)
     "Rune platebody": {"type": "body", "def": 3, "stackable": False, "value": 12000, "aliases": "rune plate"},

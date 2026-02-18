@@ -631,7 +631,7 @@ class CombatManager:
             if bank_loss > 0:
                 p.bank_coins -= bank_loss
 
-            return False, npc_name, events, lost_items, bank_loss, [], [], eaten_food, []
+            return False, npc_name, events, lost_items, bank_loss, [], [], eaten_food, [], None
 
         p.kills += 1
         p.npc_kills[npc_name] = p.npc_kills.get(npc_name, 0) + 1
@@ -761,4 +761,14 @@ class CombatManager:
             loot_lines.append("")
             loot_lines.extend(food_lines)
 
-        return True, npc_name, events, {}, 0, loot_lines, ground_drops, eaten_food, broadcasts
+        slayer_task_info = None
+        if task_done:
+            slayer_task_info = {
+                "xp": slayer_xp,
+                "points": slayer_pts,
+                "total_points": int(p.slayer_points or 0),
+                "tasks_done": int(p.slayer_tasks_done or 0),
+                "level": self.cog.slayer_mgr.get_slayer_level(p),
+            }
+
+        return True, npc_name, events, {}, 0, loot_lines, ground_drops, eaten_food, broadcasts, slayer_task_info

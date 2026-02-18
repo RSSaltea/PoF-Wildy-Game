@@ -1312,6 +1312,20 @@ class Wilderness(commands.Cog):
                     await ctx.reply(f"You don’t have **{item_key}** in your inventory or bank.")
                     return
 
+            # Style compatibility check for mainhand/offhand
+            new_style = ITEMS.get(item_key, {}).get("style")
+            if new_style and new_style != "all" and slot in ("mainhand", "offhand"):
+                other_slot = "offhand" if slot == "mainhand" else "mainhand"
+                other_item = p.equipment.get(other_slot)
+                if other_item:
+                    other_style = ITEMS.get(other_item, {}).get("style")
+                    if other_style and other_style != "all" and other_style != new_style:
+                        await ctx.reply(
+                            f"You can't equip **{item_key}** ({new_style}) with **{other_item}** ({other_style}). "
+                            f"Unequip your {other_slot} first or use a matching style."
+                        )
+                        return
+
             old = p.equipment.get(slot)
             if old:
                 if self._inv_free_slots(p.inventory) < 1:
@@ -1798,27 +1812,21 @@ class Wilderness(commands.Cog):
                 return
 
             if wildy_level is None:
-                if not p.in_wilderness:
-                    wildy_level = random.randint(1, cap)
-                else:
-                    if p.wildy_level >= cap:
-                        await ctx.reply(f"You're already at the deepest wilderness level (**{cap}**).")
-                        return
-                    wildy_level = random.randint(p.wildy_level + 1, cap)
+                wildy_level = random.randint(1, cap)
 
             wildy_level = clamp(int(wildy_level), 1, cap)
 
             if p.in_wilderness:
-                if wildy_level <= p.wildy_level:
+                if wildy_level == p.wildy_level:
                     await ctx.reply(
-                        f"You’re already in the Wilderness at level **{p.wildy_level}**. "
-                        f"Pick a higher level to venture deeper (max **{cap}**)."
+                        f"You're already at Wilderness level **{p.wildy_level}**."
                     )
                     return
 
+                going_deeper = wildy_level > p.wildy_level
                 p.wildy_level = wildy_level
 
-                if not p.skulled:
+                if going_deeper and not p.skulled:
                     skull_chance = min(0.10 + (wildy_level / cap) * 0.35, 0.45)
                     if random.random() < skull_chance:
                         p.skulled = True
@@ -1828,8 +1836,15 @@ class Wilderness(commands.Cog):
                 self._set_cd(p, "venture")
                 await self._persist()
 
+                if going_deeper:
+                    arrow = "⬆️"
+                    direction = "deeper"
+                else:
+                    arrow = "⬇️"
+                    direction = "back"
+
                 await ctx.reply(
-                    f"⬆️ You venture **deeper** into the Wilderness (**level {wildy_level}**). "
+                    f"{arrow} You venture **{direction}** in the Wilderness (**level {wildy_level}**). "
                     f"{'☠️ You are **SKULLED**.' if p.skulled else 'You are not skulled.'}\n"
                     f"Next: !w fight or !w attack @user or !w tele."
                 )
@@ -1923,7 +1938,7 @@ class Wilderness(commands.Cog):
                 else:
                     header_lines.append(f"🎯 Targeted fight: **{forced_npc['name']}** — **FAILED**, random encounter instead…")
 
-            won, npc_name, events, lost_items, bank_loss, loot_lines, ground_drops, eaten_food, broadcasts = \
+            won, npc_name, events, lost_items, bank_loss, loot_lines, ground_drops, eaten_food, broadcasts, slayer_task_info = \
                 self._simulate_pvm_fight_and_loot(p, chosen, header_lines=header_lines or None)
 
             if not won:
@@ -1973,6 +1988,20 @@ class Wilderness(commands.Cog):
 
             view = FightLogView(author_id=ctx.author.id, pages=pages, title=f"{ctx.author.display_name} vs {npc_name}", cog=self, ground_drops=ground_drops, start_on_last=True,)
             await ctx.reply(content=view._render(), view=view)
+
+            if slayer_task_info:
+                emb = discord.Embed(
+                    title="✅ Slayer Task Complete!",
+                    description=(
+                        f"**{ctx.author.display_name}** has completed their slayer task!\n\n"
+                        f"🗡️ Slayer Level: **{slayer_task_info['level']}**\n"
+                        f"⭐ Points earned: **+{slayer_task_info['points']}** (Total: **{slayer_task_info['total_points']}**)\n"
+                        f"📋 Tasks completed: **{slayer_task_info['tasks_done']}**\n\n"
+                        f"Use `!w slayer task` to get a new assignment!"
+                    ),
+                    color=0x00FF00,
+                )
+                await ctx.send(embed=emb)
 
         await self._send_broadcasts(ctx.author, broadcasts)
 
@@ -2063,7 +2092,7 @@ class Wilderness(commands.Cog):
                     f"⚠️ **Ambush!** You tried to teleport but were attacked by **{chosen['name']}** (Wildy {p.wildy_level})."
                 ]
 
-                won, npc_name, events, lost_items, bank_loss, loot_lines, _, _, broadcasts = \
+                won, npc_name, events, lost_items, bank_loss, loot_lines, _, _, broadcasts, slayer_task_info = \
                     self._simulate_pvm_fight_and_loot(p, chosen, header_lines=header)
 
                 if not won:
@@ -2091,6 +2120,21 @@ class Wilderness(commands.Cog):
                     + "\n".join(loot_lines)
                     + f"\n\nYou are still in the Wilderness (level {p.wildy_level}). Try `!w tele` again."
                 )
+
+                if slayer_task_info:
+                    emb = discord.Embed(
+                        title="✅ Slayer Task Complete!",
+                        description=(
+                            f"**{ctx.author.display_name}** has completed their slayer task!\n\n"
+                            f"🗡️ Slayer Level: **{slayer_task_info['level']}**\n"
+                            f"⭐ Points earned: **+{slayer_task_info['points']}** (Total: **{slayer_task_info['total_points']}**)\n"
+                            f"📋 Tasks completed: **{slayer_task_info['tasks_done']}**\n\n"
+                            f"Use `!w slayer task` to get a new assignment!"
+                        ),
+                        color=0x00FF00,
+                    )
+                    await ctx.send(embed=emb)
+
                 await self._send_broadcasts(ctx.author, broadcasts)
                 return
 
@@ -2778,7 +2822,8 @@ class Wilderness(commands.Cog):
                 await ctx.reply(f"**{resolved}** has no alch value.")
                 return
 
-            inv_qty = p.inventory.get(resolved, 0)
+            inv_key = self._resolve_from_keys_case_insensitive(resolved, p.inventory.keys())
+            inv_qty = p.inventory.get(inv_key, 0) if inv_key else 0
             if inv_qty <= 0:
                 await ctx.reply(f"You don't have any **{resolved}** in your inventory.")
                 return
@@ -2791,7 +2836,7 @@ class Wilderness(commands.Cog):
             alch_qty = min(inv_qty, nats)
             total_gp = value * alch_qty
 
-            self._remove_item(p.inventory, resolved, alch_qty)
+            self._remove_item(p.inventory, inv_key, alch_qty)
             self._remove_item(p.inventory, "Nature rune", alch_qty)
             p.coins += total_gp
             await self._persist()
