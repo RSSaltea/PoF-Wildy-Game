@@ -89,11 +89,53 @@
       <h2>6. Progress Further</h2>
       <ul>
         <li><strong>Slayer</strong> — Use <code>!w slayer task</code> to get assignments for bonus XP and points. See the <a href="slayer.html">Slayer Guide</a>.</li>
-        <li><strong>Crafting</strong> — Combine drops into better gear with <code>!w craft</code>. Check <code>!w craftables</code> for recipes.</li>
-        <li><strong>Shopping</strong> — Buy better weapons, armour, and food from <code>!w shop list</code>.</li>
-        <li><strong>Banking</strong> — Keep your valuables safe with <code>!w deposit</code> and <code>!w bank</code>.</li>
-        <li><strong>Alchemy</strong> — Convert drops to coins with <code>!w alch</code> or set up auto-alch with <code>!w alch auto</code>.</li>
+        <li><strong>Crafting</strong> — Combine drops into powerful gear. Check <code>!w craftables</code> for recipes.</li>
+        <li><strong>Runecrafting</strong> — Craft runes from Pure essence. Runes fuel equipment effects and enchanting.</li>
+        <li><strong>Gem Cutting</strong> — Cut uncut gems into cut gems, then combine them into an <a href="../items/omnigem.html">Omnigem</a>.</li>
+        <li><strong>Enchanting</strong> — Create powerful items like the <a href="../items/eclipse-of-the-five.html">Eclipse of the Five</a>.</li>
+        <li><strong>Shopping</strong> — Buy better weapons, armour, and food from the shop.</li>
+        <li><strong>Alchemy</strong> — Convert drops to coins or set up auto-alch.</li>
+        <li><strong>Trading</strong> — Trade items with other players.</li>
+        <li><strong>Presets</strong> — Save and load gear loadouts quickly.</li>
       </ul>
+
+      <h2>Crafting & Skills</h2>
+      <div class="command-block">
+        <h3><code>!w craft &lt;item&gt;</code></h3>
+        <p>Craft an item from materials in your bank. Use <code>!w craftables</code> to see all recipes.</p>
+      </div>
+      <div class="command-block">
+        <h3><code>!w rc &lt;rune&gt;</code></h3>
+        <div class="aliases">Aliases: <code>runecraft</code></div>
+        <p>Craft runes from Pure essence in your bank. Pouches in your inventory increase the amount crafted. You'll be busy for 25 seconds while crafting.</p>
+      </div>
+      <div class="command-block">
+        <h3><code>!w cut &lt;gem&gt;</code></h3>
+        <p>Cut uncut gems from your bank into cut gems. Each gem takes 1.2 seconds to cut. You can specify a quantity (<code>!w cut 5 sapphire</code>) or cut all (<code>!w cut all sapphire</code>). Use <code>!w cut stop</code> to stop early. Cannot be done in the Wilderness.</p>
+      </div>
+      <div class="command-block">
+        <h3><code>!w enchant &lt;item&gt;</code></h3>
+        <p>Enchant an item using runes from your bank. For example, <code>!w enchant omnigem amulet</code> creates the <a href="../items/eclipse-of-the-five.html">Eclipse of the Five</a> (requires 10 Cosmic runes and 5 Bone Runes).</p>
+      </div>
+
+      <h2>Other Useful Commands</h2>
+      <div class="command-block">
+        <h3><code>!w trade &lt;@player&gt;</code></h3>
+        <p>Start a trade with another player. Use <code>!w trade add</code>, <code>!w trade remove</code>, <code>!w trade accept</code>, and <code>!w trade cancel</code> to manage trades.</p>
+      </div>
+      <div class="command-block">
+        <h3><code>!w preset create &lt;name&gt;</code></h3>
+        <p>Save your current equipped gear as a preset. Load it later with <code>!w preset load &lt;name&gt;</code>. Use <code>!w presets</code> to see your saved presets.</p>
+      </div>
+      <div class="command-block">
+        <h3><code>!w drink</code></h3>
+        <p>Drink a potion from your inventory for a temporary combat buff. Strength potions grant +2 ATK for 10 hits, Super Strength potions grant +4 ATK for 20 hits.</p>
+      </div>
+      <div class="command-block">
+        <h3><code>!w alch &lt;item&gt;</code></h3>
+        <p>Convert items to coins using Nature runes. Use <code>!w alch auto &lt;item&gt;</code> to auto-alch that item whenever you receive it.</p>
+      </div>
+
       <p>As you grow stronger, venture deeper into the Wilderness to face <a href="../npcs/index.html">higher-tier NPCs and bosses</a> with powerful unique drops and pets.</p>
 
       <h2>Reset Your Profile</h2>
