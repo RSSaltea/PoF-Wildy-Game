@@ -463,6 +463,36 @@ details.drop-section summary h2::before {
 details.drop-section[open] summary h2::before {
   content: '\25BE';
 }
+details.drop-inner {
+  margin-top: 1.25rem;
+}
+details.drop-inner summary {
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+details.drop-inner summary::-webkit-details-marker {
+  display: none;
+}
+details.drop-inner summary::marker {
+  display: none;
+  content: '';
+}
+details.drop-inner summary h3 {
+  margin-top: 0;
+  padding-left: 1rem;
+  position: relative;
+}
+details.drop-inner summary h3::before {
+  content: '\25B8';
+  position: absolute;
+  left: 0;
+  color: var(--text-muted);
+  font-size: 0.85em;
+}
+details.drop-inner[open] summary h3::before {
+  content: '\25BE';
+}
 
 /* Footer */
 .footer {
