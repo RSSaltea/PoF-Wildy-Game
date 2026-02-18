@@ -145,7 +145,7 @@ class Wilderness(commands.Cog):
         cmd_name = ctx.command.qualified_name if ctx.command else ""
 
         if ch.id in TRADE_ONLY_CHANNEL_IDS:
-            if cmd_name in TRADE_CHANNEL_CMDS:
+            if cmd_name in TRADE_CHANNEL_CMDS or cmd_name.startswith("w trade"):
                 return self._ready or (await ctx.reply("Wilderness is still loading.") and False)
             await ctx.reply("This channel is for **trading, bank & inventory** only.")
             return False
