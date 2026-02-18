@@ -1531,7 +1531,9 @@ class Wilderness(commands.Cog):
         if not await self._ensure_ready(ctx):
             return
 
-        bank_all = args.strip().lower() == "all"
+        raw = args.strip()
+        bank_all = raw.lower() == "all"
+        specific_item = None if (not raw or bank_all) else raw
 
         async with self._mem_lock:
             p = self._get_player(ctx.author)
@@ -1550,33 +1552,60 @@ class Wilderness(commands.Cog):
             kept_locked: Dict[str, int] = {}
             banked_coins = int(p.coins)
 
-            # Move inventory items — skip locked unless bank_all
-            for item, qty in list(p.inventory.items()):
-                if qty <= 0:
-                    continue
+            if specific_item:
+                # Deposit a specific item (overrides locks, deposits all of it)
+                inv_key = self._resolve_from_keys_case_insensitive(specific_item, p.inventory.keys())
+                if not inv_key:
+                    maybe = self._resolve_item(specific_item)
+                    if maybe:
+                        inv_key = self._resolve_from_keys_case_insensitive(maybe, p.inventory.keys())
+                    # Also try noted variant
+                    if not inv_key and maybe:
+                        noted_name = self._note(maybe)
+                        inv_key = self._resolve_from_keys_case_insensitive(noted_name, p.inventory.keys())
+                    if not inv_key:
+                        noted_query = self._note(specific_item)
+                        inv_key = self._resolve_from_keys_case_insensitive(noted_query, p.inventory.keys())
 
-                if not bank_all and self._is_locked(p, item):
-                    kept_locked[item] = qty
-                    continue
+                if not inv_key or int(p.inventory.get(inv_key, 0)) <= 0:
+                    await ctx.reply("That item isn't in your inventory.")
+                    return
 
-                # Normal banking — noted items become unnoted in bank
-                bank_name = self._unnote(item) if self._is_noted(item) else item
+                qty = int(p.inventory[inv_key])
+                bank_name = self._unnote(inv_key) if self._is_noted(inv_key) else inv_key
                 self._add_item(p.bank, bank_name, qty)
-                banked_items[item] = qty
-                p.inventory.pop(item, None)
+                banked_items[inv_key] = qty
+                p.inventory.pop(inv_key, None)
+                banked_coins = 0  # don't bank coins on specific deposit
 
-            # Bank equipped gear if bank_all
-            if bank_all:
-                for slot, item in list(p.equipment.items()):
-                    if item:
-                        self._add_item(p.bank, item, 1)
-                        banked_equip[slot] = item
-                p.equipment.clear()
+            else:
+                # Move inventory items — skip locked unless bank_all
+                for item, qty in list(p.inventory.items()):
+                    if qty <= 0:
+                        continue
 
-            # Bank coins
-            if p.coins > 0:
-                p.bank_coins += p.coins
-                p.coins = 0
+                    if not bank_all and self._is_locked(p, item):
+                        kept_locked[item] = qty
+                        continue
+
+                    # Normal banking — noted items become unnoted in bank
+                    bank_name = self._unnote(item) if self._is_noted(item) else item
+                    self._add_item(p.bank, bank_name, qty)
+                    banked_items[item] = qty
+                    p.inventory.pop(item, None)
+
+                # Bank equipped gear if bank_all
+                if bank_all:
+                    for slot, item in list(p.equipment.items()):
+                        if item:
+                            self._add_item(p.bank, item, 1)
+                            banked_equip[slot] = item
+                    p.equipment.clear()
+
+                # Bank coins
+                if p.coins > 0:
+                    p.bank_coins += p.coins
+                    p.coins = 0
 
             self._set_cd(p, "bank")
             await self._persist()
@@ -1591,10 +1620,10 @@ class Wilderness(commands.Cog):
         if banked_equip:
             equip_str = ", ".join(f"**{item}** ({slot})" for slot, item in banked_equip.items())
             lines.append(f"🛡️ **Banked equipment:** {equip_str}")
-        if banked_coins > 0:
+        if not specific_item and banked_coins > 0:
             lines.append(f"🪙 **Banked coins:** {banked_coins:,}")
 
-        if not bank_all:
+        if not bank_all and not specific_item:
             lines.append("(Equipped gear unchanged.)")
 
         await ctx.reply("\n".join(lines))
@@ -2251,57 +2280,144 @@ class Wilderness(commands.Cog):
                 self._touch(p)
                 await self._persist()
 
+                all_slayer_infos = []
+                all_broadcasts = list(broadcasts)
+                if slayer_task_info:
+                    all_slayer_infos.append(slayer_task_info)
+
                 pages = self._build_pages(events, per_page=10)
                 summary = (
-                    f"✅ **You have killed {npc_name}!** Your teleport was interrupted.\n"
+                    f"✅ **You have killed {npc_name}!**\n"
                     f"End HP: **{p.hp}/{self.config['max_hp']}**\n"
                     + ("\n".join(loot_lines) if loot_lines else "(no loot)")
-                    + f"\n\nYou are still in the Wilderness (level {p.wildy_level}). Try `!w tele` again."
                 )
-                pages.append(summary)
 
-                view = FightLogView(
-                    author_id=ctx.author.id,
-                    pages=pages,
-                    title=f"Ambush! {ctx.author.display_name} vs {npc_name}",
-                    cog=self,
-                    ground_drops=ground_drops,
-                    start_on_last=True,
-                    npc_image=npc_image,
-                )
-                await ctx.reply(embed=view._render_embed(), view=view)
+                # 2% chance of a second ambush after winning the first
+                if random.random() < 0.02:
+                    eligible2 = [n for n in NPCS if p.wildy_level >= n["min_wildy"]] or [NPCS[0]]
+                    chosen2 = random.choice(eligible2)
 
-                if slayer_task_info:
+                    summary += f"\n\n⚠️ **Another ambush!** A **{chosen2['name']}** attacks before you can teleport!"
+                    pages.append(summary)
+
+                    header2 = [f"⚠️ **Second ambush!** A **{chosen2['name']}** leaps out of the shadows!"]
+                    won2, npc_name2, events2, lost_items2, bank_loss2, loot_lines2, ground_drops2, eaten_food2, broadcasts2, slayer_task_info2 = \
+                        self._simulate_pvm_fight_and_loot(p, chosen2, header_lines=header2)
+
+                    npc_image = chosen2.get("image") or npc_image
+                    all_broadcasts.extend(broadcasts2)
+                    ground_drops = ground_drops2
+
+                    if not won2:
+                        food_lines2 = self._food_summary_lines(eaten_food2, lost_items2)
+                        p.deaths += 1
+                        p.wildy_run_id = int(p.wildy_run_id) + 1
+                        p.ground_items = []
+                        p.in_wilderness = False
+                        p.skulled = False
+                        p.wildy_level = 1
+                        p.hp = int(self.config["starting_hp"])
+                        self._full_heal(p)
+                        await self._persist()
+
+                        pages2 = self._build_pages(events2, per_page=10)
+                        pages.extend(pages2)
+                        death_summary = (
+                            f"☠️ **You died during the second ambush.**\n"
+                            f"📉 **Lost from inventory:**\n{self._format_items_short(lost_items2, max_lines=18)}\n"
+                            f"🏦 Lost bank coins: **{bank_loss2:,}** (10%)"
+                            + (("\n\n" + "\n".join(food_lines2)) if food_lines2 else "")
+                        )
+                        pages.append(death_summary)
+
+                        view = FightLogView(
+                            author_id=ctx.author.id,
+                            pages=pages,
+                            title=f"Double Ambush! {ctx.author.display_name}",
+                            cog=self,
+                            ground_drops=ground_drops,
+                            start_on_last=True,
+                            npc_image=npc_image,
+                        )
+                        await ctx.reply(embed=view._render_embed(), view=view)
+                        await self._send_broadcasts(ctx.author, all_broadcasts)
+                        return
+
+                    # Won both ambushes — teleport out
+                    self._touch(p)
+                    if slayer_task_info2:
+                        all_slayer_infos.append(slayer_task_info2)
+
+                    p.wildy_run_id = int(p.wildy_run_id) + 1
+                    p.ground_items = []
+                    p.in_wilderness = False
+                    p.skulled = False
+                    p.wildy_level = 1
+                    p.escapes += 1
+                    self._full_heal(p)
+                    await self._persist()
+
+                    pages2 = self._build_pages(events2, per_page=10)
+                    pages.extend(pages2)
+                    tele_summary = (
+                        f"✅ **You have killed {npc_name2}!**\n"
+                        f"End HP: **{p.hp}/{self.config['max_hp']}**\n"
+                        + ("\n".join(loot_lines2) if loot_lines2 else "(no loot)")
+                        + "\n\n✨ **Teleport successful!** You escaped the Wilderness. (Fully healed)"
+                    )
+                    pages.append(tele_summary)
+
+                    view = FightLogView(
+                        author_id=ctx.author.id,
+                        pages=pages,
+                        title=f"Double Ambush! {ctx.author.display_name}",
+                        cog=self,
+                        ground_drops=ground_drops,
+                        start_on_last=True,
+                        npc_image=npc_image,
+                    )
+                    await ctx.reply(embed=view._render_embed(), view=view)
+
+                else:
+                    # No second ambush — teleport out
+                    p.wildy_run_id = int(p.wildy_run_id) + 1
+                    p.ground_items = []
+                    p.in_wilderness = False
+                    p.skulled = False
+                    p.wildy_level = 1
+                    p.escapes += 1
+                    self._full_heal(p)
+                    await self._persist()
+
+                    summary += "\n\n✨ **Teleport successful!** You escaped the Wilderness. (Fully healed)"
+                    pages.append(summary)
+
+                    view = FightLogView(
+                        author_id=ctx.author.id,
+                        pages=pages,
+                        title=f"Ambush! {ctx.author.display_name} vs {npc_name}",
+                        cog=self,
+                        ground_drops=ground_drops,
+                        start_on_last=True,
+                        npc_image=npc_image,
+                    )
+                    await ctx.reply(embed=view._render_embed(), view=view)
+
+                for si in all_slayer_infos:
                     emb = discord.Embed(
                         title="✅ Slayer Task Complete!",
                         description=(
                             f"**{ctx.author.display_name}** has completed their slayer task!\n\n"
-                            f"🗡️ Slayer Level: **{slayer_task_info['level']}**\n"
-                            f"⭐ Points earned: **+{slayer_task_info['points']}** (Total: **{slayer_task_info['total_points']}**)\n"
-                            f"📋 Tasks completed: **{slayer_task_info['tasks_done']}**\n\n"
+                            f"🗡️ Slayer Level: **{si['level']}**\n"
+                            f"⭐ Points earned: **+{si['points']}** (Total: **{si['total_points']}**)\n"
+                            f"📋 Tasks completed: **{si['tasks_done']}**\n\n"
                             f"Use `!w slayer task` to get a new assignment!"
                         ),
                         color=0x00FF00,
                     )
                     await ctx.send(embed=emb)
 
-                # Low HP / no food warning
-                has_food = any(p.inventory.get(f, 0) > 0 for f in FOOD)
-                warnings = []
-                if p.hp < 20:
-                    warnings.append(f"Your HP is critically low (**{p.hp}/{self.config['max_hp']}**)")
-                if not has_food:
-                    warnings.append("You have **no food** remaining in your inventory")
-                if warnings:
-                    emb = discord.Embed(
-                        title="⚠️ Warning!",
-                        description="\n".join(f"- {w}" for w in warnings)
-                            + "\n\nConsider using `!w eat`, `!w tele`, or restocking before your next fight!",
-                        color=0xFF4444,
-                    )
-                    await ctx.send(embed=emb)
-
-                await self._send_broadcasts(ctx.author, broadcasts)
+                await self._send_broadcasts(ctx.author, all_broadcasts)
                 return
 
             # 80% successful teleport

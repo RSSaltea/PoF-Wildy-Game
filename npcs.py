@@ -225,8 +225,6 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
         "loot": [
             {"item": "Death rune", "min": 20, "max": 100, "chance": "1/2"},
             {"item": "Uncut sapphire", "min": 1, "max": 3, "chance": "1/4", "noted": True},
-            {"item": "Abyssal charm", "min": 5, "max": 15, "chance": "1/4"},
-            {"item": "Veilfruit", "min": 2, "max": 5, "chance": "1/5"},
             {"item": "Gold Bar", "min": 1, "max": 1, "chance": "1/30"},
         ],
     },
