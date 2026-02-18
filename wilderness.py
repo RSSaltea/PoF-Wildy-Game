@@ -1963,6 +1963,7 @@ class Wilderness(commands.Cog):
                 )
                 pages.append(summary)
 
+                npc_image = chosen.get("image")
                 view = FightLogView(
                     author_id=ctx.author.id,
                     pages=pages,
@@ -1970,8 +1971,9 @@ class Wilderness(commands.Cog):
                     cog=self,
                     ground_drops=ground_drops,
                     start_on_last=True,
+                    npc_image=npc_image,
                 )
-                await ctx.reply(content=view._render(), view=view)
+                await ctx.reply(embed=view._render_embed(), view=view)
 
                 return
 
@@ -1986,8 +1988,9 @@ class Wilderness(commands.Cog):
             )
             pages.append(summary)
 
-            view = FightLogView(author_id=ctx.author.id, pages=pages, title=f"{ctx.author.display_name} vs {npc_name}", cog=self, ground_drops=ground_drops, start_on_last=True,)
-            await ctx.reply(content=view._render(), view=view)
+            npc_image = chosen.get("image")
+            view = FightLogView(author_id=ctx.author.id, pages=pages, title=f"{ctx.author.display_name} vs {npc_name}", cog=self, ground_drops=ground_drops, start_on_last=True, npc_image=npc_image)
+            await ctx.reply(embed=view._render_embed(), view=view)
 
             if slayer_task_info:
                 emb = discord.Embed(

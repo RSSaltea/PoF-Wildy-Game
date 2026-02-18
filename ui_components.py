@@ -100,11 +100,13 @@ class FightLogView(discord.ui.View):
         cog: Optional["Wilderness"] = None,
         ground_drops: Optional[List[Tuple[str, int, int]]] = None,
         start_on_last: bool = False,
+        npc_image: Optional[str] = None,
     ):
         super().__init__(timeout=300)
         self.author_id = author_id
         self.pages = pages
         self.title = title
+        self.npc_image = npc_image
 
         self.page = (max(0, len(self.pages) - 1) if start_on_last else 0)
 
@@ -126,10 +128,16 @@ class FightLogView(discord.ui.View):
         self.next_btn.disabled = (self.page >= last)
         self.last_btn.disabled = (self.page >= last)
 
-    def _render(self) -> str:
+    def _render_embed(self) -> discord.Embed:
         total = max(1, len(self.pages))
-        header = f"📜 **{self.title}** — Page **{self.page + 1}/{total}**\n"
-        return header + self.pages[self.page]
+        emb = discord.Embed(
+            title=f"📜 {self.title} — Page {self.page + 1}/{total}",
+            description=self.pages[self.page],
+            color=0x2B2D31,
+        )
+        if self.npc_image:
+            emb.set_thumbnail(url=self.npc_image)
+        return emb
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.author_id:
@@ -141,25 +149,25 @@ class FightLogView(discord.ui.View):
     async def first_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.page = 0
         self._sync_buttons()
-        await interaction.response.edit_message(content=self._render(), view=self)
+        await interaction.response.edit_message(embed=self._render_embed(), view=self)
 
     @discord.ui.button(emoji="◀️", style=discord.ButtonStyle.secondary)
     async def prev_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.page = max(0, self.page - 1)
         self._sync_buttons()
-        await interaction.response.edit_message(content=self._render(), view=self)
+        await interaction.response.edit_message(embed=self._render_embed(), view=self)
 
     @discord.ui.button(emoji="▶️", style=discord.ButtonStyle.secondary)
     async def next_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.page = min(len(self.pages) - 1, self.page + 1)
         self._sync_buttons()
-        await interaction.response.edit_message(content=self._render(), view=self)
+        await interaction.response.edit_message(embed=self._render_embed(), view=self)
 
     @discord.ui.button(emoji="⏭️", style=discord.ButtonStyle.secondary)
     async def last_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.page = max(0, len(self.pages) - 1)
         self._sync_buttons()
-        await interaction.response.edit_message(content=self._render(), view=self)
+        await interaction.response.edit_message(embed=self._render_embed(), view=self)
 
     async def on_timeout(self):
         for child in self.children:
