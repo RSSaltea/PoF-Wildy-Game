@@ -40,15 +40,12 @@
   ];
 
   /* Resolve URLs relative to the wiki root.
-     We detect the base by finding our own <script> tag's src —
-     if src="../search.js" we are one level deep, if "search.js" we are at root. */
+     We detect the base from the stylesheet href which is already correct
+     on every page: "style.css" at root, "../style.css" in subdirs. */
   var baseUrl = (function () {
-    var scripts = document.querySelectorAll("script[src]");
-    for (var i = 0; i < scripts.length; i++) {
-      var src = scripts[i].getAttribute("src");
-      if (src.indexOf("search.js") >= 0) {
-        return src.replace("search.js", "");
-      }
+    var link = document.querySelector('link[href*="style.css"]');
+    if (link) {
+      return link.getAttribute("href").replace("style.css", "");
     }
     return "";
   })();
