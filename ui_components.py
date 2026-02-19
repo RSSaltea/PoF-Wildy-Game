@@ -44,7 +44,7 @@ class GroundPickupButton(discord.ui.Button):
             p = self.cog._get_player(interaction.user)
 
             # Invalidate if they teleported/died since the drop
-            if int(p.wildy_run_id) != self.run_id or not p.in_wilderness:
+            if int(p.wildy_run_id) != self.run_id:
                 await interaction.response.send_message(
                     "You can't pick this up anymore (you teleported or died after it dropped).",
                     ephemeral=True
@@ -477,13 +477,6 @@ class GroundPickupViewButton(discord.ui.Button):
 
         async with self.cog._mem_lock:
             p = self.cog._get_player(interaction.user)
-
-            if not p.in_wilderness:
-                await interaction.response.send_message(
-                    "You're not in the Wilderness anymore — ground items are gone.",
-                    ephemeral=True,
-                )
-                return
 
             # Check item still exists on ground
             ground = self.cog._active_ground_items(p)

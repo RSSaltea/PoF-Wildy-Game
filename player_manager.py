@@ -87,6 +87,10 @@ class PlayerManager:
         p.uniques = p.uniques or {}
         p.pets = p.pets or []
         p.pet_counts = getattr(p, "pet_counts", None) or {}
+        # Backfill: ensure every owned pet has at least count 1
+        for _pet_name in (p.pets or []):
+            if _pet_name not in p.pet_counts:
+                p.pet_counts[_pet_name] = 1
         p.consume_auto = getattr(p, "consume_auto", None) or []
         p.cd = p.cd or {}
         p.locked = getattr(p, "locked", None) or []

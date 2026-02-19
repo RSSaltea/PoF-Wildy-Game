@@ -8,6 +8,7 @@ import discord
 from discord.ext import commands
 import asyncio
 import random
+import time
 from typing import Dict, Any, Optional, Tuple, List
 import re
 
@@ -447,23 +448,51 @@ class Wilderness(commands.Cog):
         if not ch:
             return
         for drop_type, item_name, npc_name in broadcasts:
-            if drop_type == "Unique":
+            if drop_type == "Milestone":
+                # item_name is "Skill:Level", e.g. "Slayer:99"
+                skill, level = item_name.split(":", 1)
+                emoji = "🎉"
+                colour = discord.Colour.green()
+                emb = discord.Embed(
+                    title=f"{emoji} Level {level} {skill}!",
+                    description=(
+                        f"{user.mention} has achieved **Level {level} {skill}**!"
+                    ),
+                    colour=colour,
+                )
+            elif drop_type == "Unique":
                 emoji = "✨"
                 colour = discord.Colour.gold()
+                emb = discord.Embed(
+                    title=f"{emoji} {drop_type} Drop!",
+                    description=(
+                        f"{user.mention} got a **{drop_type}** drop!\n"
+                        f"They received **{item_name}** from **{npc_name}**!"
+                    ),
+                    colour=colour,
+                )
             elif drop_type == "Special":
                 emoji = "🩸"
                 colour = discord.Colour.red()
+                emb = discord.Embed(
+                    title=f"{emoji} {drop_type} Drop!",
+                    description=(
+                        f"{user.mention} got a **{drop_type}** drop!\n"
+                        f"They received **{item_name}** from **{npc_name}**!"
+                    ),
+                    colour=colour,
+                )
             else:
                 emoji = "🐾"
                 colour = discord.Colour.purple()
-            emb = discord.Embed(
-                title=f"{emoji} {drop_type} Drop!",
-                description=(
-                    f"{user.mention} got a **{drop_type}** drop!\n"
-                    f"They received **{item_name}** from **{npc_name}**!"
-                ),
-                colour=colour,
-            )
+                emb = discord.Embed(
+                    title=f"{emoji} {drop_type} Drop!",
+                    description=(
+                        f"{user.mention} got a **{drop_type}** drop!\n"
+                        f"They received **{item_name}** from **{npc_name}**!"
+                    ),
+                    colour=colour,
+                )
             try:
                 await ch.send(embed=emb)
             except Exception:
@@ -944,11 +973,6 @@ class Wilderness(commands.Cog):
 
         async with self._mem_lock:
             p = self._get_player(ctx.author)
-
-            if not p.in_wilderness:
-                await ctx.reply("You're not in the Wilderness.")
-                return
-
             ground = self._active_ground_items(p)
             await self._persist()
 
@@ -994,10 +1018,6 @@ class Wilderness(commands.Cog):
 
         async with self._mem_lock:
             p = self._get_player(ctx.author)
-
-            if not p.in_wilderness:
-                await ctx.reply("You're not in the Wilderness.")
-                return
 
             ground = self._active_ground_items(p)
             if not ground:
@@ -2327,7 +2347,7 @@ class Wilderness(commands.Cog):
 
                     npc_image = chosen2.get("image") or npc_image
                     all_broadcasts.extend(broadcasts2)
-                    ground_drops = ground_drops2
+                    ground_drops = ground_drops + ground_drops2
 
                     if not won2:
                         food_lines2 = self._food_summary_lines(eaten_food2, lost_items2)
@@ -2376,6 +2396,15 @@ class Wilderness(commands.Cog):
                     p.wildy_level = 1
                     p.escapes += 1
                     self._full_heal(p)
+
+                    # Re-add ambush ground drops so they survive the teleport
+                    if ground_drops:
+                        now = int(time.time())
+                        new_run = int(p.wildy_run_id)
+                        for item, qty, _old in ground_drops:
+                            p.ground_items.append([item, qty, now])
+                        ground_drops = [(item, qty, new_run) for item, qty, _old in ground_drops]
+
                     await self._persist()
 
                     pages2 = self._build_pages(events2, per_page=10)
@@ -2408,6 +2437,15 @@ class Wilderness(commands.Cog):
                     p.wildy_level = 1
                     p.escapes += 1
                     self._full_heal(p)
+
+                    # Re-add ambush ground drops so they survive the teleport
+                    if ground_drops:
+                        now = int(time.time())
+                        new_run = int(p.wildy_run_id)
+                        for item, qty, _old in ground_drops:
+                            p.ground_items.append([item, qty, now])
+                        ground_drops = [(item, qty, new_run) for item, qty, _old in ground_drops]
+
                     await self._persist()
 
                     summary += "\n\n✨ **Teleport successful!** You escaped the Wilderness. (Fully healed)"
@@ -3648,10 +3686,16 @@ class Wilderness(commands.Cog):
             f"You consume the **{source_name}** and gain **{xp_gained:,.1f} {xp_skill} XP**! "
             f"(from your {location})"
         )
+        milestone_broadcasts = []
         if xp_skill == "slayer" and new_level > old_level:
             msg += f"\n🎉 **Slayer level up! {old_level} → {new_level}**"
+            for milestone in (99, 120):
+                if old_level < milestone <= new_level:
+                    milestone_broadcasts.append(("Milestone", f"{xp_skill.title()}:{milestone}", source_name))
 
         await ctx.reply(msg)
+        if milestone_broadcasts:
+            await self._send_broadcasts(ctx.author, milestone_broadcasts)
 
     @consume_cmd.command(name="auto")
     async def consume_auto_cmd(self, ctx: commands.Context, *, item_name: str = ""):

@@ -646,12 +646,19 @@ class CombatManager:
         p.hp = your_hp
 
         # Slayer XP and task progress
+        old_slayer_lvl = self.cog.slayer_mgr.get_slayer_level(p)
         slayer_xp, task_done, slayer_pts = self.cog.slayer_mgr.on_npc_kill(p, npc_type)
+        new_slayer_lvl = self.cog.slayer_mgr.get_slayer_level(p)
 
         loot_lines: List[str] = []
         auto_drops: Dict[str, int] = {}
         ground_drops: List[Tuple[str, int, int]] = []  # (item, qty, run_id)
         broadcasts: List[Tuple[str, str, str]] = []  # (drop_type, item, npc_name)
+
+        # Broadcast milestone levels (99 and 120)
+        for milestone in (99, 120):
+            if old_slayer_lvl < milestone <= new_slayer_lvl:
+                broadcasts.append(("Milestone", f"Slayer:{milestone}", npc_name))
 
         max_items = 3
         items_dropped = 0
@@ -698,6 +705,9 @@ class CombatManager:
             msg = f"🔮 Auto-consume: **{item} x{qty}** → **+{total_xp:,.1f} {xp_skill} XP**"
             if xp_skill == "slayer" and new_level > old_level:
                 msg += f" (Level up! {old_level} → {new_level})"
+                for milestone in (99, 120):
+                    if old_level < milestone <= new_level:
+                        broadcasts.append(("Milestone", f"{xp_skill.title()}:{milestone}", npc_name))
             loot_lines.append(msg)
             return True
 
