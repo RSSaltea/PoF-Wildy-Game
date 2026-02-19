@@ -88,12 +88,23 @@ class PresetManager:
             if qty <= 0:
                 continue
             bank_have = p.bank.get(item, 0)
-            take = min(qty, bank_have)
-            if take > 0:
-                self.cog._remove_item(p.bank, item, take)
-                self.cog._add_item(p.inventory, item, take)
-            if take < qty:
-                missing.append(f"{item} x{qty - take}")
+            # If the preset has a noted item, check bank for the unnoted version
+            if bank_have <= 0 and self.cog._is_noted(item):
+                unnoted = self.cog._unnote(item)
+                bank_have_unnoted = p.bank.get(unnoted, 0)
+                take = min(qty, bank_have_unnoted)
+                if take > 0:
+                    self.cog._remove_item(p.bank, unnoted, take)
+                    self.cog._add_item(p.inventory, item, take)
+                if take < qty:
+                    missing.append(f"{item} x{qty - take}")
+            else:
+                take = min(qty, bank_have)
+                if take > 0:
+                    self.cog._remove_item(p.bank, item, take)
+                    self.cog._add_item(p.inventory, item, take)
+                if take < qty:
+                    missing.append(f"{item} x{qty - take}")
 
         msg = f"Loaded preset **{key}**."
         if missing:
