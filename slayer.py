@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from .wilderness import Wilderness
 
 # OSRS XP table - xp_for_level[L] = XP needed to reach level L
-_XP_TABLE: List[int] = [0]
+_XP_TABLE: List[int] = [0, 0]  # index 0 unused; level 1 = 0 XP
 _total = 0
 for _n in range(1, 126):
     _total += math.floor(_n + 300 * (2 ** (_n / 7)))
