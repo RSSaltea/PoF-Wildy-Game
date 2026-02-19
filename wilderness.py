@@ -2182,10 +2182,13 @@ class Wilderness(commands.Cog):
             if not has_food:
                 warnings.append("You have **no food** remaining in your inventory")
             if warnings:
+                if has_food:
+                    tip = "Consider using `!w eat`, `!w tele`, or restocking before your next fight!"
+                else:
+                    tip = "Consider using `!w tele`, `!w shop`, or `!w withdraw` to restock before your next fight!"
                 emb = discord.Embed(
                     title="⚠️ Warning!",
-                    description="\n".join(f"- {w}" for w in warnings)
-                        + "\n\nConsider using `!w eat`, `!w tele`, or restocking before your next fight!",
+                    description="\n".join(f"- {w}" for w in warnings) + f"\n\n{tip}",
                     color=0xFF4444,
                 )
                 await ctx.send(embed=emb)
