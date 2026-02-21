@@ -509,6 +509,22 @@ details.drop-inner[open] summary h3::before {
   content: '\25BE';
 }
 
+/* Infobox Stat Sections */
+.infobox-header {
+  background: var(--bg-secondary);
+  padding: 0.4rem 1rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.stat-pos { color: var(--green); }
+.stat-neg { color: var(--red); }
+.stat-zero { color: var(--text-muted); }
+
 /* Footer */
 .footer {
   text-align: center;
