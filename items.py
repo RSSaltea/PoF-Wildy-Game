@@ -30,6 +30,25 @@ DEF_KEYS = tuple(f"d_{s}" for s in STANCES)
 STR_KEYS = ("str_melee", "str_range", "str_magic", "str_necro")
 ALL_COMBAT_KEYS = ATK_KEYS + DEF_KEYS + STR_KEYS
 
+# ── User-facing display names ────────────────────────────────────────────
+COMBAT_KEY_DISPLAY: Dict[str, str] = {
+    "a_stab": "Stab Attack Bonus", "a_slash": "Slash Attack Bonus", "a_crush": "Crush Attack Bonus",
+    "a_magic": "Magic Attack Bonus", "a_range": "Range Attack Bonus", "a_necro": "Necromancy Attack Bonus",
+    "d_stab": "Stab Defence", "d_slash": "Slash Defence", "d_crush": "Crush Defence",
+    "d_magic": "Magic Defence", "d_range": "Range Defence", "d_necro": "Necromancy Defence",
+    "str_melee": "Melee Strength", "str_range": "Range Strength",
+    "str_magic": "Magic Strength", "str_necro": "Necromancy Strength",
+}
+
+STYLE_DISPLAY: Dict[str, str] = {
+    "melee": "Melee", "magic": "Magic", "range": "Range", "necro": "Necromancy",
+}
+
+STANCE_DISPLAY: Dict[str, str] = {
+    "stab": "Stab", "slash": "Slash", "crush": "Crush",
+    "magic": "Magic", "range": "Range", "necro": "Necromancy",
+}
+
 POTIONS = {
     "Strength": {"str": 2, "hits": 10, "aliases": "str,str pot"},
     "Super Strength": {"str": 4, "hits": 20, "aliases": "super str,sup str"},
@@ -283,28 +302,6 @@ ITEM_EFFECTS = {
     "Eclipse of the Five": {"effect": "When worn, grants +24 melee strength and +8 magic/range/necro strength, but reduces all defences by 1. Crafted from an Omnigem Amulet via `!w enchant`."},
     "Omnigem Amulet": {"effect": "An unenchanted amulet. Use `!w enchant omnigem amulet` to create Eclipse of the Five."},
     "Omnigem": {"effect": "A fused gem containing all five gem types. Used to craft an Omnigem Amulet."},
-    # Range weapons
-    "Rotwood shortbow": {"effect": "Fires any arrows. 20% chance to consume 1 arrow per hit."},
-    "Whisperwood bow": {"effect": "Fires any arrows. 20% chance to consume 1 arrow per hit."},
-    "Ironwood bow": {"effect": "Fires any arrows. 20% chance to consume 1 arrow per hit."},
-    "Hexwood bow": {"effect": "Fires any arrows. 20% chance to consume 1 arrow per hit."},
-    "Bone crossbow": {"effect": "Fires Bone bolts. 20% chance to consume 1 bolt per hit."},
-    "Nightfall bow": {"effect": "A devastating two-handed range weapon. Fires any arrows. 20% chance to consume 1 arrow per hit."},
-    # Magic weapons
-    "Galestaff": {"effect": "Channels Air runes. 20% chance to consume 1 rune per hit."},
-    "Tidestaff": {"effect": "Channels Water runes. 20% chance to consume 1 rune per hit."},
-    "Stonestaff": {"effect": "Channels Earth runes. 20% chance to consume 1 rune per hit."},
-    "Flamestaff": {"effect": "Channels Fire runes. 20% chance to consume 1 rune per hit."},
-    "Voidtouched wand": {"effect": "Channels Death runes. 20% chance to consume 1 rune per hit."},
-    "Soulfire staff": {"effect": "A devastating two-handed magic weapon. Channels Blood runes. 20% chance to consume 1 rune per hit."},
-    # Necro weapons
-    "Spectral scythe": {"effect": "A mid-tier necromancy scythe."},
-    "Deathwarden staff": {"effect": "A powerful two-handed necromancy staff."},
-    "Netharis's Grasp": {"effect": "The most powerful necromancy weapon, wrested from Netharis herself."},
-    # Offhands
-    "Voidfire Quiver": {"effect": "A range offhand that boosts accuracy and strength."},
-    "Cindertome": {"effect": "A magic offhand that boosts accuracy and strength."},
-    "Soulbound Grimoire": {"effect": "A necromancy offhand that boosts accuracy and strength."},
 }
 
 GEM_CUTTING = {

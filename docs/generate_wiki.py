@@ -36,6 +36,11 @@ def stat_val(v):
     else:
         return '<span class="stat-zero">0</span>'
 
+_STYLE_DISP = {"melee": "Melee", "magic": "Magic", "range": "Range", "necro": "Necromancy"}
+_STANCE_DISP = {"stab": "Stab", "slash": "Slash", "crush": "Crush", "magic": "Magic", "range": "Range", "necro": "Necromancy"}
+def _style_disp(s): return _STYLE_DISP.get(s, s.capitalize())
+def _stance_disp(s): return _STANCE_DISP.get(s, s.capitalize())
+
 def img_relative(url):
     """Convert a full GitHub URL to a relative path from npcs/ or items/ dir."""
     if not url:
@@ -70,34 +75,34 @@ NO_IMG_CARD = '<div class="npc-card-image" style="display:flex;align-items:cente
 # ─── NPC Descriptions ───────────────────────────────────────────────────
 
 NPC_DESCRIPTIONS = {
-    "revenant": "The Revenant Goblin is the weakest of the restless spirits that haunt the Wilderness. Once a lowly goblin in life, it now wanders the wasteland as a flickering ghost, driven by an insatiable hunger for the living. Though feeble, it serves as a grim reminder that even the weakest creatures are dangerous in death.",
+    "revenant": "The Revenant Goblin is a restless spirit that haunts the Wilderness. Once a lowly goblin in life, it now wanders the wasteland as a flickering ghost, driven by an insatiable hunger for the living.",
     "revenant imp": "The Revenant Imp is a spectral creature that haunts the Wilderness with a bow in hand. Once a mischievous imp in life, it now fires ghostly arrows at any adventurer foolish enough to wander too close.",
-    "wandering_warlock": "The Wandering Warlock is a restless mage who roams the Wilderness, hurling arcane blasts at anyone who crosses its path. Though relatively weak, its magical attacks can catch unprepared adventurers off guard.",
+    "wandering_warlock": "The Wandering Warlock is a restless mage who roams the Wilderness, hurling arcane blasts at anyone who crosses its path. Its magical attacks can catch unprepared adventurers off guard.",
     "cursed_spirit": "The Cursed Spirit is a tormented soul bound to the Wilderness by dark necromantic energy. It lashes out with spectral claws, draining the life force of those who dare approach.",
-    "feral_scorpion": "The Feral Scorpion is a vicious creature that lurks in the shallow Wilderness. Its powerful pincers deliver crushing blows, making it a dangerous foe for the unarmoured.",
+    "feral_scorpion": "The Feral Scorpion is a vicious creature that lurks in the shallow Wilderness. Its pincers deliver crushing blows, making it a dangerous foe for the unarmoured.",
     "revenant knight": "The Revenant Knight is the ghostly remains of a once-noble warrior. Clad in spectral armour and wielding an ethereal blade, it patrols the mid-level Wilderness with deadly precision.",
-    "revenant pyromancer": "The Revenant Pyromancer is a ghostly mage that wields devastating fire magic. In life it was a powerful sorcerer; in death, its flames burn even hotter.",
+    "revenant pyromancer": "The Revenant Pyromancer is a ghostly mage that wields fire magic. In life it was a sorcerer; in death, its flames burn even hotter.",
     "corrupted_ranger": "The Corrupted Ranger is a fallen archer twisted by dark energy. Its arrows fly true and strike with unnatural precision, making it a formidable ranged threat.",
     "shade": "The Shade is a dark entity that exists between life and death. It attacks with necromantic energy, draining the very essence of its victims.",
-    "infernal_imp": "The Infernal Imp is a demonic creature from the depths of the Wilderness. Its crushing blows are powered by hellfire, dealing devastating melee damage.",
-    "chaos_fanatic": "The Chaos Fanatic is a deranged mage who has made the Wilderness his domain. He bombards adventurers with chaotic magical attacks while cackling maniacally. Despite his madness, he is a formidable foe who guards valuable treasures.",
+    "infernal_imp": "The Infernal Imp is a demonic creature from the depths of the Wilderness. Its crushing blows are powered by hellfire, dealing heavy melee damage.",
+    "chaos_fanatic": "The Chaos Fanatic is a deranged mage who has made the Wilderness his domain. He bombards adventurers with chaotic magical attacks while cackling maniacally. Despite his madness, he guards valuable treasures.",
     "phantom_archer": "The Phantom Archer is a spectral marksman that haunts the mid-level Wilderness. Its ghostly arrows are nearly impossible to dodge, making it a formidable ranged threat.",
-    "risen_bonecaller": "The Risen Bonecaller is a powerful necromancer that commands the dead. It attacks with bone magic and can summon spectral minions to aid in combat.",
+    "risen_bonecaller": "The Risen Bonecaller is a necromancer that commands the dead. It attacks with bone magic and can summon spectral minions to aid in combat.",
     "windstrider": "The Windstrider is a swift and deadly ranged boss that dashes through the Wilderness with supernatural speed. Its Evasive Dash ability allows it to dodge incoming attacks entirely.",
-    "infernal_warlock": "The Infernal Warlock is a powerful magic boss that commands devastating fire spells. Its Infernal Blaze ability supercharges its attacks, dealing bonus fire damage for several hits.",
-    "revenant necro": "The Revenant Necromancer is one of the most powerful revenants in the Wilderness. It commands dark necromantic magic to raise the dead and unleash devastating attacks on the living.",
-    "revenant demon": "The Revenant Abyssal Demon is a terrifying ghostly beast that combines the raw power of an abyssal demon with the ethereal nature of a revenant. Its slashing attacks can tear through even the strongest armour.",
-    "blight cyclops": "The Blighted Cyclops is a one-eyed monstrosity corrupted by dark energy. It swings its massive fists with devastating force, and occasionally drops defenders for warriors brave enough to challenge it.",
-    "overlord": "The Abyssal Overlord is a massive abyssal creature that rules over the deep Wilderness. Its crushing attacks are devastating, and it guards some of the most valuable loot in the game.",
-    "valthyros": "Lord Valthyros is a powerful magical entity who has claimed a portion of the Wilderness as his domain. His arcane attacks are devastating, and his defensive magic makes him incredibly difficult to damage with physical attacks.",
-    "revenant archon": "The Revenant Archon is an elite revenant warrior, the pinnacle of ghostly combat prowess. Once a legendary champion in life, it now patrols the deep Wilderness as an unstoppable spectral force.",
-    "hollow_warden": "The Hollow Warden is a massive stone golem that guards the deep Wilderness. Though it drops no unique items, it yields incredible quantities of resources. Its Stone Shell ability halves incoming damage temporarily.",
-    "veilbreaker": "Zarveth the Veilbreaker is a fearsome warrior who shattered the barrier between life and death. He wields incredible strength and guards some of the most powerful melee equipment in the Wilderness.",
+    "infernal_warlock": "The Infernal Warlock is a magic boss that commands fire spells. Its Infernal Blaze ability supercharges its attacks, dealing bonus fire damage for several hits.",
+    "revenant necro": "The Revenant Necromancer is an elite revenant that haunts the deep Wilderness. It commands dark necromantic magic to raise the dead and unleash deadly attacks on the living.",
+    "revenant demon": "The Revenant Abyssal Demon is a ghostly beast that combines the raw power of an abyssal demon with the ethereal nature of a revenant. Its slashing attacks can tear through heavy armour.",
+    "blight cyclops": "The Blighted Cyclops is a one-eyed monstrosity corrupted by dark energy. It swings its massive fists with crushing force, and occasionally drops defenders for warriors brave enough to challenge it.",
+    "overlord": "The Abyssal Overlord is a massive abyssal creature that rules over the deep Wilderness. Its crushing attacks hit hard, and it guards valuable loot.",
+    "valthyros": "Lord Valthyros is a magical entity who has claimed a portion of the Wilderness as his domain. His arcane attacks are dangerous, and his defensive magic makes him difficult to damage with physical attacks.",
+    "revenant archon": "The Revenant Archon is an elite revenant warrior and a formidable ghostly combatant. Once a legendary champion in life, it now patrols the deep Wilderness as a relentless spectral force.",
+    "hollow_warden": "The Hollow Warden is a massive stone golem that guards the deep Wilderness. Though it drops no unique items, it yields large quantities of resources. Its Stone Shell ability halves incoming damage temporarily.",
+    "veilbreaker": "Zarveth the Veilbreaker is a fearsome warrior who shattered the barrier between life and death. He wields great strength and guards coveted melee equipment.",
     "masked_figure": "The Masked Figure is a mysterious assassin who stalks the deepest parts of the Wilderness. Nobody knows who hides behind the mask, but its precision strikes and deadly combat style have claimed countless adventurers.",
-    "duskwalker": "The Duskwalker is an elite ranged boss that stalks the deepest parts of the Wilderness. Its Shadow Volley ability allows it to fire two volleys in rapid succession, overwhelming even the most prepared adventurers.",
-    "emberlord": "Emberlord Kael is a terrifying magic boss wreathed in eternal flame. Its Flame Burst ability deals unavoidable fire damage, and it drops some of the most powerful magic equipment in the game.",
-    "gravekeeper": "Gravekeeper Azriel is the ultimate necromancy boss, commanding armies of the dead from its throne in the deepest Wilderness. Its Soul Siphon ability heals it while weakening its target's defences.",
-    "netharis": "Netharis the Undying is the most powerful boss in the Wilderness. This ancient necromantic entity commands overwhelming dark magic and is nearly impossible to kill. Only the strongest and most well-equipped adventurers dare face her.",
+    "duskwalker": "The Duskwalker is a ranged boss that stalks the deepest parts of the Wilderness. Its Shadow Volley ability allows it to fire two volleys in rapid succession, overwhelming adventurers.",
+    "emberlord": "Emberlord Kael is a magic boss wreathed in eternal flame. Its Flame Burst ability deals unavoidable fire damage, and it guards sought-after magic equipment.",
+    "gravekeeper": "Gravekeeper Azriel is a necromancy boss that commands armies of the dead from its throne in the deepest Wilderness. Its Soul Siphon ability heals it while weakening its target's defences.",
+    "netharis": "Netharis the Undying is an ancient necromantic entity that commands overwhelming dark magic. She is feared throughout the Wilderness, and only well-equipped adventurers dare face her.",
 }
 
 NPC_SPECIALS = {
@@ -192,19 +197,19 @@ def generate_npc_page(npc, drops):
           <div class="infobox-header">Combat Info</div>
           <div class="infobox-row"><span class="infobox-label">Wilderness Level</span><span class="infobox-value">{min_w}+</span></div>
           <div class="infobox-row"><span class="infobox-label">Health</span><span class="infobox-value">{hp}</span></div>
-          <div class="infobox-row"><span class="infobox-label">Attack Style</span><span class="infobox-value">{esc(style.capitalize())} ({esc(stance.capitalize())})</span></div>
+          <div class="infobox-row"><span class="infobox-label">Attack Style</span><span class="infobox-value">{esc(_style_disp(style))} ({esc(_stance_disp(stance))})</span></div>
           <div class="infobox-row"><span class="infobox-label">Attack Strength</span><span class="infobox-value">{atk}</span></div>
+          <div class="infobox-row"><span class="infobox-label">Ability</span><span class="infobox-value">{esc(ability_short)}</span></div>
           <div class="infobox-header">Defence Bonuses</div>
           <div class="infobox-row"><span class="infobox-label">Stab</span><span class="infobox-value">{stat_val(d_stab)}</span></div>
           <div class="infobox-row"><span class="infobox-label">Slash</span><span class="infobox-value">{stat_val(d_slash)}</span></div>
           <div class="infobox-row"><span class="infobox-label">Crush</span><span class="infobox-value">{stat_val(d_crush)}</span></div>
           <div class="infobox-row"><span class="infobox-label">Magic</span><span class="infobox-value">{stat_val(d_magic)}</span></div>
           <div class="infobox-row"><span class="infobox-label">Range</span><span class="infobox-value">{stat_val(d_range)}</span></div>
-          <div class="infobox-row"><span class="infobox-label">Necro</span><span class="infobox-value">{stat_val(d_necro)}</span></div>
+          <div class="infobox-row"><span class="infobox-label">Necromancy</span><span class="infobox-value">{stat_val(d_necro)}</span></div>
           <div class="infobox-header">Slayer Info</div>
           <div class="infobox-row"><span class="infobox-label">Slayer Level</span><span class="infobox-value">{slayer_lv}</span></div>
           <div class="infobox-row"><span class="infobox-label">Slayer XP</span><span class="infobox-value">{slayer_xp}</span></div>
-          <div class="infobox-row"><span class="infobox-label">Ability</span><span class="infobox-value">{esc(ability_short)}</span></div>
         </div>
       </div>
     </div>
@@ -303,13 +308,13 @@ def item_style_display(meta):
                 return "Magic"
         for sk in ["str_necro", "a_necro"]:
             if meta.get(sk, 0):
-                return "Necro"
+                return "Necromancy"
         # Check d_* values for armour
         has_def = any(meta.get(f"d_{s}", 0) != 0 for s in ["stab", "slash", "crush", "magic", "range", "necro"])
         if has_def:
             return "Melee"
         return "\u2014"
-    return style.capitalize()
+    return _style_disp(style)
 
 
 def generate_item_page(name, meta):
@@ -380,7 +385,7 @@ def generate_item_page(name, meta):
             info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Crush</span><span class="infobox-value">{stat_val(a_crush)}</span></div>')
             info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Magic</span><span class="infobox-value">{stat_val(a_magic)}</span></div>')
             info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Range</span><span class="infobox-value">{stat_val(a_range)}</span></div>')
-            info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Necro</span><span class="infobox-value">{stat_val(a_necro)}</span></div>')
+            info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Necromancy</span><span class="infobox-value">{stat_val(a_necro)}</span></div>')
 
         # Show Defence Bonuses section
         if has_def:
@@ -390,7 +395,7 @@ def generate_item_page(name, meta):
             info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Crush</span><span class="infobox-value">{stat_val(d_crush)}</span></div>')
             info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Magic</span><span class="infobox-value">{stat_val(d_magic)}</span></div>')
             info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Range</span><span class="infobox-value">{stat_val(d_range)}</span></div>')
-            info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Necro</span><span class="infobox-value">{stat_val(d_necro)}</span></div>')
+            info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Necromancy</span><span class="infobox-value">{stat_val(d_necro)}</span></div>')
 
         # Show Strength Bonuses section
         if has_str:
@@ -398,7 +403,7 @@ def generate_item_page(name, meta):
             info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Melee</span><span class="infobox-value">{stat_val(str_melee)}</span></div>')
             info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Range</span><span class="infobox-value">{stat_val(str_range)}</span></div>')
             info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Magic</span><span class="infobox-value">{stat_val(str_magic)}</span></div>')
-            info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Necro</span><span class="infobox-value">{stat_val(str_necro)}</span></div>')
+            info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Necromancy</span><span class="infobox-value">{stat_val(str_necro)}</span></div>')
 
         # Special bonuses (atk_vs_npc for ether weapons)
         atk_vs_npc = meta.get("atk_vs_npc", 0)
@@ -536,30 +541,30 @@ def item_card_stat(name, meta):
 
     # Weapons: show primary str bonus
     if "mainhand" in t:
-        for sk, label in [("str_melee", "Melee Str"), ("str_range", "Range Str"),
-                          ("str_magic", "Magic Str"), ("str_necro", "Necro Str")]:
+        for sk, label in [("str_melee", "Melee Strength"), ("str_range", "Range Strength"),
+                          ("str_magic", "Magic Strength"), ("str_necro", "Necromancy Strength")]:
             v = meta.get(sk, 0)
             if v:
                 return f"+{v} {label}"
         return item_slot_display(meta)
 
-    # Offhands: show str bonus if any, else acc, else def
+    # Offhands: show str bonus if any, else attack bonus, else def
     if "offhand" in t and "mainhand" not in t:
-        for sk, label in [("str_melee", "Melee Str"), ("str_range", "Range Str"),
-                          ("str_magic", "Magic Str"), ("str_necro", "Necro Str")]:
+        for sk, label in [("str_melee", "Melee Strength"), ("str_range", "Range Strength"),
+                          ("str_magic", "Magic Strength"), ("str_necro", "Necromancy Strength")]:
             v = meta.get(sk, 0)
             if v:
                 return f"+{v} {label}"
-        for ak, label in [("a_stab", "Stab Acc"), ("a_slash", "Slash Acc"), ("a_crush", "Crush Acc"),
-                          ("a_magic", "Magic Acc"), ("a_range", "Range Acc"), ("a_necro", "Necro Acc")]:
+        for ak, label in [("a_stab", "Stab Attack"), ("a_slash", "Slash Attack"), ("a_crush", "Crush Attack"),
+                          ("a_magic", "Magic Attack"), ("a_range", "Range Attack"), ("a_necro", "Necromancy Attack")]:
             v = meta.get(ak, 0)
             if v:
                 return f"+{v} {label}"
         # Defence only
         best_d = 0
         best_label = ""
-        for dk, label in [("d_stab", "Stab Def"), ("d_slash", "Slash Def"), ("d_crush", "Crush Def"),
-                          ("d_magic", "Magic Def"), ("d_range", "Range Def"), ("d_necro", "Necro Def")]:
+        for dk, label in [("d_stab", "Stab Defence"), ("d_slash", "Slash Defence"), ("d_crush", "Crush Defence"),
+                          ("d_magic", "Magic Defence"), ("d_range", "Range Defence"), ("d_necro", "Necromancy Defence")]:
             v = meta.get(dk, 0)
             if v > best_d:
                 best_d = v
@@ -570,8 +575,8 @@ def item_card_stat(name, meta):
 
     # Armour: show str bonus if any, else highest def
     slot = item_slot_display(meta)
-    for sk, label in [("str_melee", "Melee Str"), ("str_range", "Range Str"),
-                      ("str_magic", "Magic Str"), ("str_necro", "Necro Str")]:
+    for sk, label in [("str_melee", "Melee Strength"), ("str_range", "Range Strength"),
+                      ("str_magic", "Magic Strength"), ("str_necro", "Necromancy Strength")]:
         v = meta.get(sk, 0)
         if v:
             return f"+{v} {label}"
@@ -580,13 +585,13 @@ def item_card_stat(name, meta):
     best_d = 0
     best_label = ""
     for dk, label in [("d_stab", "Stab"), ("d_slash", "Slash"), ("d_crush", "Crush"),
-                      ("d_magic", "Magic"), ("d_range", "Range"), ("d_necro", "Necro")]:
+                      ("d_magic", "Magic"), ("d_range", "Range"), ("d_necro", "Necromancy")]:
         v = meta.get(dk, 0)
         if v > best_d:
             best_d = v
             best_label = label
     if best_d:
-        return f"+{best_d} {best_label} Def"
+        return f"+{best_d} {best_label} Defence"
 
     # Non-combat: type label
     if name in PET_NAMES:
@@ -711,6 +716,7 @@ def make_npc_card(npc):
     s = slug(name)
     tier = npc.get("tier", 1)
     hp = npc.get("hp", 0)
+    min_w = npc.get("min_wildy", 1)
     img_url = npc.get("image", "")
     img_rel = img_relative(img_url)
     if img_rel:
@@ -720,7 +726,7 @@ def make_npc_card(npc):
     return f'''      <a class="npc-card" href="{s}.html">
         {img_html}
         <div class="npc-card-name">{e_name}</div>
-        <div class="npc-card-tier"><span class="tier tier-{tier}">Tier {tier}</span> &middot; {hp} HP</div>
+        <div class="npc-card-tier"><span class="tier tier-{tier}">Tier {tier}</span> &middot; {hp} HP &middot; Lvl {min_w}+</div>
       </a>'''
 
 
@@ -833,12 +839,12 @@ def generate_items_index():
         ("melee_weapons", "Melee Weapons"),
         ("range_weapons", "Range Weapons"),
         ("magic_weapons", "Magic Weapons"),
-        ("necro_weapons", "Necro Weapons"),
+        ("necro_weapons", "Necromancy Weapons"),
         ("offhands", "Offhands"),
         ("melee_armour", "Melee Armour"),
         ("range_armour", "Range Armour"),
         ("magic_armour", "Magic Armour"),
-        ("necro_armour", "Necro Armour"),
+        ("necro_armour", "Necromancy Armour"),
         ("accessories", "Accessories"),
         ("food", "Food"),
         ("potions", "Potions"),

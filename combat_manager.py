@@ -5,7 +5,7 @@ from typing import Dict, Any, Optional, Tuple, List, TYPE_CHECKING
 
 from .models import PlayerState, DuelState, clamp, parse_chance, _now
 from .npcs import NPCS, NPC_SLAYER
-from .items import FOOD, ITEMS, STANCE_TO_STYLE
+from .items import FOOD, ITEMS, STANCE_TO_STYLE, COMBAT_KEY_DISPLAY, STYLE_DISPLAY, STANCE_DISPLAY
 from .consume import CONSUMABLES
 
 if TYPE_CHECKING:
@@ -202,12 +202,12 @@ class CombatManager:
             title=f"👹 NPC: {name}",
             description=desc,
         )
-        stats_parts = [f"Base HP: **{base_hp}**", f"Stance: **{npc_stance}**", f"Str ({npc_style}): **{npc_str}**"]
+        stats_parts = [f"Base HP: **{base_hp}**", f"Stance: **{STANCE_DISPLAY.get(npc_stance, npc_stance)}**", f"Strength ({STYLE_DISPLAY.get(npc_style, npc_style)}): **{npc_str}**"]
         def_parts = []
         for s in ("stab", "slash", "crush", "magic", "range", "necro"):
             v = npc.get(f"d_{s}", 0)
             if v != 0:
-                def_parts.append(f"d_{s}: **{v}**")
+                def_parts.append(f"{COMBAT_KEY_DISPLAY.get(f'd_{s}', s)}: **{v}**")
         if def_parts:
             stats_parts.append("Defence: " + ", ".join(def_parts))
         else:

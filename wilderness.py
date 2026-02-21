@@ -22,6 +22,9 @@ from .items import (
     GEM_CUTTING,
     STANCE_TO_STYLE,
     ALL_COMBAT_KEYS,
+    COMBAT_KEY_DISPLAY,
+    STYLE_DISPLAY,
+    STANCE_DISPLAY,
 )
 from .enchant import ENCHANTABLES
 from .consume import CONSUMABLES
@@ -315,13 +318,13 @@ class Wilderness(commands.Cog):
         if stats.get("type"):
             stat_lines.append(f"Slot: **{stats['type']}**")
         if stats.get("stance"):
-            stat_lines.append(f"Stance: **{stats['stance']}**")
+            stat_lines.append(f"Stance: **{STANCE_DISPLAY.get(stats['stance'], stats['stance'])}**")
         for key in ALL_COMBAT_KEYS:
             v = stats.get(key, 0)
             if v:
-                stat_lines.append(f"{key}: **{v}**")
+                stat_lines.append(f"{COMBAT_KEY_DISPLAY.get(key, key)}: **{v}**")
         if stats.get("atk_vs_npc"):
-            stat_lines.append(f"Str vs NPC: **{stats['atk_vs_npc']}**")
+            stat_lines.append(f"Strength vs NPC: **{stats['atk_vs_npc']}**")
         if stats.get("value"):
             stat_lines.append(f"Value: **{stats['value']:,}** coins")
         if stat_lines:
@@ -351,13 +354,13 @@ class Wilderness(commands.Cog):
         if stats.get("type"):
             stat_lines.append(f"Slot: **{stats['type']}**")
         if stats.get("stance"):
-            stat_lines.append(f"Stance: **{stats['stance']}**")
+            stat_lines.append(f"Stance: **{STANCE_DISPLAY.get(stats['stance'], stats['stance'])}**")
         for key in ALL_COMBAT_KEYS:
             v = stats.get(key, 0)
             if v:
-                stat_lines.append(f"{key}: **{v}**")
+                stat_lines.append(f"{COMBAT_KEY_DISPLAY.get(key, key)}: **{v}**")
         if stats.get("atk_vs_npc"):
-            stat_lines.append(f"Str vs NPC: **{stats['atk_vs_npc']}**")
+            stat_lines.append(f"Strength vs NPC: **{stats['atk_vs_npc']}**")
         if stats.get("value"):
             stat_lines.append(f"Value: **{stats['value']:,}** coins")
         if stat_lines:
@@ -1111,13 +1114,13 @@ class Wilderness(commands.Cog):
 
             stat_parts = []
             if meta.get("stance"):
-                stat_parts.append(f"Stance: **{meta['stance']}**")
+                stat_parts.append(f"Stance: **{STANCE_DISPLAY.get(meta['stance'], meta['stance'])}**")
             for key in ALL_COMBAT_KEYS:
                 v = meta.get(key, 0)
                 if v:
-                    stat_parts.append(f"{key}: **{v}**")
+                    stat_parts.append(f"{COMBAT_KEY_DISPLAY.get(key, key)}: **{v}**")
             if meta.get("atk_vs_npc"):
-                stat_parts.append(f"Str vs NPC: **{meta['atk_vs_npc']}**")
+                stat_parts.append(f"Strength vs NPC: **{meta['atk_vs_npc']}**")
             if meta.get("consumes"):
                 c = meta["consumes"]
                 label = {"arrow": "Any arrows", "bolt": "Bone bolts"}.get(c, c)
@@ -1384,20 +1387,22 @@ class Wilderness(commands.Cog):
                 lines.append(f"- **{slot}**: {item} x{p.ammo_qty}")
             else:
                 lines.append(f"- **{slot}**: {item}")
-        lines.append(f"Weapon stance: **{stance}** ({style})")
+        stance_disp = STANCE_DISPLAY.get(stance, stance)
+        style_disp = STYLE_DISPLAY.get(style, style)
+        lines.append(f"Weapon stance: **{stance_disp}** ({style_disp})")
         pvp_str = pvp_bonuses.get(f"str_{style}", 0)
         pvm_str = pvm_bonuses.get(f"str_{style}", 0)
         def_parts = []
         for s in ("stab", "slash", "crush", "magic", "range", "necro"):
             v = pvp_bonuses.get(f"d_{s}", 0)
             if v:
-                def_parts.append(f"d_{s}: {v}")
+                def_parts.append(f"{COMBAT_KEY_DISPLAY.get(f'd_{s}', s)}: {v}")
         def_text = ", ".join(def_parts) if def_parts else "(none)"
         if pvm_str != pvp_str:
-            lines.append(f"PvM str ({style}): **{pvm_str}** (max hit ~{6 + pvm_str // 4})")
-            lines.append(f"PvP str ({style}): **{pvp_str}** (max hit ~{6 + pvp_str // 4})")
+            lines.append(f"PvM Strength ({style_disp}): **{pvm_str}** (max hit ~{6 + pvm_str // 4})")
+            lines.append(f"PvP Strength ({style_disp}): **{pvp_str}** (max hit ~{6 + pvp_str // 4})")
         else:
-            lines.append(f"Str ({style}): **{pvp_str}** (max hit ~{6 + pvp_str // 4})")
+            lines.append(f"Strength ({style_disp}): **{pvp_str}** (max hit ~{6 + pvp_str // 4})")
         lines.append(f"Defence: {def_text}")
         await ctx.reply("**Equipped:**\n" + "\n".join(lines))
 
