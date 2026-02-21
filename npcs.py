@@ -312,9 +312,6 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Scaleweave body", "min": 1, "max": 1, "chance": "1/150"},
             {"item": "Scaleweave chaps", "min": 1, "max": 1, "chance": "1/150"},
         ],
-        "pet": [
-            {"item": "Flickerwisp", "min": 1, "max": 1, "chance": "1/1500"},
-        ],
         "loot": [
             {"item": "Mithril arrows", "min": 15, "max": 60, "chance": "1/2"},
             {"item": "Adamant arrows", "min": 5, "max": 25, "chance": "1/4"},
@@ -332,9 +329,6 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Spectral scythe", "min": 1, "max": 1, "chance": "1/150"},
             {"item": "Ghostweave robetop", "min": 1, "max": 1, "chance": "1/200"},
             {"item": "Ghostweave robeskirt", "min": 1, "max": 1, "chance": "1/200"},
-        ],
-        "pet": [
-            {"item": "Soulflame", "min": 1, "max": 1, "chance": "1/1500"},
         ],
         "loot": [
             {"item": "Bone Rune", "min": 5, "max": 20, "chance": "1/2"},
@@ -532,9 +526,6 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Soulfire robeskirt", "min": 1, "max": 1, "chance": "1/400"},
             {"item": "Cindertome", "min": 1, "max": 1, "chance": "1/500"},
             {"item": "Ancient Emblem", "min": 1, "max": 1, "chance": "1/100"},
-        ],
-        "pet": [
-            {"item": "Soulflame", "min": 1, "max": 1, "chance": "1/2000"},
         ],
         "loot": [
             {"item": "Blood rune", "min": 20, "max": 100, "chance": "1/2"},

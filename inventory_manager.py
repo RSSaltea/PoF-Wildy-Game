@@ -158,13 +158,27 @@ class InventoryManager:
         if not consumes:
             return True, None
 
-        consumes_meta = ITEMS.get(consumes, {})
-        consumes_type = str(consumes_meta.get("type", "")).lower()
+        # Check if consumes refers to a specific item (runes) or ammo category (arrow/bolt)
+        consumes_meta = ITEMS.get(consumes)
 
-        # Range ammo: check equipment ammo slot
-        if consumes_type == "ammo":
+        if consumes_meta:
+            # Specific item (runes) — check inventory
+            consumes_type = str(consumes_meta.get("type", "")).lower()
+            if consumes_type == "rune":
+                if p.inventory.get(consumes, 0) <= 0:
+                    return False, None
+                if random.random() < 0.2:
+                    self.remove_item(p.inventory, consumes, 1)
+                    return True, consumes
+                return True, None
+            return True, None
+        else:
+            # Category-based ammo (arrow/bolt) — check equipment ammo slot
             equipped_ammo = p.equipment.get("ammo")
-            if equipped_ammo != consumes or p.ammo_qty <= 0:
+            if not equipped_ammo or p.ammo_qty <= 0:
+                return False, None
+            ammo_meta = ITEMS.get(equipped_ammo, {})
+            if ammo_meta.get("ammo_type") != consumes:
                 return False, None
             # 20% chance to consume 1
             if random.random() < 0.2:
@@ -172,21 +186,8 @@ class InventoryManager:
                 if p.ammo_qty <= 0:
                     p.equipment.pop("ammo", None)
                     p.ammo_qty = 0
-                return True, consumes
+                return True, equipped_ammo
             return True, None
-
-        # Magic runes: check inventory
-        if consumes_type == "rune":
-            if p.inventory.get(consumes, 0) <= 0:
-                return False, None
-            # 20% chance to consume 1
-            if random.random() < 0.2:
-                self.remove_item(p.inventory, consumes, 1)
-                return True, consumes
-            return True, None
-
-        # Unknown type — treat as no requirement
-        return True, None
 
     def equipped_bonus(
         self,
@@ -201,8 +202,8 @@ class InventoryManager:
         for slot, item in p.equipment.items():
             meta = ITEMS.get(item, {})
             for key in ALL_COMBAT_KEYS:
-                # If ammo/rune not available, skip mainhand str_* bonuses
-                if consumes_charged is False and slot == "mainhand" and key.startswith("str_"):
+                # If ammo/rune not available, skip mainhand and ammo str_* bonuses
+                if consumes_charged is False and slot in ("mainhand", "ammo") and key.startswith("str_"):
                     continue
                 bonuses[key] += int(meta.get(key, 0))
 

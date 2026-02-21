@@ -1119,7 +1119,9 @@ class Wilderness(commands.Cog):
             if meta.get("atk_vs_npc"):
                 stat_parts.append(f"Str vs NPC: **{meta['atk_vs_npc']}**")
             if meta.get("consumes"):
-                stat_parts.append(f"Consumes: **{meta['consumes']}**")
+                c = meta["consumes"]
+                label = {"arrow": "Any arrows", "bolt": "Bone bolts"}.get(c, c)
+                stat_parts.append(f"Consumes: **{label}**")
             stat_text = "\n".join(stat_parts) if stat_parts else "(no combat stats)"
             emb.add_field(name="Stats", value=stat_text, inline=True)
 

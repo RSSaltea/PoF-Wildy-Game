@@ -81,7 +81,7 @@ NPC_DESCRIPTIONS = {
     "shade": "The Shade is a dark entity that exists between life and death. It attacks with necromantic energy, draining the very essence of its victims.",
     "infernal_imp": "The Infernal Imp is a demonic creature from the depths of the Wilderness. Its crushing blows are powered by hellfire, dealing devastating melee damage.",
     "chaos_fanatic": "The Chaos Fanatic is a deranged mage who has made the Wilderness his domain. He bombards adventurers with chaotic magical attacks while cackling maniacally. Despite his madness, he is a formidable foe who guards valuable treasures.",
-    "phantom_archer": "The Phantom Archer is a spectral marksman that haunts the mid-level Wilderness. Its ghostly arrows are nearly impossible to dodge, and it occasionally drops the elusive Flickerwisp pet.",
+    "phantom_archer": "The Phantom Archer is a spectral marksman that haunts the mid-level Wilderness. Its ghostly arrows are nearly impossible to dodge, making it a formidable ranged threat.",
     "risen_bonecaller": "The Risen Bonecaller is a powerful necromancer that commands the dead. It attacks with bone magic and can summon spectral minions to aid in combat.",
     "windstrider": "The Windstrider is a swift and deadly ranged boss that dashes through the Wilderness with supernatural speed. Its Evasive Dash ability allows it to dodge incoming attacks entirely.",
     "infernal_warlock": "The Infernal Warlock is a powerful magic boss that commands devastating fire spells. Its Infernal Blaze ability supercharges its attacks, dealing bonus fire damage for several hits.",
@@ -324,7 +324,8 @@ def generate_item_page(name, meta):
     value_str = f"{value:,} coins" if value else "\u2014"
     slot = item_slot_display(meta)
     style = item_style_display(meta)
-    consumes = meta.get("consumes", "")
+    consumes_raw = meta.get("consumes", "")
+    consumes = {"arrow": "Any arrows", "bolt": "Bone bolts"}.get(consumes_raw, consumes_raw)
     effect_text = effects.get("effect", "")
 
     # Image
