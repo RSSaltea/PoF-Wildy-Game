@@ -1224,6 +1224,7 @@ class Wilderness(commands.Cog):
            "gloves", "boots",
             "ring",
             "mainhand", "offhand",
+            "ammo",
         ]
 
         lines = []
@@ -1231,7 +1232,21 @@ class Wilderness(commands.Cog):
 
         for slot in slot_order:
             if slot in gear and gear[slot]:
-                lines.append(f"• **{slot}**: {gear[slot]}")
+                if slot == "ammo":
+                    ammo_item = gear[slot]
+                    ammo_meta = ITEMS.get(ammo_item, {})
+                    if ammo_meta.get("ammo_type") == "quiver":
+                        ammo2 = gear.get("ammo2")
+                        if ammo2 and p.ammo_qty > 0:
+                            lines.append(f"• **{slot}**: {ammo_item} with {ammo2} x{p.ammo_qty}")
+                        else:
+                            lines.append(f"• **{slot}**: {ammo_item} (empty)")
+                    else:
+                        lines.append(f"• **{slot}**: {ammo_item} x{p.ammo_qty}")
+                    used.add("ammo")
+                    used.add("ammo2")
+                else:
+                    lines.append(f"• **{slot}**: {gear[slot]}")
                 used.add(slot)
 
         for slot, item in sorted(gear.items(), key=lambda kv: kv[0]):
@@ -1383,8 +1398,18 @@ class Wilderness(commands.Cog):
         style = STANCE_TO_STYLE.get(stance, "melee")
         lines = []
         for slot, item in p.equipment.items():
-            if slot == "ammo":
-                lines.append(f"- **{slot}**: {item} x{p.ammo_qty}")
+            if slot == "ammo2":
+                continue  # shown as part of ammo line
+            elif slot == "ammo":
+                ammo_meta = ITEMS.get(item, {})
+                if ammo_meta.get("ammo_type") == "quiver":
+                    ammo2 = p.equipment.get("ammo2")
+                    if ammo2 and p.ammo_qty > 0:
+                        lines.append(f"- **{slot}**: {item} with {ammo2} x{p.ammo_qty}")
+                    else:
+                        lines.append(f"- **{slot}**: {item} (empty)")
+                else:
+                    lines.append(f"- **{slot}**: {item} x{p.ammo_qty}")
             else:
                 lines.append(f"- **{slot}**: {item}")
         stance_disp = STANCE_DISPLAY.get(stance, stance)
@@ -1461,45 +1486,102 @@ class Wilderness(commands.Cog):
                         )
                         return
 
-            # Work out how many free slots we need for the swap
+            # Work out how many free slots we need for the swap (ammo slot handles itself)
             is_2h = self._is_twohanded(item_key)
             old_mh = p.equipment.get(slot)          # item currently in the target slot
             old_oh = p.equipment.get("offhand") if is_2h else None  # offhand to clear for 2h
-            slots_needed = (1 if old_mh else 0) + (1 if old_oh else 0)
+            if slot != "ammo":
+                slots_needed = (1 if old_mh else 0) + (1 if old_oh else 0)
+                if slots_needed > 0 and self._inv_free_slots(p.inventory) < slots_needed:
+                    await ctx.reply(f"No inventory space to swap gear (need **{slots_needed}** free slot(s)).")
+                    return
 
-            if slots_needed > 0 and self._inv_free_slots(p.inventory) < slots_needed:
-                await ctx.reply(f"No inventory space to swap gear (need **{slots_needed}** free slot(s)).")
-                return
-
-            # Return old items to inventory
+            # Return old items to inventory (ammo slot handles its own return)
             removed_extra = None
-            if old_mh:
+            if old_mh and slot != "ammo":
                 self._add_item(p.inventory, old_mh, 1)
             if old_oh:
                 self._add_item(p.inventory, old_oh, 1)
                 p.equipment.pop("offhand", None)
                 removed_extra = old_oh
 
-            # Ammo slot: move entire stack and track qty
+            # Ammo slot: handle quiver and regular ammo
             if slot == "ammo":
-                if p.in_wilderness:
-                    qty = p.inventory.get(inv_key, 0)
-                    self._remove_item(p.inventory, inv_key, qty)
-                else:
-                    if has_in_inv:
+                new_meta = ITEMS.get(item_key, {})
+                old_ammo = p.equipment.get("ammo")
+                old_meta = ITEMS.get(old_ammo, {}) if old_ammo else {}
+                old_ammo2 = p.equipment.get("ammo2")
+
+                if new_meta.get("ammo_type") == "quiver":
+                    # --- Equipping a quiver ---
+                    # Return old ammo/quiver + ammo2 to inventory
+                    if old_ammo:
+                        if old_meta.get("ammo_type") == "quiver":
+                            self._add_item(p.inventory, old_ammo, 1)
+                            if old_ammo2 and p.ammo_qty > 0:
+                                self._add_item(p.inventory, old_ammo2, p.ammo_qty)
+                            p.equipment.pop("ammo2", None)
+                        else:
+                            self._add_item(p.inventory, old_ammo, p.ammo_qty)
+                    # Take quiver from inventory/bank (non-stackable, qty 1)
+                    if p.in_wilderness:
+                        self._remove_item(p.inventory, inv_key, 1)
+                    else:
+                        if has_in_inv:
+                            self._remove_item(p.inventory, inv_key, 1)
+                        else:
+                            self._remove_item(p.bank, bank_key, 1)
+                    p.equipment["ammo"] = item_key
+                    p.ammo_qty = 0
+                    await self._persist()
+                    await ctx.reply(f"✅ Equipped **{item_key}** in slot **ammo**.")
+                    return
+
+                elif old_ammo and old_meta.get("ammo_type") == "quiver":
+                    # --- Equipping arrows into quiver's ammo2 slot ---
+                    # Return old ammo2 arrows if different type
+                    if old_ammo2 and old_ammo2 != item_key and p.ammo_qty > 0:
+                        self._add_item(p.inventory, old_ammo2, p.ammo_qty)
+                        p.ammo_qty = 0
+                    # Take arrows from inventory/bank
+                    if p.in_wilderness:
                         qty = p.inventory.get(inv_key, 0)
                         self._remove_item(p.inventory, inv_key, qty)
                     else:
-                        qty = p.bank.get(bank_key, 0)
-                        self._remove_item(p.bank, bank_key, qty)
-                # Return old ammo to inventory if swapping
-                if old_mh:  # old_mh holds the previous item in the slot
-                    self._add_item(p.inventory, old_mh, p.ammo_qty)
-                p.equipment[slot] = item_key
-                p.ammo_qty = qty
-                await self._persist()
-                await ctx.reply(f"✅ Equipped **{item_key} x{qty}** in slot **{slot}**.")
-                return
+                        if has_in_inv:
+                            qty = p.inventory.get(inv_key, 0)
+                            self._remove_item(p.inventory, inv_key, qty)
+                        else:
+                            qty = p.bank.get(bank_key, 0)
+                            self._remove_item(p.bank, bank_key, qty)
+                    if old_ammo2 == item_key:
+                        p.ammo_qty += qty
+                    else:
+                        p.ammo_qty = qty
+                    p.equipment["ammo2"] = item_key
+                    await self._persist()
+                    await ctx.reply(f"✅ Equipped **{item_key} x{qty}** in **{old_ammo}** (total: x{p.ammo_qty}).")
+                    return
+
+                else:
+                    # --- Normal ammo equip (no quiver involved) ---
+                    if p.in_wilderness:
+                        qty = p.inventory.get(inv_key, 0)
+                        self._remove_item(p.inventory, inv_key, qty)
+                    else:
+                        if has_in_inv:
+                            qty = p.inventory.get(inv_key, 0)
+                            self._remove_item(p.inventory, inv_key, qty)
+                        else:
+                            qty = p.bank.get(bank_key, 0)
+                            self._remove_item(p.bank, bank_key, qty)
+                    if old_ammo:
+                        self._add_item(p.inventory, old_ammo, p.ammo_qty)
+                    p.equipment["ammo"] = item_key
+                    p.ammo_qty = qty
+                    await self._persist()
+                    await ctx.reply(f"✅ Equipped **{item_key} x{qty}** in slot **ammo**.")
+                    return
 
             # Take the new item from inventory or bank
             if p.in_wilderness:
@@ -1539,9 +1621,21 @@ class Wilderness(commands.Cog):
 
                 removed = []
                 for s, item in list(p.equipment.items()):
-                    if s == "ammo":
-                        self._add_item(p.inventory, item, p.ammo_qty)
-                        removed.append(f"**{item} x{p.ammo_qty}** ({s})")
+                    if s == "ammo2":
+                        continue  # handled with ammo
+                    elif s == "ammo":
+                        ammo_meta = ITEMS.get(item, {})
+                        if ammo_meta.get("ammo_type") == "quiver":
+                            self._add_item(p.inventory, item, 1)
+                            ammo2 = p.equipment.get("ammo2")
+                            if ammo2 and p.ammo_qty > 0:
+                                self._add_item(p.inventory, ammo2, p.ammo_qty)
+                                removed.append(f"**{item} with {ammo2} x{p.ammo_qty}** ({s})")
+                            else:
+                                removed.append(f"**{item}** ({s})")
+                        else:
+                            self._add_item(p.inventory, item, p.ammo_qty)
+                            removed.append(f"**{item} x{p.ammo_qty}** ({s})")
                         p.ammo_qty = 0
                     else:
                         self._add_item(p.inventory, item, 1)
@@ -1568,12 +1662,26 @@ class Wilderness(commands.Cog):
                 return
 
             if slot == "ammo":
-                self._add_item(p.inventory, item, p.ammo_qty)
-                p.equipment.pop(slot, None)
-                qty_returned = p.ammo_qty
-                p.ammo_qty = 0
-                await self._persist()
-                await ctx.reply(f"✅ Unequipped **{item} x{qty_returned}** from **{slot}**.")
+                ammo_meta = ITEMS.get(item, {})
+                if ammo_meta.get("ammo_type") == "quiver":
+                    self._add_item(p.inventory, item, 1)
+                    msg_parts = [f"**{item}**"]
+                    ammo2 = p.equipment.get("ammo2")
+                    if ammo2 and p.ammo_qty > 0:
+                        self._add_item(p.inventory, ammo2, p.ammo_qty)
+                        msg_parts.append(f"**{ammo2} x{p.ammo_qty}**")
+                    p.equipment.pop("ammo", None)
+                    p.equipment.pop("ammo2", None)
+                    p.ammo_qty = 0
+                    await self._persist()
+                    await ctx.reply(f"✅ Unequipped {' + '.join(msg_parts)} from **ammo**.")
+                else:
+                    self._add_item(p.inventory, item, p.ammo_qty)
+                    p.equipment.pop(slot, None)
+                    qty_returned = p.ammo_qty
+                    p.ammo_qty = 0
+                    await self._persist()
+                    await ctx.reply(f"✅ Unequipped **{item} x{qty_returned}** from **{slot}**.")
                 return
 
             self._add_item(p.inventory, item, 1)
@@ -1712,7 +1820,20 @@ class Wilderness(commands.Cog):
                 if bank_all:
                     for slot, item in list(p.equipment.items()):
                         if item:
-                            self._add_item(p.bank, item, 1)
+                            if slot == "ammo2":
+                                continue  # handled with ammo
+                            elif slot == "ammo":
+                                ammo_meta = ITEMS.get(item, {})
+                                if ammo_meta.get("ammo_type") == "quiver":
+                                    self._add_item(p.bank, item, 1)
+                                    ammo2 = p.equipment.get("ammo2")
+                                    if ammo2 and p.ammo_qty > 0:
+                                        self._add_item(p.bank, ammo2, p.ammo_qty)
+                                else:
+                                    self._add_item(p.bank, item, p.ammo_qty)
+                                p.ammo_qty = 0
+                            else:
+                                self._add_item(p.bank, item, 1)
                             banked_equip[slot] = item
                     p.equipment.clear()
 

@@ -175,12 +175,31 @@ class InventoryManager:
         else:
             # Category-based ammo (arrow/bolt) — check equipment ammo slot
             equipped_ammo = p.equipment.get("ammo")
-            if not equipped_ammo or p.ammo_qty <= 0:
+            if not equipped_ammo:
                 return False, None
             ammo_meta = ITEMS.get(equipped_ammo, {})
+
+            # Quiver: check arrows in the ammo2 slot
+            if ammo_meta.get("ammo_type") == "quiver":
+                ammo2 = p.equipment.get("ammo2")
+                if not ammo2 or p.ammo_qty <= 0:
+                    return False, None
+                loaded_meta = ITEMS.get(ammo2, {})
+                if loaded_meta.get("ammo_type") != consumes:
+                    return False, None
+                if random.random() < 0.2:
+                    p.ammo_qty -= 1
+                    if p.ammo_qty <= 0:
+                        p.equipment.pop("ammo2", None)
+                        p.ammo_qty = 0
+                    return True, ammo2
+                return True, None
+
+            # Regular ammo (arrows/bolts directly equipped)
+            if p.ammo_qty <= 0:
+                return False, None
             if ammo_meta.get("ammo_type") != consumes:
                 return False, None
-            # 20% chance to consume 1
             if random.random() < 0.2:
                 p.ammo_qty -= 1
                 if p.ammo_qty <= 0:
@@ -202,8 +221,8 @@ class InventoryManager:
         for slot, item in p.equipment.items():
             meta = ITEMS.get(item, {})
             for key in ALL_COMBAT_KEYS:
-                # If ammo/rune not available, skip mainhand and ammo str_* bonuses
-                if consumes_charged is False and slot in ("mainhand", "ammo") and key.startswith("str_"):
+                # If ammo/rune not available, skip mainhand, ammo, and ammo2 str_* bonuses
+                if consumes_charged is False and slot in ("mainhand", "ammo", "ammo2") and key.startswith("str_"):
                     continue
                 bonuses[key] += int(meta.get(key, 0))
 

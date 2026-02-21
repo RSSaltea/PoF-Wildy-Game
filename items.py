@@ -107,7 +107,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     # Offhands
     "Rune sq shield": {"type": "offhand", "style": "melee", "d_stab": 12, "d_slash": 12, "d_crush": 12, "d_range": 8, "stackable": False, "value": 7000, "aliases": "rune sq", "image": _IMG_BASE + "rune%20sq%20shield.png"},
     "Skull Lantern": {"type": "offhand", "style": "necro", "a_necro": 16, "stackable": False, "value": 142000, "aliases": "lantern"},
-    "Voidfire Quiver": {"type": "offhand", "style": "range", "a_range": 16, "str_range": 8, "stackable": False, "value": 100000, "aliases": "voidfire quiver,vquiver"},
+    "Voidfire Quiver": {"type": "ammo", "ammo_type": "quiver", "style": "range", "a_range": 16, "str_range": 8, "stackable": False, "value": 100000, "aliases": "voidfire quiver,vquiver"},
     "Cindertome": {"type": "offhand", "style": "magic", "a_magic": 16, "str_magic": 8, "stackable": False, "value": 100000, "aliases": "cindertome,ctome"},
     "Soulbound Grimoire": {"type": "offhand", "style": "necro", "a_necro": 20, "str_necro": 12, "stackable": False, "value": 120000, "aliases": "soulbound grimoire,grimoire,sgrimoire"},
     "Bronze Defender": {"type": "offhand", "style": "melee", "d_stab": 4, "d_slash": 4, "d_crush": 4, "stackable": False, "value": 500, "aliases": "bronze def"},

@@ -65,7 +65,20 @@ class PresetManager:
 
         for slot, item in list(p.equipment.items()):
             if item:
-                self.cog._add_item(p.bank, item, 1)
+                if slot == "ammo2":
+                    continue  # handled with ammo
+                elif slot == "ammo":
+                    ammo_meta = ITEMS.get(item, {})
+                    if ammo_meta.get("ammo_type") == "quiver":
+                        self.cog._add_item(p.bank, item, 1)
+                        ammo2 = p.equipment.get("ammo2")
+                        if ammo2 and p.ammo_qty > 0:
+                            self.cog._add_item(p.bank, ammo2, p.ammo_qty)
+                    else:
+                        self.cog._add_item(p.bank, item, p.ammo_qty)
+                    p.ammo_qty = 0
+                else:
+                    self.cog._add_item(p.bank, item, 1)
         p.equipment.clear()
 
         for item, qty in list(p.inventory.items()):
