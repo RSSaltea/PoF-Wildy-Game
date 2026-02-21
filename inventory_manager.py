@@ -4,7 +4,7 @@ from typing import Dict, Optional, Tuple, List, TYPE_CHECKING
 
 import time
 
-from .items import ITEMS, FOOD, EQUIP_SLOT_SET, POTIONS
+from .items import ITEMS, FOOD, EQUIP_SLOT_SET, POTIONS, STANCE_TO_STYLE, ALL_COMBAT_KEYS, DEF_KEYS
 from .models import PlayerState, clamp
 
 GROUND_ITEM_TTL = 300  # 5 minutes
@@ -133,36 +133,104 @@ class InventoryManager:
             return None
         return DEFENDER_ORDER[idx + 1]
 
+    def weapon_stance(self, p: PlayerState) -> str:
+        mainhand = p.equipment.get("mainhand")
+        if mainhand:
+            meta = ITEMS.get(mainhand, {})
+            return meta.get("stance", "slash")
+        return "slash"
+
+    def weapon_style(self, p: PlayerState) -> str:
+        return STANCE_TO_STYLE.get(self.weapon_stance(p), "melee")
+
+    def check_and_consume_ammo(self, p: PlayerState) -> Tuple[bool, Optional[str]]:
+        """Check if mainhand weapon requires ammo/runes and consume one (20% chance per hit).
+
+        Returns (charged, consumed_item_name).
+        - charged: True if the player has the required consumable (or weapon has none).
+        - consumed_item_name: the item name if one was consumed this hit, else None.
+        """
+        mainhand = p.equipment.get("mainhand")
+        if not mainhand:
+            return True, None
+        meta = ITEMS.get(mainhand, {})
+        consumes = meta.get("consumes")
+        if not consumes:
+            return True, None
+
+        consumes_meta = ITEMS.get(consumes, {})
+        consumes_type = str(consumes_meta.get("type", "")).lower()
+
+        # Range ammo: check equipment ammo slot
+        if consumes_type == "ammo":
+            equipped_ammo = p.equipment.get("ammo")
+            if equipped_ammo != consumes or p.ammo_qty <= 0:
+                return False, None
+            # 20% chance to consume 1
+            if random.random() < 0.2:
+                p.ammo_qty -= 1
+                if p.ammo_qty <= 0:
+                    p.equipment.pop("ammo", None)
+                    p.ammo_qty = 0
+                return True, consumes
+            return True, None
+
+        # Magic runes: check inventory
+        if consumes_type == "rune":
+            if p.inventory.get(consumes, 0) <= 0:
+                return False, None
+            # 20% chance to consume 1
+            if random.random() < 0.2:
+                self.remove_item(p.inventory, consumes, 1)
+                return True, consumes
+            return True, None
+
+        # Unknown type — treat as no requirement
+        return True, None
+
     def equipped_bonus(
         self,
         p: PlayerState,
         *,
         vs_npc: bool,
         chainmace_charged: Optional[bool] = None,
-    ) -> Tuple[int, int]:
-        atk = 0
-        deff = 0
+        consumes_charged: Optional[bool] = None,
+    ) -> Dict[str, int]:
+        bonuses: Dict[str, int] = {k: 0 for k in ALL_COMBAT_KEYS}
 
-        for item in p.equipment.values():
+        for slot, item in p.equipment.items():
             meta = ITEMS.get(item, {})
-            atk += int(meta.get("atk", 0))
-            deff += int(meta.get("def", 0))
+            for key in ALL_COMBAT_KEYS:
+                # If ammo/rune not available, skip mainhand str_* bonuses
+                if consumes_charged is False and slot == "mainhand" and key.startswith("str_"):
+                    continue
+                bonuses[key] += int(meta.get(key, 0))
 
-            if vs_npc:
-                if meta.get("atk_vs_npc") and item in ETHER_WEAPONS:
-                    charged = chainmace_charged
-                    if charged is None:
-                        charged = (p.inventory.get("Revenant ether", 0) >= 3)
-                    if not charged:
-                        continue
-                atk += int(meta.get("atk_vs_npc", 0))
+        # Ether weapon atk_vs_npc bonus (already in *4 scale)
+        if vs_npc:
+            mainhand = p.equipment.get("mainhand", "")
+            meta = ITEMS.get(mainhand, {})
+            if meta.get("atk_vs_npc") and mainhand in ETHER_WEAPONS:
+                charged = chainmace_charged
+                if charged is None:
+                    charged = (p.inventory.get("Revenant ether", 0) >= 3)
+                if charged:
+                    style = self.weapon_style(p)
+                    bonuses[f"str_{style}"] += int(meta["atk_vs_npc"])
 
+        # Active buffs
+        style = self.weapon_style(p)
         buffs = getattr(p, "active_buffs", None) or {}
         for buff in buffs.values():
-            atk += int(buff.get("atk", 0))
-            deff += int(buff.get("def", 0))
+            str_val = int(buff.get("str", 0)) or int(buff.get("atk", 0))
+            if str_val:
+                bonuses[f"str_{style}"] += str_val * 4
+            def_val = int(buff.get("def", 0))
+            if def_val:
+                for dk in DEF_KEYS:
+                    bonuses[dk] += def_val * 4
 
-        return atk, deff
+        return bonuses
 
 
     def consume_buffs_on_hit(self, p: PlayerState) -> List[str]:
@@ -268,6 +336,8 @@ class InventoryManager:
             return "Jewellery"
         if t == "rune":
             return "Runes"
+        if t == "ammo":
+            return "Ammo"
         if t == "esspouch":
             return "Pouches"
 
@@ -302,7 +372,7 @@ class InventoryManager:
                 continue
             cats.add(self.bank_category_for_item(item))
 
-        order = ["All", "Food", "Potions", "Weapons", "Armour", "Offhands", "Jewellery", "Misc"]
+        order = ["All", "Food", "Potions", "Weapons", "Armour", "Offhands", "Ammo", "Runes", "Jewellery", "Misc"]
         present = [c for c in order if c == "All" or c in cats]
         return present or ["All"]
 
@@ -351,7 +421,7 @@ class InventoryManager:
                 continue
             cats.add(self.bank_category_for_item(item))
 
-        order = ["All", "Food", "Potions", "Weapons", "Armour", "Offhands", "Jewellery", "Misc"]
+        order = ["All", "Food", "Potions", "Weapons", "Armour", "Offhands", "Ammo", "Runes", "Jewellery", "Misc"]
         present = [c for c in order if c == "All" or c in cats]
         return present or ["All"]
 

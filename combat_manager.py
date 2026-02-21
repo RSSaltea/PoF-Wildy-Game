@@ -5,13 +5,13 @@ from typing import Dict, Any, Optional, Tuple, List, TYPE_CHECKING
 
 from .models import PlayerState, DuelState, clamp, parse_chance, _now
 from .npcs import NPCS, NPC_SLAYER
-from .items import FOOD, ITEMS
+from .items import FOOD, ITEMS, STANCE_TO_STYLE
 from .consume import CONSUMABLES
 
 if TYPE_CHECKING:
     from .wilderness import Wilderness
 
-REVENANT_TYPES = {"revenant", "revenant knight", "revenant demon", "revenant necro", "revenant archon"}
+REVENANT_TYPES = {"revenant", "revenant knight", "revenant demon", "revenant necro", "revenant archon", "revenant imp", "revenant pyromancer"}
 ETHER_WEAPONS = {"Viggora's Chainmace", "Abyssal Chainmace"}
 AFK_TIMEOUT_SEC = 60 * 60
 AFK_SWEEP_INTERVAL_SEC = 5 * 60
@@ -166,7 +166,14 @@ class CombatManager:
     
     def npc_info_embed(self, npc_name: str, guild: Optional[discord.Guild]) -> discord.Embed:
         npc = self.cog._resolve_npc(npc_name) or NPCS[0]
-        name, base_hp, tier, min_wildy, npc_type, atk_bonus, def_bonus = npc["name"], npc["hp"], npc["tier"], npc["min_wildy"], npc["npc_type"], npc["atk"], npc["def"]
+        name = npc["name"]
+        base_hp = npc["hp"]
+        tier = npc["tier"]
+        min_wildy = npc["min_wildy"]
+        npc_type = npc["npc_type"]
+        npc_stance = npc.get("stance", "slash")
+        npc_style = STANCE_TO_STYLE.get(npc_stance, "melee")
+        npc_str = npc.get(f"str_{npc_style}", 0)
 
         drops = (self.cog.config.get("npc_drops", {}) or {}).get(npc_type, {}) or {}
         coins_range = drops.get("coins_range", [0, 0])
@@ -195,12 +202,18 @@ class CombatManager:
             title=f"👹 NPC: {name}",
             description=desc,
         )
-        emb.add_field(
-            name="Base Stats",
-            value=f"Base HP: **{base_hp}**\nAtk bonus: **{atk_bonus}**\nDef bonus: **{def_bonus}**",
-            inline=True,
-        )
-        emb.add_field(name="Scaling", value="In fights, HP/Atk/Def scale with your Wilderness level.", inline=True)
+        stats_parts = [f"Base HP: **{base_hp}**", f"Stance: **{npc_stance}**", f"Str ({npc_style}): **{npc_str}**"]
+        def_parts = []
+        for s in ("stab", "slash", "crush", "magic", "range", "necro"):
+            v = npc.get(f"d_{s}", 0)
+            if v != 0:
+                def_parts.append(f"d_{s}: **{v}**")
+        if def_parts:
+            stats_parts.append("Defence: " + ", ".join(def_parts))
+        else:
+            stats_parts.append("Defence: **(none)**")
+        emb.add_field(name="Base Stats", value="\n".join(stats_parts), inline=True)
+        emb.add_field(name="Scaling", value="In fights, stats scale with your Wilderness level.", inline=True)
 
         emb.add_field(name="Coins", value=f"Range: **{c_lo:,}–{c_hi:,}**", inline=False)
         emb.add_field(name="Loot", value=section_lines("loot"), inline=False)
@@ -411,10 +424,16 @@ class CombatManager:
                 return
 
             if action == "hit":
-                atk_bonus, _ = self.cog._equipped_bonus(attacker, vs_npc=False)
-                _, def_bonus = self.cog._equipped_bonus(defender, vs_npc=False)
-                atk_stat = 6 + atk_bonus + int(attacker.wildy_level / 12)
-                def_stat = 5 + def_bonus + int(defender.wildy_level / 12)
+                ammo_charged, consumed_ammo = self.cog.inv_mgr.check_and_consume_ammo(attacker)
+                if consumed_ammo:
+                    duel.log.append(f"🏹 {attacker_member.display_name} used **{consumed_ammo}**")
+                atk_bonuses = self.cog._equipped_bonus(attacker, vs_npc=False, consumes_charged=ammo_charged)
+                def_bonuses = self.cog._equipped_bonus(defender, vs_npc=False)
+                stance = self.cog._weapon_stance(attacker)
+                style = STANCE_TO_STYLE.get(stance, "melee")
+                effective_power = atk_bonuses.get(f"a_{stance}", 0) + atk_bonuses.get(f"str_{style}", 0)
+                atk_stat = 6 + (effective_power // 4) + int(attacker.wildy_level / 12)
+                def_stat = 5 + (def_bonuses.get(f"d_{stance}", 0) // 4) + int(defender.wildy_level / 12)
                 roll_a = random.randint(0, atk_stat)
                 roll_d = random.randint(0, def_stat)
                 hit = max(0, roll_a - roll_d)
@@ -505,13 +524,18 @@ class CombatManager:
          loot_lines_on_win, ground_drops, eaten_food, broadcasts)
         broadcasts: [(drop_type, item_name, npc_name), ...] for unique/special/pet
         """
-        npc_name, npc_hp, npc_tier, npc_type, npc_atk_bonus, npc_def_bonus = chosen_npc["name"], chosen_npc["hp"], chosen_npc["tier"], chosen_npc["npc_type"], chosen_npc["atk"], chosen_npc["def"]
+        npc_name = chosen_npc["name"]
+        npc_hp = chosen_npc["hp"]
+        npc_tier = chosen_npc["tier"]
+        npc_type = chosen_npc["npc_type"]
+        npc_stance = chosen_npc.get("stance", "slash")
+        npc_style = STANCE_TO_STYLE.get(npc_stance, "melee")
+        npc_str = chosen_npc.get(f"str_{npc_style}", 0)
 
         npc_hp += int(p.wildy_level / 8)
         npc_max = npc_hp
 
-        npc_atk = 1 + npc_tier + npc_atk_bonus + int(p.wildy_level / 12)
-        npc_def_stat = npc_tier + npc_def_bonus + int(p.wildy_level / 20)
+        npc_max_hit = 1 + npc_tier + (npc_str // 4) + int(p.wildy_level / 12)
 
         your_hp = p.hp
         start_hp = p.hp
@@ -527,6 +551,9 @@ class CombatManager:
         force_zero_next_hit = False
         bleed_hits = 0
         netharis_debuff_hits = 0
+        netharis_debuff_amount = 4
+        stone_shell_hits = 0
+        blaze_hits = 0
 
         while npc_hp > 0 and your_hp > 0:
             charged = False
@@ -537,19 +564,34 @@ class CombatManager:
                     charged = True
                     self.cog._remove_item(p.inventory, "Revenant ether", 3)
 
-            atk_bonus, def_bonus = self.cog._equipped_bonus(p, vs_npc=True, chainmace_charged=charged)
-            your_atk = 6 + atk_bonus + int(p.wildy_level / 15)
-            your_def = 6 + def_bonus + int(p.wildy_level / 20)
+            # Ammo/rune consumption
+            ammo_charged, consumed_ammo = self.cog.inv_mgr.check_and_consume_ammo(p)
+            if consumed_ammo:
+                events.append(f"🏹 Used **{consumed_ammo}**")
+
+            bonuses = self.cog._equipped_bonus(p, vs_npc=True, chainmace_charged=charged, consumes_charged=ammo_charged)
+            player_stance = self.cog._weapon_stance(p)
+            player_style = STANCE_TO_STYLE.get(player_stance, "melee")
+            effective_power = bonuses.get(f"a_{player_stance}", 0) + bonuses.get(f"str_{player_style}", 0)
+            your_atk = 6 + (effective_power // 4) + int(p.wildy_level / 15)
+            npc_def_stat = npc_tier + (chosen_npc.get(f"d_{player_stance}", 0) // 4) + int(p.wildy_level / 20)
+            your_def = 6 + (bonuses.get(f"d_{npc_stance}", 0) // 4) + int(p.wildy_level / 20)
 
             roll_a = random.randint(0, your_atk)
             roll_d = random.randint(0, npc_def_stat)
             hit = max(0, roll_a - roll_d)
 
-            # Zarveth forced zero mechanic
+            # Forced zero mechanic (Zarveth / Windstrider Evasive Dash)
             if force_zero_next_hit:
                 hit = 0
                 force_zero_next_hit = False
-                events.append("🕳️ The veil disrupts your swing — your hit is forced to **0**!")
+                events.append("🕳️ Your attack is disrupted — your hit is forced to **0**!")
+
+            # Stone Shell (Hollow Warden) — player damage halved
+            if stone_shell_hits > 0 and hit > 0:
+                hit = max(1, hit // 2)
+                stone_shell_hits -= 1
+                events.append(f"🪨 **Stone Shell** halves your damage! ({stone_shell_hits} hits remaining)")
 
             # Wristwraps
             if p.equipment.get("gloves") == "Wristwraps of the Damned":
@@ -584,12 +626,18 @@ class CombatManager:
 
             def_for_roll = your_def
             if netharis_debuff_hits > 0:
-                def_for_roll = max(0, your_def - 4)
+                def_for_roll = max(0, your_def - netharis_debuff_amount)
                 netharis_debuff_hits -= 1
 
-            roll_na = random.randint(0, npc_atk)
+            roll_na = random.randint(0, npc_max_hit)
             roll_nd = random.randint(0, def_for_roll)
             npc_hit = max(0, roll_na - roll_nd)
+
+            # Infernal Blaze (Infernal Warlock) — NPC hits deal +3
+            if blaze_hits > 0 and npc_hit > 0:
+                npc_hit += 3
+                blaze_hits -= 1
+                events.append(f"🔥 **Infernal Blaze** adds +3 damage! ({blaze_hits} hits remaining)")
 
             if npc_type in REVENANT_TYPES and p.equipment.get("amulet") == "Bracelet of ethereum":
                 npc_hit = int(npc_hit * 0.5)
@@ -630,6 +678,49 @@ class CombatManager:
                     heal_amt = npc_hit
                     npc_hp = min(npc_hp + heal_amt, npc_max)
                     events.append(f"🩸 **Lord Valthyros** drains your blood! Heals **{heal_amt} HP** | {npc_name}: **{npc_hp}/{npc_max}**")
+
+            # Windstrider 10% proc — Evasive Dash (force next player hit to 0)
+            if npc_name == "Windstrider" and your_hp > 0 and npc_hp > 0:
+                if random.random() < 0.10:
+                    force_zero_next_hit = True
+                    events.append("💨 **Windstrider** dashes aside! Your **next hit will deal 0**.")
+
+            # Infernal Warlock 8% proc — Infernal Blaze (+3 NPC hit damage for 3 hits)
+            if npc_name == "Infernal Warlock" and your_hp > 0 and npc_hp > 0:
+                if random.random() < 0.08:
+                    blaze_hits = 3
+                    events.append("🔥 **Infernal Warlock** ignites! NPC hits deal **+3 damage** for **3** hits.")
+
+            # Hollow Warden 10% proc — Stone Shell (player damage halved for 3 hits)
+            if npc_name == "Hollow Warden" and your_hp > 0 and npc_hp > 0:
+                if random.random() < 0.10:
+                    stone_shell_hits = 3
+                    events.append("🪨 **Hollow Warden** raises a Stone Shell! Your damage is **halved** for **3** hits.")
+
+            # Duskwalker 8% proc — Shadow Volley (immediate second NPC attack)
+            if npc_name == "Duskwalker" and your_hp > 0 and npc_hp > 0:
+                if random.random() < 0.08:
+                    events.append("🌑 **Duskwalker** unleashes a Shadow Volley!")
+                    roll_na2 = random.randint(0, npc_max_hit)
+                    roll_nd2 = random.randint(0, def_for_roll)
+                    npc_hit2 = max(0, roll_na2 - roll_nd2)
+                    your_hp = clamp(your_hp - npc_hit2, 0, int(self.cog.config["max_hp"]))
+                    events.append(f"💥 Shadow Volley hits **{npc_hit2}** | You: **{your_hp}/{self.cog.config['max_hp']}**")
+
+            # Emberlord Kael 10% proc — Flame Burst (5 flat unavoidable damage)
+            if npc_name == "Emberlord Kael" and your_hp > 0 and npc_hp > 0:
+                if random.random() < 0.10:
+                    your_hp = clamp(your_hp - 5, 0, int(self.cog.config["max_hp"]))
+                    events.append(f"🌋 **Emberlord Kael** unleashes a Flame Burst! **5** unavoidable damage | You: **{your_hp}/{self.cog.config['max_hp']}**")
+
+            # Gravekeeper Azriel 12% proc — Soul Siphon (life steal + def reduction)
+            if npc_name == "Gravekeeper Azriel" and your_hp > 0 and npc_hp > 0 and npc_hit > 0:
+                if random.random() < 0.12:
+                    heal_amt = npc_hit
+                    npc_hp = min(npc_hp + heal_amt, npc_max)
+                    netharis_debuff_hits = 4
+                    netharis_debuff_amount = 3
+                    events.append(f"👻 **Gravekeeper Azriel** siphons your soul! Heals **{heal_amt} HP** and reduces your defence by **3** for **4** hits. | {npc_name}: **{npc_hp}/{npc_max}**")
 
         if your_hp <= 0:
             lost_items = dict(p.inventory)

@@ -20,6 +20,8 @@ from .items import (
     STARTER_SHOP_COOLDOWN_SEC,
     POTIONS,
     GEM_CUTTING,
+    STANCE_TO_STYLE,
+    ALL_COMBAT_KEYS,
 )
 from .enchant import ENCHANTABLES
 from .consume import CONSUMABLES
@@ -247,7 +249,9 @@ class Wilderness(commands.Cog):
     def _item_slot(self, item_name): return self.inv_mgr.item_slot(item_name)
     def _is_twohanded(self, item_name): return self.inv_mgr.is_twohanded(item_name)
     def _next_defender_drop(self, p): return self.inv_mgr.next_defender_drop(p)
-    def _equipped_bonus(self, p, *, vs_npc, chainmace_charged=None): return self.inv_mgr.equipped_bonus(p, vs_npc=vs_npc, chainmace_charged=chainmace_charged)
+    def _equipped_bonus(self, p, *, vs_npc, chainmace_charged=None, consumes_charged=None): return self.inv_mgr.equipped_bonus(p, vs_npc=vs_npc, chainmace_charged=chainmace_charged, consumes_charged=consumes_charged)
+    def _weapon_stance(self, p): return self.inv_mgr.weapon_stance(p)
+    def _weapon_style(self, p): return self.inv_mgr.weapon_style(p)
     def _consume_buffs_on_hit(self, p): return self.inv_mgr.consume_buffs_on_hit(p)
     def _apply_seeping_heal(self, p, damage_dealt): return self.inv_mgr.apply_seeping_heal(p, damage_dealt)
     def _best_food_in_inventory(self, p): return self.inv_mgr.best_food_in_inventory(p)
@@ -310,12 +314,14 @@ class Wilderness(commands.Cog):
         stat_lines = []
         if stats.get("type"):
             stat_lines.append(f"Slot: **{stats['type']}**")
-        if stats.get("atk"):
-            stat_lines.append(f"ATK: **{stats['atk']}**")
+        if stats.get("stance"):
+            stat_lines.append(f"Stance: **{stats['stance']}**")
+        for key in ALL_COMBAT_KEYS:
+            v = stats.get(key, 0)
+            if v:
+                stat_lines.append(f"{key}: **{v}**")
         if stats.get("atk_vs_npc"):
-            stat_lines.append(f"ATK vs NPC: **{stats['atk_vs_npc']}**")
-        if stats.get("def"):
-            stat_lines.append(f"DEF: **{stats['def']}**")
+            stat_lines.append(f"Str vs NPC: **{stats['atk_vs_npc']}**")
         if stats.get("value"):
             stat_lines.append(f"Value: **{stats['value']:,}** coins")
         if stat_lines:
@@ -344,12 +350,14 @@ class Wilderness(commands.Cog):
         stat_lines = []
         if stats.get("type"):
             stat_lines.append(f"Slot: **{stats['type']}**")
-        if stats.get("atk"):
-            stat_lines.append(f"ATK: **{stats['atk']}**")
+        if stats.get("stance"):
+            stat_lines.append(f"Stance: **{stats['stance']}**")
+        for key in ALL_COMBAT_KEYS:
+            v = stats.get(key, 0)
+            if v:
+                stat_lines.append(f"{key}: **{v}**")
         if stats.get("atk_vs_npc"):
-            stat_lines.append(f"ATK vs NPC: **{stats['atk_vs_npc']}**")
-        if stats.get("def"):
-            stat_lines.append(f"DEF: **{stats['def']}**")
+            stat_lines.append(f"Str vs NPC: **{stats['atk_vs_npc']}**")
         if stats.get("value"):
             stat_lines.append(f"Value: **{stats['value']:,}** coins")
         if stat_lines:
@@ -748,7 +756,7 @@ class Wilderness(commands.Cog):
 
             # Apply buff
             p.active_buffs[base_name] = {
-                "atk": potion_data.get("atk", 0),
+                "str": potion_data.get("str", 0),
                 "remaining_hits": potion_data.get("hits", 0)
             }
 
@@ -762,7 +770,7 @@ class Wilderness(commands.Cog):
 
         await ctx.reply(
             f"🧪 You drink **{base_name}**!\n"
-            f"+{potion_data['atk']} attack for {potion_data['hits']} hits."
+            f"+{potion_data['str']} strength for {potion_data['hits']} hits."
         )
 
     @w.command(name="hp", aliases=["health"])
@@ -1094,9 +1102,6 @@ class Wilderness(commands.Cog):
         meta = ITEMS.get(item_key) if item_key else None
         if meta and self._item_slot(item_key):
             slot = self._item_slot(item_key)
-            atk = int(meta.get("atk", 0))
-            deff = int(meta.get("def", 0))
-            atk_vs_npc = int(meta.get("atk_vs_npc", 0))
             sell_value = int(meta.get("value", 0))
             is_2h = self._is_twohanded(item_key)
 
@@ -1104,9 +1109,18 @@ class Wilderness(commands.Cog):
             emb = discord.Embed(title=item_key, color=0x58a6ff)
             emb.add_field(name="Slot", value=slot_display, inline=True)
 
-            stat_text = f"+{atk} atk / +{deff} def"
-            if atk_vs_npc:
-                stat_text += f"\n+{atk_vs_npc} atk vs NPCs"
+            stat_parts = []
+            if meta.get("stance"):
+                stat_parts.append(f"Stance: **{meta['stance']}**")
+            for key in ALL_COMBAT_KEYS:
+                v = meta.get(key, 0)
+                if v:
+                    stat_parts.append(f"{key}: **{v}**")
+            if meta.get("atk_vs_npc"):
+                stat_parts.append(f"Str vs NPC: **{meta['atk_vs_npc']}**")
+            if meta.get("consumes"):
+                stat_parts.append(f"Consumes: **{meta['consumes']}**")
+            stat_text = "\n".join(stat_parts) if stat_parts else "(no combat stats)"
             emb.add_field(name="Stats", value=stat_text, inline=True)
 
             if sell_value > 0:
@@ -1358,14 +1372,31 @@ class Wilderness(commands.Cog):
         if not p.equipment:
             await ctx.reply("You have nothing equipped.")
             return
-        pvp_atk, pvp_def = self._equipped_bonus(p, vs_npc=False)
-        pvm_atk, pvm_def = self._equipped_bonus(p, vs_npc=True, chainmace_charged=True)
-        lines = [f"- **{slot}**: {item}" for slot, item in p.equipment.items()]
-        if pvm_atk != pvp_atk:
-            lines.append(f"PvM: **+{pvm_atk} atk / +{pvm_def} def**")
-            lines.append(f"PvP: **+{pvp_atk} atk / +{pvp_def} def**")
+        pvp_bonuses = self._equipped_bonus(p, vs_npc=False)
+        pvm_bonuses = self._equipped_bonus(p, vs_npc=True, chainmace_charged=True)
+        stance = self._weapon_stance(p)
+        style = STANCE_TO_STYLE.get(stance, "melee")
+        lines = []
+        for slot, item in p.equipment.items():
+            if slot == "ammo":
+                lines.append(f"- **{slot}**: {item} x{p.ammo_qty}")
+            else:
+                lines.append(f"- **{slot}**: {item}")
+        lines.append(f"Weapon stance: **{stance}** ({style})")
+        pvp_str = pvp_bonuses.get(f"str_{style}", 0)
+        pvm_str = pvm_bonuses.get(f"str_{style}", 0)
+        def_parts = []
+        for s in ("stab", "slash", "crush", "magic", "range", "necro"):
+            v = pvp_bonuses.get(f"d_{s}", 0)
+            if v:
+                def_parts.append(f"d_{s}: {v}")
+        def_text = ", ".join(def_parts) if def_parts else "(none)"
+        if pvm_str != pvp_str:
+            lines.append(f"PvM str ({style}): **{pvm_str}** (max hit ~{6 + pvm_str // 4})")
+            lines.append(f"PvP str ({style}): **{pvp_str}** (max hit ~{6 + pvp_str // 4})")
         else:
-            lines.append(f"Bonuses: **+{pvp_atk} atk / +{pvp_def} def**")
+            lines.append(f"Str ({style}): **{pvp_str}** (max hit ~{6 + pvp_str // 4})")
+        lines.append(f"Defence: {def_text}")
         await ctx.reply("**Equipped:**\n" + "\n".join(lines))
 
     @w.command(name="equip")
@@ -1442,6 +1473,27 @@ class Wilderness(commands.Cog):
                 p.equipment.pop("offhand", None)
                 removed_extra = old_oh
 
+            # Ammo slot: move entire stack and track qty
+            if slot == "ammo":
+                if p.in_wilderness:
+                    qty = p.inventory.get(inv_key, 0)
+                    self._remove_item(p.inventory, inv_key, qty)
+                else:
+                    if has_in_inv:
+                        qty = p.inventory.get(inv_key, 0)
+                        self._remove_item(p.inventory, inv_key, qty)
+                    else:
+                        qty = p.bank.get(bank_key, 0)
+                        self._remove_item(p.bank, bank_key, qty)
+                # Return old ammo to inventory if swapping
+                if old_mh:  # old_mh holds the previous item in the slot
+                    self._add_item(p.inventory, old_mh, p.ammo_qty)
+                p.equipment[slot] = item_key
+                p.ammo_qty = qty
+                await self._persist()
+                await ctx.reply(f"✅ Equipped **{item_key} x{qty}** in slot **{slot}**.")
+                return
+
             # Take the new item from inventory or bank
             if p.in_wilderness:
                 self._remove_item(p.inventory, inv_key, 1)
@@ -1480,8 +1532,13 @@ class Wilderness(commands.Cog):
 
                 removed = []
                 for s, item in list(p.equipment.items()):
-                    self._add_item(p.inventory, item, 1)
-                    removed.append(f"**{item}** ({s})")
+                    if s == "ammo":
+                        self._add_item(p.inventory, item, p.ammo_qty)
+                        removed.append(f"**{item} x{p.ammo_qty}** ({s})")
+                        p.ammo_qty = 0
+                    else:
+                        self._add_item(p.inventory, item, 1)
+                        removed.append(f"**{item}** ({s})")
                 p.equipment.clear()
                 await self._persist()
 
@@ -1501,6 +1558,15 @@ class Wilderness(commands.Cog):
 
             if self._inv_free_slots(p.inventory) < 1:
                 await ctx.reply("No inventory space to unequip (need 1 free slot).")
+                return
+
+            if slot == "ammo":
+                self._add_item(p.inventory, item, p.ammo_qty)
+                p.equipment.pop(slot, None)
+                qty_returned = p.ammo_qty
+                p.ammo_qty = 0
+                await self._persist()
+                await ctx.reply(f"✅ Unequipped **{item} x{qty_returned}** from **{slot}**.")
                 return
 
             self._add_item(p.inventory, item, 1)

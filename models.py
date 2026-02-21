@@ -96,6 +96,7 @@ class PlayerState:
     alch_auto: List[str] = None
     pet_counts: Dict[str, int] = None
     consume_auto: List[str] = None
+    ammo_qty: int = 0
 
     def __post_init__(self):
         if self.inventory is None:

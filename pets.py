@@ -47,6 +47,25 @@ PET_ALIASES: Dict[str, str] = {
     "lil undying": "Lil' Undying",
     "undying pet": "Lil' Undying",
     "netharis pet": "Lil' Undying",
+
+    "flicker": "Flickerwisp",
+    "wisp": "Flickerwisp",
+    "flickerwisp pet": "Flickerwisp",
+
+    "dark archer": "Tiny Dark Archer",
+    "tiny archer": "Tiny Dark Archer",
+    "tda": "Tiny Dark Archer",
+
+    "soulflame pet": "Soulflame",
+    "soul flame": "Soulflame",
+    "sf": "Soulflame",
+
+    "embersprite pet": "Embersprite",
+    "ember": "Embersprite",
+    "sprite": "Embersprite",
+
+    "baby fanatic": "Baby Chaos Fanatic",
+    "fanatic pet": "Baby Chaos Fanatic",
 }
 
 def resolve_pet(query: str) -> Optional[str]:
