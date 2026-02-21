@@ -76,7 +76,7 @@ BROADCAST_CHANNEL_ID = 1473373945729126641
 TRADE_CHANNEL_CMDS = {"w trade", "w deposit", "w bank", "w inv", "w inventory"}
 INFO_CHANNEL_CMDS = {"w stats", "w examine", "w inspect", "w insp", "w npcs", "w bank", "w inv", "w kc", "w killcount", "w highscores", "w hs", "w slayer"}
 
-REVENANT_TYPES = {"revenant", "revenant knight", "revenant demon", "revenant necro", "revenant archon"}
+REVENANT_TYPES = {"revenant goblin", "revenant knight", "revenant demon", "revenant necro", "revenant archon", "revenant imp", "revenant pyromancer"}
 
 class Wilderness(commands.Cog):
     def __init__(self, bot: commands.Bot):

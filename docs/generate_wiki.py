@@ -75,7 +75,7 @@ NO_IMG_CARD = '<div class="npc-card-image" style="display:flex;align-items:cente
 # ─── NPC Descriptions ───────────────────────────────────────────────────
 
 NPC_DESCRIPTIONS = {
-    "revenant": "The Revenant Goblin is a restless spirit that haunts the Wilderness. Once a lowly goblin in life, it now wanders the wasteland as a flickering ghost, driven by an insatiable hunger for the living.",
+    "revenant goblin": "The Revenant Goblin is a restless spirit that haunts the Wilderness. Once a lowly goblin in life, it now wanders the wasteland as a flickering ghost, driven by an insatiable hunger for the living.",
     "revenant imp": "The Revenant Imp is a spectral creature that haunts the Wilderness with a bow in hand. Once a mischievous imp in life, it now fires ghostly arrows at any adventurer foolish enough to wander too close.",
     "wandering_warlock": "The Wandering Warlock is a restless mage who roams the Wilderness, hurling arcane blasts at anyone who crosses its path. Its magical attacks can catch unprepared adventurers off guard.",
     "cursed_spirit": "The Cursed Spirit is a tormented soul bound to the Wilderness by dark necromantic energy. It lashes out with spectral claws, draining the life force of those who dare approach.",
@@ -229,7 +229,6 @@ def build_drop_table_html(drops):
     coins = drops.get("coins_range")
     loot = drops.get("loot", [])
     unique = drops.get("unique", [])
-    special = drops.get("special", [])
     pet = drops.get("pet", [])
 
     html = '\n        <details class="drop-section" open>\n        <summary><h2>Drop Table</h2></summary>\n'
@@ -242,9 +241,6 @@ def build_drop_table_html(drops):
 
     if unique:
         html += drop_table_section("Unique", unique, "drop-unique")
-
-    if special:
-        html += drop_table_section("Special", special, "drop-special")
 
     if pet:
         html += drop_table_section("Pet", pet, "drop-pet")
@@ -295,7 +291,12 @@ def item_slot_display(meta):
 
 def item_style_display(meta):
     style = str(meta.get("style", "")).lower()
+    t = str(meta.get("type", "")).lower()
+    # Armour without an explicit style is universal
+    is_armour_slot = any(s in t for s in ["helm", "body", "legs", "boots", "gloves"])
     if not style:
+        if is_armour_slot:
+            return "All Styles"
         # Infer from stats on the item
         for sk in ["str_melee", "a_stab", "a_slash", "a_crush"]:
             if meta.get(sk, 0):
@@ -312,7 +313,7 @@ def item_style_display(meta):
         # Check d_* values for armour
         has_def = any(meta.get(f"d_{s}", 0) != 0 for s in ["stab", "slash", "crush", "magic", "range", "necro"])
         if has_def:
-            return "Melee"
+            return "All Styles"
         return "\u2014"
     return _style_disp(style)
 
@@ -447,7 +448,7 @@ def generate_item_page(name, meta):
     # Build sources from NPC_DROPS
     source_rows = []
     for nt, drops in NPC_DROPS.items():
-        for section in ["loot", "unique", "special", "pet"]:
+        for section in ["loot", "unique", "pet"]:
             for entry in drops.get(section, []):
                 if entry.get("item", "").lower() == name.lower():
                     npc_name = nt
@@ -459,7 +460,7 @@ def generate_item_page(name, meta):
                     mx = entry.get("max", 1)
                     chance = entry.get("chance", "?")
                     qty = f"{mn}" if mn == mx else f"{mn}&ndash;{mx}"
-                    css_class = ' class="drop-pet"' if section == "pet" else (' class="drop-unique"' if section in ("unique", "special") else "")
+                    css_class = ' class="drop-pet"' if section == "pet" else (' class="drop-unique"' if section == "unique" else "")
                     npc_slug = slug(npc_name)
                     source_rows.append(f'            <tr{css_class}><td><a href="../npcs/{npc_slug}.html">{esc(npc_name)}</a></td><td>{qty}</td><td>{chance}</td></tr>')
 
@@ -656,20 +657,15 @@ def categorize_item(name, meta):
     # Armour slots
     for slot_key in ARMOUR_SLOTS:
         if slot_key in t:
-            if style == "range": return "range_armour"
-            if style == "magic": return "magic_armour"
-            if style == "necro": return "necro_armour"
-            return "melee_armour"
+            return "armour"
 
-    # Gloves - check style
+    # Gloves - check if it's armour or accessory
     if "gloves" in t:
-        if style == "range": return "range_armour"
-        if style == "magic": return "magic_armour"
-        if style == "necro": return "necro_armour"
-        # Special gloves (bracelet of ethereum, etc.)
-        if not style:
-            return "accessories"
-        return "melee_armour"
+        # Items with combat stats are armour; special gloves (bracelet of ethereum, etc.) are accessories
+        has_combat = any(meta.get(k, 0) for k in ["d_stab", "d_slash", "d_crush", "d_magic", "d_range", "d_necro", "str_melee", "str_range", "str_magic", "str_necro"])
+        if has_combat:
+            return "armour"
+        return "accessories"
 
     # Accessories
     if any(s in t for s in ["amulet", "ring", "cape"]):
@@ -794,10 +790,7 @@ def generate_items_index():
         "magic_weapons": [],
         "necro_weapons": [],
         "offhands": [],
-        "melee_armour": [],
-        "range_armour": [],
-        "magic_armour": [],
-        "necro_armour": [],
+        "armour": [],
         "accessories": [],
         "food": [],
         "potions": [],
@@ -831,8 +824,7 @@ def generate_items_index():
         categories[cat].sort(key=weapon_sort_key)
 
     # Sort armour by value (ascending)
-    for cat in ["melee_armour", "range_armour", "magic_armour", "necro_armour"]:
-        categories[cat].sort(key=lambda x: x[1].get("value", 0))
+    categories["armour"].sort(key=lambda x: x[1].get("value", 0))
 
     # Section definitions
     SECTIONS = [
@@ -841,10 +833,7 @@ def generate_items_index():
         ("magic_weapons", "Magic Weapons"),
         ("necro_weapons", "Necromancy Weapons"),
         ("offhands", "Offhands"),
-        ("melee_armour", "Melee Armour"),
-        ("range_armour", "Range Armour"),
-        ("magic_armour", "Magic Armour"),
-        ("necro_armour", "Necromancy Armour"),
+        ("armour", "Armour"),
         ("accessories", "Accessories"),
         ("food", "Food"),
         ("potions", "Potions"),

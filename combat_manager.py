@@ -11,7 +11,7 @@ from .consume import CONSUMABLES
 if TYPE_CHECKING:
     from .wilderness import Wilderness
 
-REVENANT_TYPES = {"revenant", "revenant knight", "revenant demon", "revenant necro", "revenant archon", "revenant imp", "revenant pyromancer"}
+REVENANT_TYPES = {"revenant goblin", "revenant knight", "revenant demon", "revenant necro", "revenant archon", "revenant imp", "revenant pyromancer"}
 ETHER_WEAPONS = {"Viggora's Chainmace", "Abyssal Chainmace"}
 AFK_TIMEOUT_SEC = 60 * 60
 AFK_SWEEP_INTERVAL_SEC = 5 * 60
@@ -218,9 +218,6 @@ class CombatManager:
         emb.add_field(name="Coins", value=f"Range: **{c_lo:,}–{c_hi:,}**", inline=False)
         emb.add_field(name="Loot", value=section_lines("loot"), inline=False)
         emb.add_field(name="Uniques", value=section_lines("unique"), inline=False)
-
-        if drops.get("special"):
-            emb.add_field(name="Special", value=section_lines("special"), inline=False)
 
         emb.add_field(name="Pet", value=section_lines("pet"), inline=False)
 
@@ -854,21 +851,6 @@ class CombatManager:
                         ground_drops.append((item, on_ground, int(p.wildy_run_id)))
                 items_dropped += 1
                 broadcasts.append(("Unique", item, npc_name))
-
-        if can_drop():
-            npc_special = self.cog._npc_roll_table(npc_type, "special")
-            if npc_special:
-                item, qty = npc_special
-                if self.cog._is_blacklisted(p, item):
-                    self.cog._record_autodrop(auto_drops, item, qty)
-                    loot_lines.append(f"🩸 SPECIAL: **{item} x{qty}** (blacklisted - dropped)")
-                else:
-                    dest, on_ground = self.cog._try_put_item_or_ground(p, item, qty)
-                    loot_lines.append(f"🩸 SPECIAL: **{item} x{qty}** {dest}".rstrip())
-                    if on_ground > 0:
-                        ground_drops.append((item, on_ground, int(p.wildy_run_id)))
-                broadcasts.append(("Special", item, npc_name))
-                items_dropped += 1
 
         pet = self.cog._npc_roll_pet(npc_type)
         if pet:
