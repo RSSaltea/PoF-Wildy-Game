@@ -649,7 +649,7 @@ class Wilderness(commands.Cog):
             "You need gear equipped to deal damage and take less."
         ), inline=False)
         emb.add_field(name="Step 3 — Buy Some Food", value=(
-            "`!w shop buy 10 shrimp`\n"
+            "`!w shop buy 10 lobster`\n"
             "Food heals you during combat. You auto-eat when your HP gets low."
         ), inline=False)
         emb.add_field(name="Step 4 — Enter the Wilderness", value=(
@@ -2576,7 +2576,7 @@ class Wilderness(commands.Cog):
             kills = p.kills
             tip_msg = None
             if kills == 1:
-                tip_msg = "**First kill!** Use `!w deposit` to bank your loot so you don't lose it if you die. Use `!w shop buy 10 shrimp` if you need food."
+                tip_msg = "**First kill!** Use `!w deposit` to bank your loot so you don't lose it if you die. Use `!w shop buy 10 lobster` if you need food."
             elif kills == 5:
                 tip_msg = "**5 kills!** Try `!w slayer task` for slayer assignments — you'll earn bonus XP and points towards powerful rewards."
             elif kills == 15:
