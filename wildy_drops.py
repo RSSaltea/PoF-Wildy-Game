@@ -1,7 +1,7 @@
 
 from typing import Dict, Any, List
 
-CHEST_COIN_RANGE = [5000, 25000]
+CHEST_COIN_RANGE = [1000, 5000]
 
 CHEST_REWARDS: List[Dict[str, Any]] = [
     {"item": "Blood rune", "min": 3, "max": 20, "chance": "1/2"},

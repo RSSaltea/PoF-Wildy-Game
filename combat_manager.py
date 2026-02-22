@@ -762,7 +762,7 @@ class CombatManager:
             nats = p.inventory.get("Nature rune", 0)
             if nats < qty:
                 return False
-            total_gp = value * qty
+            total_gp = int(value * 1.3) * qty
             p.coins += total_gp
             self.cog._remove_item(p.inventory, "Nature rune", qty)
             loot_lines.append(f"🔥 Auto-alch: **{item} x{qty}** → **{total_gp:,} coins** (-{qty} Nature rune)")

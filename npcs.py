@@ -108,7 +108,7 @@ for _npc in NPCS:
 NPC_DROPS: Dict[str, Dict[str, Any]] = {
     # ── Revenant imp (T1 w1) ──
     "revenant imp": {
-        "coins_range": [0, 800],
+        "coins_range": [0, 150],
         "unique": [
             {"item": "Rotwood shortbow", "min": 1, "max": 1, "chance": "1/80"},
             {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/3000", "on_task_chance": "1/1500"},
@@ -129,7 +129,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Wandering Warlock (T1 w3) ──
     "wandering_warlock": {
-        "coins_range": [0, 600],
+        "coins_range": [0, 120],
         "unique": [
             {"item": "Galestaff", "min": 1, "max": 1, "chance": "1/80"},
         ],
@@ -143,7 +143,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Cursed Spirit (T1 w4) ──
     "cursed_spirit": {
-        "coins_range": [0, 700],
+        "coins_range": [0, 130],
         "loot": [
             {"item": "Bone Rune", "min": 3, "max": 10, "chance": "1/3"},
             {"item": "Death rune", "min": 3, "max": 10, "chance": "1/4"},
@@ -154,7 +154,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Feral Scorpion (T1 w6) ──
     "feral_scorpion": {
-        "coins_range": [0, 500],
+        "coins_range": [0, 100],
         "loot": [
             {"item": "Bronze arrows", "min": 10, "max": 30, "chance": "1/2"},
             {"item": "Iron arrows", "min": 5, "max": 15, "chance": "1/3"},
@@ -164,7 +164,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Revenant goblin (T1 w8) ──
     "revenant goblin": {
-        "coins_range": [0, 1000],
+        "coins_range": [0, 200],
         "unique": [
             {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/2000", "on_task_chance": "1/1000"},
         ],
@@ -181,7 +181,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Corrupted Ranger (T2 w11) ──
     "corrupted_ranger": {
-        "coins_range": [0, 1800],
+        "coins_range": [0, 350],
         "unique": [
             {"item": "Whisperwood bow", "min": 1, "max": 1, "chance": "1/120"},
             {"item": "Scaleweave body", "min": 1, "max": 1, "chance": "1/300", "on_task_chance": "1/120"},
@@ -200,7 +200,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Shade (T2 w13) ──
     "shade": {
-        "coins_range": [0, 2000],
+        "coins_range": [0, 400],
         "unique": [
             {"item": "Ghostweave robetop", "min": 1, "max": 1, "chance": "1/300", "on_task_chance": "1/120"},
             {"item": "Ghostweave robeskirt", "min": 1, "max": 1, "chance": "1/300", "on_task_chance": "1/120"},
@@ -218,7 +218,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Infernal Imp (T2 w15) ──
     "infernal_imp": {
-        "coins_range": [0, 1500],
+        "coins_range": [0, 300],
         "loot": [
             {"item": "Fire rune", "min": 5, "max": 20, "chance": "1/2"},
             {"item": "Air rune", "min": 5, "max": 15, "chance": "1/3"},
@@ -228,7 +228,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Revenant pyromancer (T2 w17) ──
     "revenant pyromancer": {
-        "coins_range": [0, 2000],
+        "coins_range": [0, 400],
         "unique": [
             {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/1700", "on_task_chance": "1/850"},
             {"item": "Tidestaff", "min": 1, "max": 1, "chance": "1/120"},
@@ -255,7 +255,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Revenant knight (T2 w19) ──
     "revenant knight": {
-        "coins_range": [0, 2000],
+        "coins_range": [0, 400],
         "unique": [
             {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/1500", "on_task_chance": "1/750"},
         ],
@@ -272,7 +272,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Phantom Archer (T3 w21) ──
     "phantom_archer": {
-        "coins_range": [0, 3500],
+        "coins_range": [0, 700],
         "unique": [
             {"item": "Ironwood bow", "min": 1, "max": 1, "chance": "1/200"},
         ],
@@ -285,7 +285,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Chaos fanatic (T3 w24) ──
     "chaos_fanatic": {
-        "coins_range": [0, 4000],
+        "coins_range": [0, 800],
         "unique": [
             {"item": "Dragon 2h sword", "min": 1, "max": 1, "chance": "1/200"},
             {"item": "Stonestaff", "min": 1, "max": 1, "chance": "1/200"},
@@ -305,7 +305,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Risen Bonecaller (T3 w26) ──
     "risen_bonecaller": {
-        "coins_range": [0, 4000],
+        "coins_range": [0, 800],
         "unique": [
             {"item": "Spectral scythe", "min": 1, "max": 1, "chance": "1/200"},
             {"item": "Death Guard", "min": 1, "max": 1, "chance": "1/100"},
@@ -319,7 +319,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Windstrider (T3 w28) ──
     "windstrider": {
-        "coins_range": [0, 5000],
+        "coins_range": [0, 1000],
         "unique": [
             {"item": "Hexwood bow", "min": 1, "max": 1, "chance": "1/200"},
             {"item": "Drakescale body", "min": 1, "max": 1, "chance": "1/500", "on_task_chance": "1/200"},
@@ -335,7 +335,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Infernal Warlock (T3 w30) ──
     "infernal_warlock": {
-        "coins_range": [0, 5500],
+        "coins_range": [0, 1100],
         "unique": [
             {"item": "Flamestaff", "min": 1, "max": 1, "chance": "1/200"},
             {"item": "Wraithcaller's robetop", "min": 1, "max": 1, "chance": "1/500", "on_task_chance": "1/200"},
@@ -351,7 +351,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Revenant necromancer (T4 w31) ──
     "revenant necro": {
-        "coins_range": [0, 2500],
+        "coins_range": [0, 500],
         "unique": [
             {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/1100", "on_task_chance": "1/550"},
             {"item": "Deathwarden robetop", "min": 1, "max": 1, "chance": "1/750", "on_task_chance": "1/300"},
@@ -370,7 +370,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Blighted Cyclops (T4 w32) ──
     "blight cyclops": {
-        "coins_range": [0, 50],
+        "coins_range": [0, 10],
         "unique": [
             {"item": "Bronze Defender", "min": 1, "max": 1, "chance": "1/50"},
             {"item": "Iron Defender", "min": 1, "max": 1, "chance": "1/50"},
@@ -388,7 +388,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Revenant abyssal demon (T4 w34) ──
     "revenant demon": {
-        "coins_range": [0, 3000],
+        "coins_range": [0, 600],
         "unique": [
             {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/850", "on_task_chance": "1/350"},
             {"item": "Abyssal Whip", "min": 1, "max": 1, "chance": "1/300"},
@@ -407,7 +407,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Hollow Warden (T4 w36) ──
     "hollow_warden": {
-        "coins_range": [5000, 25000],
+        "coins_range": [1000, 5000],
         "loot": [
             {"item": "Fire rune", "min": 20, "max": 80, "chance": "1/2"},
             {"item": "Earth rune", "min": 20, "max": 80, "chance": "1/2"},
@@ -430,7 +430,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Revenant Archon (T4 w37) ──
     "revenant archon": {
-        "coins_range": [0, 8000],
+        "coins_range": [0, 1600],
         "unique": [
             {"item": "Bone key", "min": 1, "max": 1, "chance": "1/50"},
             {"item": "Viggora's Chainmace", "min": 1, "max": 1, "chance": "1/850", "on_task_chance": "1/350"},
@@ -449,7 +449,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Lord Valthyros (T4 w38) ──
     "valthyros": {
-        "coins_range": [0, 20000],
+        "coins_range": [0, 4000],
         "unique": [
             {"item": "Ancient Emblem", "min": 1, "max": 1, "chance": "1/300", "noted": True},
             {"item": "Amulet of Seeping", "min": 1, "max": 1, "chance": "1/300"},
@@ -464,7 +464,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Abyssal Overlord (T4 w40) ──
     "overlord": {
-        "coins_range": [0, 25000],
+        "coins_range": [0, 5000],
         "unique": [
             {"item": "Abyssal Scourge", "min": 1, "max": 1, "chance": "1/350"},
             {"item": "Wristwraps of the Damned", "min": 1, "max": 1, "chance": "1/500", "on_task_chance": "1/250"},
@@ -486,7 +486,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Zarveth the Veilbreaker (T5 w41) ──
     "veilbreaker": {
-        "coins_range": [0, 45000],
+        "coins_range": [0, 8000],
         "unique": [
             {"item": "Veilbreaker", "min": 1, "max": 1, "chance": "1/400"},
             {"item": "Zarveth's Ascendant Platebody", "min": 1, "max": 1, "chance": "1/1000", "on_task_chance": "1/400"},
@@ -507,7 +507,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Duskwalker (T5 w43) ──
     "duskwalker": {
-        "coins_range": [0, 40000],
+        "coins_range": [0, 7000],
         "unique": [
             {"item": "Nightfall bow", "min": 1, "max": 1, "chance": "1/400"},
             {"item": "Bone crossbow", "min": 1, "max": 1, "chance": "1/300"},
@@ -531,7 +531,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Masked Figure (T5 w45) ──
     "masked_figure": {
-        "coins_range": [0, 30000],
+        "coins_range": [0, 5000],
         "unique": [
             {"item": "Black Mask", "min": 1, "max": 1, "chance": "1/1000", "on_task_chance": "1/250"},
             {"item": "Shadow Veil", "min": 1, "max": 1, "chance": "1/750", "on_task_chance": "1/300"},
@@ -544,7 +544,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Emberlord Kael (T5 w47) ──
     "emberlord": {
-        "coins_range": [0, 45000],
+        "coins_range": [0, 8000],
         "unique": [
             {"item": "Soulfire staff", "min": 1, "max": 1, "chance": "1/400"},
             {"item": "Voidtouched wand", "min": 1, "max": 1, "chance": "1/300"},
@@ -565,7 +565,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Gravekeeper Azriel (T5 w49) ──
     "gravekeeper": {
-        "coins_range": [0, 42000],
+        "coins_range": [0, 7500],
         "unique": [
             {"item": "Deathwarden staff", "min": 1, "max": 1, "chance": "1/400"},
             {"item": "Netharis's hood", "min": 1, "max": 1, "chance": "1/1000", "on_task_chance": "1/400"},
@@ -583,7 +583,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     },
     # ── Netharis the Undying (T5 w50) ──
     "netharis": {
-        "coins_range": [0, 50000],
+        "coins_range": [0, 10000],
         "unique": [
             {"item": "Shroud of the Undying", "min": 1, "max": 1, "chance": "1/1250", "on_task_chance": "1/500"},
             {"item": "Netharis's Grasp", "min": 1, "max": 1, "chance": "1/850", "on_task_chance": "1/350"},

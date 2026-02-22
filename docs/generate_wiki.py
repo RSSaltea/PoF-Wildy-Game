@@ -437,6 +437,9 @@ def generate_item_page(name, meta):
             info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Type</span><span class="infobox-value">{esc(type_label)}</span></div>')
 
     info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">Value</span><span class="infobox-value">{value_str}</span></div>')
+    ge_price = meta.get("ge_price", 0)
+    if ge_price:
+        info_rows.append(f'          <div class="infobox-row"><span class="infobox-label">GE Price</span><span class="infobox-value">{ge_price:,} coins</span></div>')
 
     # Effect description in content area
     effect_html = ""
@@ -940,7 +943,7 @@ def generate_ge_page():
     for name, meta in ITEMS.items():
         if name in UNTRADEABLE:
             continue
-        value = meta.get("value", 0)
+        ge_price = meta.get("ge_price", 0) or meta.get("value", 0)
         img_url = meta.get("image", "")
         img_rel = img_relative(img_url)
         cat = categorize_item(name, meta)
@@ -956,7 +959,7 @@ def generate_ge_page():
         items_js.append({
             "name": name,
             "slug": slug(name),
-            "value": value,
+            "guide": ge_price,
             "buy": buy_price,
             "sell": sell_price,
             "cat": cat,
@@ -970,7 +973,7 @@ def generate_ge_page():
             items_js.append({
                 "name": food_name,
                 "slug": slug(food_name),
-                "value": 0,
+                "guide": 0,
                 "buy": ge.get("buy", 0),
                 "sell": ge.get("sell", 0),
                 "cat": "food",
@@ -1088,7 +1091,7 @@ def generate_ge_page():
         var aHas = (a.buy > 0 || a.sell > 0) ? 1 : 0;
         var bHas = (b.buy > 0 || b.sell > 0) ? 1 : 0;
         if (bHas !== aHas) return bHas - aHas;
-        return b.value - a.value;
+        return b.guide - a.guide;
       }});
 
       summaryEl.textContent = filtered.length + " item" + (filtered.length !== 1 ? "s" : "") + " found";
@@ -1099,7 +1102,7 @@ def generate_ge_page():
         var imgTag = it.img ? '<img src="' + it.img + '" alt="" class="ge-row-img">' : '';
         html += '<tr class="ge-row" onclick="window.location.href=\\'../items/' + it.slug + '.html\\'">' +
           '<td class="ge-cell-item">' + imgTag + '<a href="../items/' + it.slug + '.html">' + it.name + '</a></td>' +
-          '<td class="ge-cell-price">' + formatCoins(it.value) + '</td>' +
+          '<td class="ge-cell-price">' + formatCoins(it.guide) + '</td>' +
           '<td class="ge-cell-price ge-buy">' + formatCoins(it.buy) + '</td>' +
           '<td class="ge-cell-price ge-sell">' + formatCoins(it.sell) + '</td>' +
           '</tr>';
@@ -1138,7 +1141,7 @@ def generate_ge_page():
       for (var m = 0; m < matches.length; m++) {{
         var it = ITEMS[matches[m].idx];
         html += '<a class="ge-suggestion" href="../items/' + it.slug + '.html" data-name="' + it.name + '">' + it.name +
-          '<span class="ge-suggestion-price">' + formatCoins(it.value) + '</span></a>';
+          '<span class="ge-suggestion-price">' + formatCoins(it.guide) + '</span></a>';
       }}
       suggestions.innerHTML = html;
       suggestions.style.display = "block";

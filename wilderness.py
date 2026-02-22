@@ -3475,7 +3475,7 @@ class Wilderness(commands.Cog):
                 return
 
             alch_qty = min(inv_qty, nats)
-            total_gp = value * alch_qty
+            total_gp = int(value * 1.3) * alch_qty
 
             self._remove_item(p.inventory, inv_key, alch_qty)
             self._remove_item(p.inventory, "Nature rune", alch_qty)
@@ -3521,7 +3521,7 @@ class Wilderness(commands.Cog):
                     return
                 p.alch_auto.append(resolved)
                 await self._persist()
-                await ctx.reply(f"🔥 Added **{resolved}** to auto-alch. Drops will be auto-alched for **{value:,} coins** each (costs 1 Nature rune per item).")
+                await ctx.reply(f"🔥 Added **{resolved}** to auto-alch. Drops will be auto-alched for **{int(value * 1.3):,} coins** each (costs 1 Nature rune per item).")
 
     # ── Slayer ───────────────────────────────────────────────────────
 
