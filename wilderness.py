@@ -516,9 +516,31 @@ class Wilderness(commands.Cog):
     async def w(self, ctx: commands.Context):
         if not await self._ensure_ready(ctx):
             return
-        emb = discord.Embed(title="Wilderness Commands")
+        emb = discord.Embed(
+            title="Wilderness",
+            description=(
+                "**Getting started is easy:**\n\n"
+                "`!w start` — Create your profile\n"
+                "`!w venture <level>` — Enter the Wilderness\n"
+                "`!w fight <npc>` — Fight an NPC\n"
+                "`!w deposit` — Bank your loot\n"
+                "`!w shop list` — Buy food & gear\n\n"
+                "**Start** → **Equip** → **Venture** → **Fight** → **Bank** → **Repeat**\n\n"
+                "Use `!w quickstart` for a step-by-step walkthrough\n"
+                "Use `!w help` to see all commands"
+            ),
+            color=0x2B2D31,
+        )
+        await ctx.reply(embed=emb)
+
+    @w.command(name="help")
+    async def help_cmd(self, ctx: commands.Context):
+        if not await self._ensure_ready(ctx):
+            return
+        emb = discord.Embed(title="Wilderness — All Commands", color=0x2B2D31)
         emb.add_field(name="Getting Started", value=(
             "`!w start` — Create your profile\n"
+            "`!w quickstart` — Step-by-step guide\n"
             "`!w reset` — Wipe your profile and start over"
         ), inline=False)
         emb.add_field(name="Combat & Exploring", value=(
@@ -578,6 +600,7 @@ class Wilderness(commands.Cog):
             "`!w shop list` — View the shop\n"
             "`!w shop buy [qty] <item>` — Buy\n"
             "`!w shop sell [qty] <item>` — Sell\n"
+            "`!w ge` — Open the Grand Exchange\n"
             "`!w chest open mysterious` — Open with a Mysterious key\n"
             "`!w chest open bone` — Open with a Bone key"
         ), inline=False)
@@ -592,6 +615,54 @@ class Wilderness(commands.Cog):
             "`!w blacklist` — View blacklist\n"
             "`!w blacklist remove <item>` — Remove\n"
             "`!w blacklist clear` — Clear blacklist"
+        ), inline=False)
+        emb.add_field(name="Warnings", value=(
+            "`!w warning health <hp>` — Auto-eat threshold\n"
+            "`!w warning food <amount>` — Low food warning\n"
+            "`!w warning` — View current settings"
+        ), inline=False)
+        await ctx.reply(embed=emb)
+
+    @w.command(name="quickstart")
+    async def quickstart_cmd(self, ctx: commands.Context):
+        if not await self._ensure_ready(ctx):
+            return
+        emb = discord.Embed(
+            title="Wilderness — Quick Start Guide",
+            color=0x2B2D31,
+        )
+        emb.add_field(name="Step 1 — Create Your Profile", value=(
+            "`!w start`\n"
+            "You'll receive a **Starter Sword** and **Starter Platebody** along with some coins."
+        ), inline=False)
+        emb.add_field(name="Step 2 — Equip Your Gear", value=(
+            "`!w equip starter sword`\n"
+            "`!w equip starter platebody`\n"
+            "You need gear equipped to deal damage and take less."
+        ), inline=False)
+        emb.add_field(name="Step 3 — Buy Some Food", value=(
+            "`!w shop buy 10 shrimp`\n"
+            "Food heals you during combat. You auto-eat when your HP gets low."
+        ), inline=False)
+        emb.add_field(name="Step 4 — Enter the Wilderness", value=(
+            "`!w venture 5`\n"
+            "Start at a low level (1-5). Higher levels have stronger NPCs with better loot."
+        ), inline=False)
+        emb.add_field(name="Step 5 — Fight!", value=(
+            "`!w fight`\n"
+            "Fight a random NPC, or target one: `!w fight revenant goblin`"
+        ), inline=False)
+        emb.add_field(name="Step 6 — Bank Your Loot", value=(
+            "`!w tele` to leave the Wilderness\n"
+            "`!w deposit` to bank your items\n"
+            "If you die, you lose everything in your inventory — bank often!"
+        ), inline=False)
+        emb.add_field(name="What Next?", value=(
+            "- `!w slayer task` — Get slayer assignments for bonus XP & points\n"
+            "- `!w shop list` — Buy better weapons & food\n"
+            "- `!w craftables` — Craft powerful gear from drops\n"
+            "- `!w ge` — Trade items with other players\n"
+            "- `!w help` — See all commands"
         ), inline=False)
         await ctx.reply(embed=emb)
 
@@ -1472,9 +1543,8 @@ class Wilderness(commands.Cog):
 
         await ctx.reply(
             f"Profile created! You have **{p.coins} coins** and **{p.hp}/{self.config['max_hp']} HP**.\n"
-            f"Starter gear received: **Starter Sword** and **Starter Platebody**.\n"
-            f"Equip your gear: !w equip starter sword and !w equip starter platebody.\n"
-            f"Then venture out: !w venture 5."
+            f"Starter gear received: **Starter Sword** and **Starter Platebody**.\n\n"
+            f"**Not sure what to do?** Use `!w quickstart` for a step-by-step guide!"
         )
 
     @w.command(name="gear", aliases=["worn"])
@@ -1954,6 +2024,10 @@ class Wilderness(commands.Cog):
         if not bank_all and not specific_item:
             lines.append("(Equipped gear unchanged.)")
 
+        # Tip for newer players on first deposit
+        if banked_items and p.kills <= 3:
+            lines.append("\n*Tip: Head back in with `!w venture` and `!w fight` to keep earning loot!*")
+
         await ctx.reply("\n".join(lines))
 
     @w.command(name="withdraw", aliases=["withdra"])
@@ -2413,7 +2487,7 @@ class Wilderness(commands.Cog):
                 summary = (
                     f"☠️ **You died to {npc_name}.**\n"
                     f"📉 **Lost from inventory:**\n{self._format_items_short(lost_items, max_lines=18)}\n"
-                    f"🏦 Lost bank coins: **{bank_loss:,}** (10%)"
+                    f"🏦 Lost bank coins: **{bank_loss:,}** (2%)"
                     + (("\n\n" + "\n".join(food_lines)) if food_lines else "")
                 )
                 pages.append(summary)
@@ -2488,6 +2562,19 @@ class Wilderness(commands.Cog):
                     description="\n".join(f"- {w}" for w in warnings) + f"\n\n{tip}",
                     color=0xFF4444,
                 )
+                await ctx.send(embed=emb)
+
+            # Contextual tips for newer players
+            kills = p.kills
+            tip_msg = None
+            if kills == 1:
+                tip_msg = "**First kill!** Use `!w deposit` to bank your loot so you don't lose it if you die. Use `!w shop buy 10 shrimp` if you need food."
+            elif kills == 5:
+                tip_msg = "**5 kills!** Try `!w slayer task` for slayer assignments — you'll earn bonus XP and points towards powerful rewards."
+            elif kills == 15:
+                tip_msg = "**15 kills!** Check `!w craftables` — you might have enough drops to craft better gear. Use `!w ge` to buy and sell items with other players."
+            if tip_msg:
+                emb = discord.Embed(description=tip_msg, color=0x3498db)
                 await ctx.send(embed=emb)
 
         await self._send_broadcasts(ctx.author, broadcasts)
@@ -2601,7 +2688,7 @@ class Wilderness(commands.Cog):
                     summary = (
                         f"☠️ **You died during the ambush.**\n"
                         f"📉 **Lost from inventory:**\n{self._format_items_short(lost_items, max_lines=18)}\n"
-                        f"🏦 Lost bank coins: **{bank_loss:,}** (10%)"
+                        f"🏦 Lost bank coins: **{bank_loss:,}** (2%)"
                         + (("\n\n" + "\n".join(food_lines)) if food_lines else "")
                     )
                     pages.append(summary)
