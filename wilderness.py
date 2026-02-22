@@ -523,7 +523,7 @@ class Wilderness(commands.Cog):
                 "`!w start` — Create your profile\n"
                 "`!w venture <level>` — Enter the Wilderness\n"
                 "`!w fight <npc>` — Fight an NPC\n"
-                "`!w deposit` — Bank your loot\n"
+                "`!w deposit` (`depo`) — Bank your loot\n"
                 "`!w shop list` — Buy food & gear\n\n"
                 "**Start** → **Equip** → **Venture** → **Fight** → **Bank** → **Repeat**\n\n"
                 "Use `!w quickstart` for a step-by-step walkthrough\n"
@@ -573,7 +573,8 @@ class Wilderness(commands.Cog):
             "`!w inspect <item>` — Inspect an item\n"
             "`!w examine @player` — Inspect player gear\n"
             "`!w npcs` — Browse NPC info\n"
-            "`!w pets` — View your pets"
+            "`!w pets` — View your pets\n"
+            "`!w highscores [category]` — View highscores"
         ), inline=False)
         emb.add_field(name="Crafting & Resources", value=(
             "`!w craft <item>` — Craft an item\n"
@@ -581,6 +582,9 @@ class Wilderness(commands.Cog):
             "`!w breakdown <item>` — Break down an item\n"
             "`!w breakdownitems` — Browse breakdowns\n"
             "`!w rc <rune>` — Craft runes\n"
+            "`!w cut <gem>` — Cut gems\n"
+            "`!w enchant <item>` — Enchant an item\n"
+            "`!w consume <item>` — Consume an item\n"
             "`!w alch <item>` — High alch an item\n"
             "`!w alch auto <item>` — Toggle auto-alch on drops"
         ), inline=False)
@@ -597,10 +601,13 @@ class Wilderness(commands.Cog):
         emb.add_field(name="Trading & Shop", value=(
             "`!w trade @player` — Start a trade\n"
             "`!w trade accept` — Accept a trade\n"
+            "`!w trade add [qty] <item>` — Add to trade\n"
+            "`!w trade remove <item> [qty]` — Remove from trade\n"
+            "`!w trade cancel` — Cancel trade\n"
+            "`!w ge` — Open the Grand Exchange\n"
             "`!w shop list` — View the shop\n"
             "`!w shop buy [qty] <item>` — Buy\n"
             "`!w shop sell [qty] <item>` — Sell\n"
-            "`!w ge` — Open the Grand Exchange\n"
             "`!w chest open mysterious` — Open with a Mysterious key\n"
             "`!w chest open bone` — Open with a Bone key"
         ), inline=False)
@@ -616,8 +623,9 @@ class Wilderness(commands.Cog):
             "`!w blacklist remove <item>` — Remove\n"
             "`!w blacklist clear` — Clear blacklist"
         ), inline=False)
-        emb.add_field(name="Warnings", value=(
-            "`!w warning health <hp>` — Auto-eat threshold\n"
+        emb.add_field(name="Warnings & Auto-eat", value=(
+            "`!w autoeat <hp>` — Set auto-eat HP threshold\n"
+            "`!w warning health <hp>` — Low HP warning\n"
             "`!w warning food <amount>` — Low food warning\n"
             "`!w warning` — View current settings"
         ), inline=False)
@@ -654,7 +662,7 @@ class Wilderness(commands.Cog):
         ), inline=False)
         emb.add_field(name="Step 6 — Bank Your Loot", value=(
             "`!w tele` to leave the Wilderness\n"
-            "`!w deposit` to bank your items\n"
+            "`!w deposit` (or `!w depo`) to bank your items\n"
             "If you die, you lose everything in your inventory — bank often!"
         ), inline=False)
         emb.add_field(name="What Next?", value=(

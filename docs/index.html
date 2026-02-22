@@ -39,53 +39,21 @@
     <h2 style="margin-top: 3rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">Getting Started</h2>
 
     <div class="content" style="margin-top: 1rem;">
-      <p>New to the Wilderness? Follow these steps to get up and running.</p>
+      <p>New to the Wilderness? You only need 5 commands to start playing. Type <code>!w quickstart</code> in Discord for an interactive guide.</p>
 
-      <h3>1. Create Your Profile</h3>
-      <p>Type <code>!w start</code> in a Discord channel where the bot is active. You'll receive a <strong>Starter Sword</strong> (+2 ATK) and <strong>Starter Platebody</strong> (+2 DEF) along with some starting coins and full HP.</p>
+      <p style="font-size: 1.1em; margin: 1.5rem 0;"><strong>Start</strong> &rarr; <strong>Equip</strong> &rarr; <strong>Venture</strong> &rarr; <strong>Fight</strong> &rarr; <strong>Bank</strong> &rarr; <strong>Repeat</strong></p>
 
-      <h3>2. Equip Your Gear</h3>
-      <p>Before you can fight, you need to equip your weapons and armour:</p>
-      <ul>
-        <li><code>!w equip starter sword</code></li>
-        <li><code>!w equip starter platebody</code></li>
-        <li>Use <code>!w gear</code> to check what you have equipped</li>
-      </ul>
+      <ol>
+        <li><code>!w start</code> &mdash; Create your profile and get starter gear</li>
+        <li><code>!w equip starter sword</code> &mdash; Equip your weapon and armour</li>
+        <li><code>!w shop buy 10 shrimp</code> &mdash; Buy food (you auto-eat during fights)</li>
+        <li><code>!w venture 5</code> &mdash; Enter the Wilderness at a safe level</li>
+        <li><code>!w fight</code> &mdash; Fight an NPC and earn loot</li>
+        <li><code>!w deposit</code> (or <code>!w depo</code>) &mdash; Bank your items so you don't lose them on death</li>
+      </ol>
 
-      <h3>3. Venture Into the Wilderness</h3>
-      <p>Use <code>!w venture &lt;level&gt;</code> to enter the Wilderness. Start low — <strong>Wilderness level 1–5</strong> is safest for beginners. Higher levels unlock stronger NPCs with better drops, but the danger increases too.</p>
-
-      <h3>4. Fight NPCs</h3>
-      <p>Once you're in the Wilderness, use <code>!w fight &lt;npc&gt;</code> to battle creatures. Start with the <a href="npcs/revenant-goblin.html">Revenant Goblin</a> (Tier 1, Wildy 1+). Each kill earns you coins, loot, and slayer XP if you have a task assigned.</p>
-
-      <h3>5. Stay Alive</h3>
-      <ul>
-        <li><code>!w eat</code> — Eat food to restore HP (buy food from the <code>!w shop</code>)</li>
-        <li><code>!w hp</code> — Check your current health</li>
-        <li><code>!w tele</code> — Teleport out of the Wilderness to safety</li>
-        <li><code>!w autoeat &lt;hp&gt;</code> — Set HP threshold for auto-eating during combat (e.g. <code>!w autoeat 50</code>)</li>
-        <li><code>!w warning health &lt;hp&gt;</code> — Warn if HP ends below this after a fight</li>
-        <li><code>!w warning food &lt;amount&gt;</code> — Warn when food drops to this amount or below</li>
-      </ul>
-      <p>If you die, you lose items in your inventory — so <strong>bank often</strong> with <code>!w deposit</code>!</p>
-
-      <h3>6. Progress Further</h3>
-      <ul>
-        <li><strong>Slayer</strong> — Use <code>!w slayer task</code> to get assignments for bonus XP and points. See the <a href="commands/slayer.html">Slayer Guide</a>.</li>
-        <li><strong>Crafting</strong> — Combine drops into better gear with <code>!w craft</code>. Check <code>!w craftables</code> for recipes.</li>
-        <li><strong>Runecrafting</strong> — Craft runes from Pure essence with <code>!w rc &lt;rune&gt;</code>. Runes fuel equipment effects and enchanting.</li>
-        <li><strong>Gem Cutting</strong> — Cut uncut gems from your bank with <code>!w cut &lt;gem&gt;</code>. Cut gems are used to craft the <a href="items/omnigem.html">Omnigem</a>.</li>
-        <li><strong>Enchanting</strong> — Enchant items with <code>!w enchant &lt;item&gt;</code>. Create powerful gear like the <a href="items/eclipse-of-the-five.html">Eclipse of the Five</a>.</li>
-        <li><strong>Consuming</strong> — Use consumable items with <code>!w consume &lt;item&gt;</code>. For example, consume an <a href="items/ancient-effigy.html">Ancient Effigy</a> for Slayer XP.</li>
-        <li><strong>Shopping</strong> — Buy better weapons, armour, and food from <code>!w shop list</code>.</li>
-        <li><strong>Banking</strong> — Keep your valuables safe with <code>!w deposit</code> and <code>!w bank</code>.</li>
-        <li><strong>Alchemy</strong> — Convert drops to coins with <code>!w alch</code> or set up auto-alch with <code>!w alch auto</code>.</li>
-        <li><strong>Trading</strong> — Trade items with other players using <code>!w trade @player</code>.</li>
-        <li><strong>Grand Exchange</strong> — Buy and sell items on the open market with <code>!w ge</code>. Check the <a href="grand-exchange/index.html">GE price database</a> for current prices.</li>
-        <li><strong>Presets</strong> — Save and load gear loadouts with <code>!w preset create &lt;name&gt;</code> and <code>!w preset load &lt;name&gt;</code>.</li>
-        <li><strong>Potions</strong> — Drink combat potions for temporary buffs with <code>!w drink</code>.</li>
-      </ul>
-      <p>As you grow stronger, venture deeper into the Wilderness to face <a href="npcs/index.html">higher-tier NPCs and bosses</a> with powerful unique drops and pets.</p>
+      <p>That's it! The game will give you tips as you play. When you're ready, explore <a href="commands/slayer.html">Slayer</a>, <a href="commands/crafting.html">Crafting</a>, the <a href="commands/grand-exchange.html">Grand Exchange</a>, and more.</p>
+      <p>See the full <a href="commands/getting-started.html">Getting Started guide</a> or type <code>!w help</code> for all commands.</p>
     </div>
 
     <h2 style="margin-top: 3rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">Quick Links</h2>
