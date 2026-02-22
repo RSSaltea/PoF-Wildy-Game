@@ -67,14 +67,15 @@ from .runecraft import RunecraftManager
 from .preset import PresetManager
 from .slayer import SlayerManager, SLAYER_SHOP, SLAYER_BLOCK_COST, MAX_SLAYER_BLOCKS
 from .npcs import NPC_SLAYER
+from .grand_exchange import GEManager, GEOpenView
 
 ALLOWED_CHANNEL_IDS = {1465451116803391529, 1472610522313523323, 1472942650381570171, 1472986472700448768, 1473103361862664338}
 TRADE_ONLY_CHANNEL_IDS = {1472986668695814277}
 INFO_ONLY_CHANNEL_IDS = {1472997615766343740}
 BROADCAST_CHANNEL_ID = 1473373945729126641
 
-TRADE_CHANNEL_CMDS = {"w trade", "w deposit", "w bank", "w inv", "w inventory"}
-INFO_CHANNEL_CMDS = {"w stats", "w examine", "w inspect", "w insp", "w npcs", "w bank", "w inv", "w kc", "w killcount", "w highscores", "w hs", "w slayer"}
+TRADE_CHANNEL_CMDS = {"w trade", "w deposit", "w bank", "w inv", "w inventory", "w ge"}
+INFO_CHANNEL_CMDS = {"w stats", "w examine", "w inspect", "w insp", "w npcs", "w bank", "w inv", "w kc", "w killcount", "w highscores", "w hs", "w slayer", "w ge"}
 
 REVENANT_TYPES = {"revenant goblin", "revenant knight", "revenant demon", "revenant necro", "revenant archon", "revenant imp", "revenant pyromancer"}
 
@@ -105,6 +106,7 @@ class Wilderness(commands.Cog):
         self.rc_mgr = RunecraftManager(self)
         self.preset_mgr = PresetManager(self)
         self.slayer_mgr = SlayerManager(self)
+        self.ge_mgr = GEManager(self)
 
 
     def _norm(self, s: str) -> str:
@@ -138,6 +140,7 @@ class Wilderness(commands.Cog):
             except Exception:
                 continue
         self.player_mgr.build_item_alias_map()
+        await self.ge_mgr.load()
         self._ready = True
         if self._afk_task is None or self._afk_task.done():
             self._afk_task = asyncio.create_task(self.combat_mgr.afk_sweeper())
@@ -175,7 +178,7 @@ class Wilderness(commands.Cog):
         BUSY_PASSTHROUGH = {"w stats", "w examine", "w inspect", "w insp", "w npcs",
                             "w inv", "w inventory", "w deposit", "w bank", "w hp",
                             "w gear", "w worn", "w pets", "w craftables", "w breakdownitems",
-                            "w kc", "w highscores", "w hs", "w slayer", "w alch"}
+                            "w kc", "w highscores", "w hs", "w slayer", "w alch", "w ge"}
         if cmd_name not in BUSY_PASSTHROUGH:
             uid = ctx.author.id
             if uid in self.players:
@@ -4111,6 +4114,29 @@ class Wilderness(commands.Cog):
             f"You enchant the **{source_name}** and create **{result_name}**! "
             f"(used {mat_list}) — added to your {location}"
         )
+
+
+    # ── Grand Exchange ─────────────────────────────────────────────
+
+    @w.command(name="ge")
+    async def ge_cmd(self, ctx: commands.Context):
+        """Open the Grand Exchange."""
+        if not await self._ensure_ready(ctx):
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+            if not p.started:
+                await ctx.reply("Create a profile first with `!w start`.")
+                return
+
+        emb = discord.Embed(
+            title="📊 Grand Exchange",
+            description="Click the button below to open your GE panel.",
+            color=0x2B2D31,
+        )
+        view = GEOpenView(self.ge_mgr, ctx.author.id)
+        await ctx.send(embed=emb, view=view)
 
 
 async def setup(bot: commands.Bot):

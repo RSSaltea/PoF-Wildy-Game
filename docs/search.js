@@ -243,6 +243,9 @@
     { title: "Soulflame", url: "items/soulflame.html", tags: "soulflame pet risen bonecaller emberlord gravekeeper necro magic" },
     { title: "Embersprite", url: "items/embersprite.html", tags: "embersprite pet infernal warlock magic" },
 
+    // Grand Exchange
+    { title: "Grand Exchange", url: "grand-exchange/index.html", tags: "grand exchange ge buy sell trade prices market offers" },
+
     // Commands index
     { title: "Commands", url: "commands/index.html", tags: "commands list all" },
 

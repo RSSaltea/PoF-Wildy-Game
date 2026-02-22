@@ -525,6 +525,154 @@ details.drop-inner[open] summary h3::before {
 .stat-neg { color: var(--red); }
 .stat-zero { color: var(--text-muted); }
 
+/* Grand Exchange */
+.ge-search-container {
+  margin-bottom: 1.5rem;
+}
+.ge-search-wrapper {
+  position: relative;
+  max-width: 500px;
+}
+.ge-search-input {
+  width: 100%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.ge-search-input::placeholder { color: var(--text-muted); }
+.ge-search-input:focus { border-color: var(--accent); }
+.ge-suggestions {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  z-index: 200;
+}
+.ge-suggestion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+  cursor: pointer;
+}
+.ge-suggestion:last-child { border-bottom: none; }
+.ge-suggestion:hover,
+.ge-suggestion.active { background: var(--bg-tertiary); text-decoration: none; }
+.ge-suggestion-price { color: var(--gold); font-size: 0.85rem; font-weight: 600; }
+
+.ge-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+.ge-filter-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.ge-filter-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+.ge-filter-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.ge-summary {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.ge-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ge-table thead th {
+  position: sticky;
+  top: 52px;
+  z-index: 10;
+  background: var(--bg-secondary);
+  padding: 0.6rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border);
+}
+.ge-th-price { text-align: right; }
+.ge-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ge-row:hover td { background: var(--bg-tertiary); }
+.ge-cell-item {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+.ge-cell-item a { color: var(--text-primary); }
+.ge-cell-item a:hover { color: var(--accent); }
+.ge-row-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.ge-cell-price {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+.ge-buy { color: var(--green); }
+.ge-sell { color: var(--red); }
+
+.ge-note {
+  margin-top: 2rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.ge-note p { margin: 0; }
+.ge-note code {
+  background: var(--bg-tertiary);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
 /* Footer */
 .footer {
   text-align: center;
@@ -596,6 +744,15 @@ details.drop-inner[open] summary h3::before {
 
   /* Ability box */
   .ability-box { padding: 0.75rem 1rem; }
+
+  /* GE */
+  .ge-search-wrapper { max-width: 100%; }
+  .ge-filters { gap: 0.35rem; }
+  .ge-filter-btn { font-size: 0.7rem; padding: 0.25rem 0.5rem; }
+  .ge-table thead th { font-size: 0.75rem; padding: 0.4rem 0.5rem; }
+  .ge-cell-item { padding: 0.4rem 0.5rem; font-size: 0.85rem; }
+  .ge-cell-price { padding: 0.4rem 0.5rem; font-size: 0.8rem; }
+  .ge-row-img { width: 22px; height: 22px; }
 }
 
 @media (max-width: 480px) {

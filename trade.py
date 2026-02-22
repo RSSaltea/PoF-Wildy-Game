@@ -7,6 +7,8 @@ from typing import Dict, Optional, Tuple, List, FrozenSet, Any
 
 import discord
 
+from .items import UNTRADEABLE
+
 
 def _now() -> int:
     return int(time.time())
@@ -338,6 +340,10 @@ class TradeManager:
             is_coins, canonical_item = self._resolve_trade_asset(ctx.author, itemname)
             if not is_coins and not canonical_item:
                 await ctx.reply("Unknown item. Try `!w inspect <itemname>` to check names/aliases.")
+                return
+
+            if not is_coins and canonical_item in UNTRADEABLE:
+                await ctx.reply(f"**{canonical_item}** is untradeable.")
                 return
 
             offer = trade.offers.get(ctx.author.id) or TradeOffer()

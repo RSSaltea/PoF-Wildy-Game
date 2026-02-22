@@ -3,18 +3,19 @@
 Wiki Generator — creates ALL HTML pages for NPCs and items from game data.
 Run from the docs/ directory:  python generate_wiki.py
 """
-import os, sys, html as html_mod
+import os, sys, json, html as html_mod
 
 # Add parent so we can import game data
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from wildygame.npcs import NPCS, NPC_DROPS
-from wildygame.items import ITEMS, ITEM_EFFECTS, FOOD
+from wildygame.items import ITEMS, ITEM_EFFECTS, FOOD, UNTRADEABLE
 
 DOCS = os.path.dirname(os.path.abspath(__file__))
 NPC_DIR = os.path.join(DOCS, "npcs")
 ITEM_DIR = os.path.join(DOCS, "items")
+GE_DIR = os.path.join(DOCS, "grand-exchange")
 
 # ─── Helpers ─────────────────────────────────────────────────────────────
 
@@ -61,6 +62,7 @@ NAVBAR = '''  <div class="navbar">
       <a href="{home}npcs/index.html"{npc_active}>NPCs</a>
       <a href="{home}items/index.html"{item_active}>Items</a>
       <a href="{home}commands/index.html">Commands</a>
+      <a href="{home}grand-exchange/index.html"{ge_active}>Grand Exchange</a>
     </nav>
       <a href="https://discord.com/invite/paws-of-fury" target="_blank" class="discord-btn"><svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>Join Discord</a>
     <div class="search-wrapper">
@@ -145,7 +147,7 @@ def generate_npc_page(npc, drops):
     else:
         img_html = NO_IMG
 
-    navbar = NAVBAR.format(home="../", npc_active=' class="active"', item_active="")
+    navbar = NAVBAR.format(home="../", npc_active=' class="active"', item_active="", ge_active="")
 
     # Defence bonuses
     d_stab = npc.get("d_stab", 0)
@@ -321,7 +323,7 @@ def item_style_display(meta):
 def generate_item_page(name, meta):
     e_name = esc(name)
     effects = ITEM_EFFECTS.get(name, {})
-    navbar = NAVBAR.format(home="../", npc_active="", item_active=' class="active"')
+    navbar = NAVBAR.format(home="../", npc_active="", item_active=' class="active"', ge_active="")
 
     t = str(meta.get("type", "")).lower()
     stackable = "Yes" if meta.get("stackable") else "No"
@@ -728,7 +730,7 @@ def make_npc_card(npc):
 
 def generate_npc_index():
     """Generate the NPC index page with NPCs grouped by tier."""
-    navbar = NAVBAR.format(home="../", npc_active=' class="active"', item_active="")
+    navbar = NAVBAR.format(home="../", npc_active=' class="active"', item_active="", ge_active="")
 
     # Group by tier
     tiers = {}
@@ -781,7 +783,7 @@ def generate_npc_index():
 
 def generate_items_index():
     """Generate the items index page with items organized by category."""
-    navbar = NAVBAR.format(home="../", npc_active="", item_active=' class="active"')
+    navbar = NAVBAR.format(home="../", npc_active="", item_active=' class="active"', ge_active="")
 
     # Categorize all items
     categories = {
@@ -890,11 +892,339 @@ def generate_items_index():
     return page
 
 
+# ─── Grand Exchange page generator ─────────────────────────────────────
+
+def _load_ge_offers():
+    """Try to load GE offers from the data file. Returns dict {item: {buy, sell}} or {}."""
+    ge_path = os.path.join(DOCS, "..", "..", "..", "data", "wilderness", "ge_offers.json")
+    ge_path = os.path.normpath(ge_path)
+    prices = {}  # item_name -> {"buy": highest_buy, "sell": lowest_sell}
+    try:
+        with open(ge_path, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+        # raw is {user_id: [offer_dict, ...]}
+        for uid, offers in raw.items():
+            for o in offers:
+                if not o:
+                    continue
+                item = o.get("item", "")
+                side = o.get("side", "")
+                price = o.get("price_each", 0)
+                filled = o.get("filled", 0)
+                qty = o.get("qty", 0)
+                if filled >= qty:
+                    continue  # fully filled, skip
+                if not item or not price:
+                    continue
+                if item not in prices:
+                    prices[item] = {"buy": 0, "sell": 0}
+                if side == "buy":
+                    if price > prices[item]["buy"]:
+                        prices[item]["buy"] = price
+                elif side == "sell":
+                    if prices[item]["sell"] == 0 or price < prices[item]["sell"]:
+                        prices[item]["sell"] = price
+    except (FileNotFoundError, json.JSONDecodeError, Exception):
+        pass
+    return prices
+
+
+def generate_ge_page():
+    """Generate the Grand Exchange price database page."""
+    navbar = NAVBAR.format(home="../", npc_active="", item_active="", ge_active=' class="active"')
+
+    ge_prices = _load_ge_offers()
+
+    # Build item data array for JS
+    items_js = []
+    for name, meta in ITEMS.items():
+        if name in UNTRADEABLE:
+            continue
+        value = meta.get("value", 0)
+        img_url = meta.get("image", "")
+        img_rel = img_relative(img_url)
+        cat = categorize_item(name, meta)
+        # On the GE page, offhands go into their combat style category
+        if cat == "offhands":
+            style = str(meta.get("style", "")).lower()
+            style_map = {"melee": "melee_weapons", "range": "range_weapons",
+                         "magic": "magic_weapons", "necro": "necro_weapons"}
+            cat = style_map.get(style, "melee_weapons")
+        ge = ge_prices.get(name, {})
+        buy_price = ge.get("buy", 0)
+        sell_price = ge.get("sell", 0)
+        items_js.append({
+            "name": name,
+            "slug": slug(name),
+            "value": value,
+            "buy": buy_price,
+            "sell": sell_price,
+            "cat": cat,
+            "img": img_rel or "",
+        })
+
+    # Also add food items not in ITEMS
+    for food_name in FOOD:
+        if food_name not in ITEMS:
+            ge = ge_prices.get(food_name, {})
+            items_js.append({
+                "name": food_name,
+                "slug": slug(food_name),
+                "value": 0,
+                "buy": ge.get("buy", 0),
+                "sell": ge.get("sell", 0),
+                "cat": "food",
+                "img": "",
+            })
+
+    items_json = json.dumps(items_js, separators=(",", ":"))
+
+    # Category labels for filter buttons
+    cat_labels = [
+        ("all", "All Items"),
+        ("melee_weapons", "Melee"),
+        ("range_weapons", "Range"),
+        ("magic_weapons", "Magic"),
+        ("necro_weapons", "Necro"),
+        ("armour", "Armour"),
+        ("accessories", "Accessories"),
+        ("food", "Food"),
+        ("potions", "Potions"),
+        ("ammo", "Ammo"),
+        ("runes", "Runes"),
+        ("materials", "Materials"),
+        ("valuables", "Valuables"),
+    ]
+    filter_btns = '\n        '.join(
+        f'<button class="ge-filter-btn{" active" if k == "all" else ""}" data-cat="{k}">{label}</button>'
+        for k, label in cat_labels
+    )
+
+    page = f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grand Exchange \u2014 Wilderness Wiki</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+{navbar}
+  <div class="container">
+    <div class="breadcrumb"><a href="../index.html">Home</a><span class="sep">/</span>Grand Exchange</div>
+
+    <div class="page-header">
+      <h1>Grand Exchange</h1>
+      <div class="subtitle">Search item prices, view active buy &amp; sell offers, and find guide prices for all tradeable items.</div>
+    </div>
+
+    <div class="ge-search-container">
+      <div class="ge-search-wrapper">
+        <input type="text" class="ge-search-input" placeholder="Search for an item..." autocomplete="off" id="ge-search">
+        <div class="ge-suggestions" id="ge-suggestions"></div>
+      </div>
+    </div>
+
+    <div class="ge-filters">
+      {filter_btns}
+    </div>
+
+    <div class="ge-summary" id="ge-summary"></div>
+
+    <table class="ge-table">
+      <thead>
+        <tr>
+          <th class="ge-th-item">Item</th>
+          <th class="ge-th-price">Guide Price</th>
+          <th class="ge-th-price">Buy Offer</th>
+          <th class="ge-th-price">Sell Offer</th>
+        </tr>
+      </thead>
+      <tbody id="ge-tbody"></tbody>
+    </table>
+
+    <div class="ge-note">
+      <p>Prices are updated each time the wiki is regenerated. Use <code>!w ge</code> in-game for live offers.</p>
+    </div>
+  </div>
+  <div class="footer">Wilderness Wiki</div>
+  <script src="../search.js"></script>
+  <script>
+  (function() {{
+    var ITEMS = {items_json};
+    var tbody = document.getElementById("ge-tbody");
+    var searchInput = document.getElementById("ge-search");
+    var suggestions = document.getElementById("ge-suggestions");
+    var summaryEl = document.getElementById("ge-summary");
+    var activeCat = "all";
+    var searchQuery = "";
+
+    function formatCoins(n) {{
+      if (!n || n === 0) return "\u2014";
+      return n.toLocaleString() + " gp";
+    }}
+
+    function renderTable() {{
+      var q = searchQuery.toLowerCase().trim();
+      var words = q ? q.split(/\\s+/) : [];
+      var filtered = [];
+
+      for (var i = 0; i < ITEMS.length; i++) {{
+        var item = ITEMS[i];
+        if (activeCat !== "all" && item.cat !== activeCat) continue;
+        if (words.length > 0) {{
+          var name = item.name.toLowerCase();
+          var match = true;
+          for (var w = 0; w < words.length; w++) {{
+            if (name.indexOf(words[w]) < 0) {{ match = false; break; }}
+          }}
+          if (!match) continue;
+        }}
+        filtered.push(item);
+      }}
+
+      // Sort: items with offers first, then by value descending
+      filtered.sort(function(a, b) {{
+        var aHas = (a.buy > 0 || a.sell > 0) ? 1 : 0;
+        var bHas = (b.buy > 0 || b.sell > 0) ? 1 : 0;
+        if (bHas !== aHas) return bHas - aHas;
+        return b.value - a.value;
+      }});
+
+      summaryEl.textContent = filtered.length + " item" + (filtered.length !== 1 ? "s" : "") + " found";
+
+      var html = "";
+      for (var j = 0; j < filtered.length; j++) {{
+        var it = filtered[j];
+        var imgTag = it.img ? '<img src="' + it.img + '" alt="" class="ge-row-img">' : '';
+        html += '<tr class="ge-row" onclick="window.location.href=\\'../items/' + it.slug + '.html\\'">' +
+          '<td class="ge-cell-item">' + imgTag + '<a href="../items/' + it.slug + '.html">' + it.name + '</a></td>' +
+          '<td class="ge-cell-price">' + formatCoins(it.value) + '</td>' +
+          '<td class="ge-cell-price ge-buy">' + formatCoins(it.buy) + '</td>' +
+          '<td class="ge-cell-price ge-sell">' + formatCoins(it.sell) + '</td>' +
+          '</tr>';
+      }}
+      tbody.innerHTML = html;
+    }}
+
+    // Search input
+    searchInput.addEventListener("input", function() {{
+      searchQuery = this.value;
+      renderSuggestions();
+      renderTable();
+    }});
+
+    function renderSuggestions() {{
+      var q = searchQuery.toLowerCase().trim();
+      if (!q) {{ suggestions.style.display = "none"; return; }}
+      var words = q.split(/\\s+/);
+      var matches = [];
+      for (var i = 0; i < ITEMS.length; i++) {{
+        var name = ITEMS[i].name.toLowerCase();
+        var score = 0;
+        if (name === q) score += 100;
+        else if (name.indexOf(q) === 0) score += 60;
+        else if (name.indexOf(q) >= 0) score += 40;
+        for (var w = 0; w < words.length; w++) {{
+          if (name.indexOf(words[w]) >= 0) score += 10;
+        }}
+        if (score > 0) matches.push({{ idx: i, score: score }});
+      }}
+      matches.sort(function(a, b) {{ return b.score - a.score; }});
+      matches = matches.slice(0, 8);
+
+      if (matches.length === 0) {{ suggestions.style.display = "none"; return; }}
+      var html = "";
+      for (var m = 0; m < matches.length; m++) {{
+        var it = ITEMS[matches[m].idx];
+        html += '<a class="ge-suggestion" href="../items/' + it.slug + '.html" data-name="' + it.name + '">' + it.name +
+          '<span class="ge-suggestion-price">' + formatCoins(it.value) + '</span></a>';
+      }}
+      suggestions.innerHTML = html;
+      suggestions.style.display = "block";
+
+      // Click suggestion to filter
+      var links = suggestions.querySelectorAll(".ge-suggestion");
+      for (var l = 0; l < links.length; l++) {{
+        links[l].addEventListener("click", function(e) {{
+          e.preventDefault();
+          searchInput.value = this.getAttribute("data-name");
+          searchQuery = searchInput.value;
+          suggestions.style.display = "none";
+          renderTable();
+        }});
+      }}
+    }}
+
+    searchInput.addEventListener("focus", function() {{
+      if (this.value) renderSuggestions();
+    }});
+
+    // Close suggestions on outside click
+    document.addEventListener("click", function(e) {{
+      if (!document.querySelector(".ge-search-wrapper").contains(e.target)) {{
+        suggestions.style.display = "none";
+      }}
+    }});
+
+    // Keyboard nav for suggestions
+    searchInput.addEventListener("keydown", function(e) {{
+      var items = suggestions.querySelectorAll(".ge-suggestion");
+      var active = suggestions.querySelector(".ge-suggestion.active");
+      var idx = -1;
+      for (var i = 0; i < items.length; i++) {{
+        if (items[i] === active) {{ idx = i; break; }}
+      }}
+      if (e.key === "ArrowDown") {{
+        e.preventDefault();
+        if (active) active.classList.remove("active");
+        idx = (idx + 1) % items.length;
+        items[idx].classList.add("active");
+      }} else if (e.key === "ArrowUp") {{
+        e.preventDefault();
+        if (active) active.classList.remove("active");
+        idx = idx <= 0 ? items.length - 1 : idx - 1;
+        items[idx].classList.add("active");
+      }} else if (e.key === "Enter") {{
+        if (active) {{
+          e.preventDefault();
+          searchInput.value = active.getAttribute("data-name");
+          searchQuery = searchInput.value;
+          suggestions.style.display = "none";
+          renderTable();
+        }}
+      }} else if (e.key === "Escape") {{
+        suggestions.style.display = "none";
+      }}
+    }});
+
+    // Category filter buttons
+    var btns = document.querySelectorAll(".ge-filter-btn");
+    for (var b = 0; b < btns.length; b++) {{
+      btns[b].addEventListener("click", function() {{
+        for (var x = 0; x < btns.length; x++) btns[x].classList.remove("active");
+        this.classList.add("active");
+        activeCat = this.getAttribute("data-cat");
+        renderTable();
+      }});
+    }}
+
+    // Initial render
+    renderTable();
+  }})();
+  </script>
+</body>
+</html>
+'''
+    return page
+
+
 # ─── Main ────────────────────────────────────────────────────────────────
 
 def main():
     os.makedirs(NPC_DIR, exist_ok=True)
     os.makedirs(ITEM_DIR, exist_ok=True)
+    os.makedirs(GE_DIR, exist_ok=True)
 
     npc_count = 0
     item_count = 0
@@ -948,7 +1278,12 @@ def main():
         f.write(items_index)
     print("  Items index: index.html")
 
-    print(f"\nDone! Generated {npc_count} NPC pages and {item_count} item pages + 2 index pages.")
+    ge_page = generate_ge_page()
+    with open(os.path.join(GE_DIR, "index.html"), "w", encoding="utf-8") as f:
+        f.write(ge_page)
+    print("  Grand Exchange: grand-exchange/index.html")
+
+    print(f"\nDone! Generated {npc_count} NPC pages and {item_count} item pages + 3 index pages.")
 
 
 if __name__ == "__main__":

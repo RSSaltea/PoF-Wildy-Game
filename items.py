@@ -107,14 +107,14 @@ ITEMS: Dict[str, Dict[str, Any]] = {
 
     # ── Melee Offhands ────────────────────────────────────────────────────
     "Rune sq shield": {"type": "offhand", "style": "melee", "d_stab": 12, "d_slash": 12, "d_crush": 12, "d_range": 8, "stackable": False, "value": 7000, "aliases": "rune sq", "image": _IMG_BASE + "rune%20sq%20shield.png"},
-    "Bronze Defender": {"type": "offhand", "style": "melee", "d_stab": 4, "d_slash": 4, "d_crush": 4, "stackable": False, "value": 500, "aliases": "bronze def"},
-    "Iron Defender": {"type": "offhand", "style": "melee", "d_stab": 4, "d_slash": 4, "d_crush": 4, "stackable": False, "value": 750, "aliases": "iron def,i def"},
-    "Steel Defender": {"type": "offhand", "style": "melee", "d_stab": 4, "d_slash": 4, "d_crush": 4, "stackable": False, "value": 1000, "aliases": "steel def,s def"},
-    "Black Defender": {"type": "offhand", "style": "melee", "d_stab": 8, "d_slash": 8, "d_crush": 8, "stackable": False, "value": 1250, "aliases": "black def"},
-    "Mithril Defender": {"type": "offhand", "style": "melee", "d_stab": 8, "d_slash": 8, "d_crush": 8, "stackable": False, "value": 1500, "aliases": "mith def,mithril def,m def"},
-    "Adamant Defender": {"type": "offhand", "style": "melee", "d_stab": 8, "d_slash": 8, "d_crush": 8, "stackable": False, "value": 1750, "aliases": "addy def,addy defender,a def"},
-    "Rune Defender": {"type": "offhand", "style": "melee", "d_stab": 8, "d_slash": 8, "d_crush": 8, "str_melee": 8, "stackable": False, "value": 2000, "aliases": "rune def,r def"},
-    "Bone Defender": {"type": "offhand", "style": "melee", "d_stab": 12, "d_slash": 12, "d_crush": 12, "str_melee": 12, "stackable": False, "value": 4000, "aliases": "bone def,b def"},
+    "Bronze Defender": {"type": "offhand", "style": "melee", "d_stab": 4, "d_slash": 4, "d_crush": 4, "stackable": False, "tradeable": False, "value": 500, "aliases": "bronze def"},
+    "Iron Defender": {"type": "offhand", "style": "melee", "d_stab": 4, "d_slash": 4, "d_crush": 4, "stackable": False, "tradeable": False, "value": 750, "aliases": "iron def,i def"},
+    "Steel Defender": {"type": "offhand", "style": "melee", "d_stab": 4, "d_slash": 4, "d_crush": 4, "stackable": False, "tradeable": False, "value": 1000, "aliases": "steel def,s def"},
+    "Black Defender": {"type": "offhand", "style": "melee", "d_stab": 8, "d_slash": 8, "d_crush": 8, "stackable": False, "tradeable": False, "value": 1250, "aliases": "black def"},
+    "Mithril Defender": {"type": "offhand", "style": "melee", "d_stab": 8, "d_slash": 8, "d_crush": 8, "stackable": False, "tradeable": False, "value": 1500, "aliases": "mith def,mithril def,m def"},
+    "Adamant Defender": {"type": "offhand", "style": "melee", "d_stab": 8, "d_slash": 8, "d_crush": 8, "stackable": False, "tradeable": False, "value": 1750, "aliases": "addy def,addy defender,a def"},
+    "Rune Defender": {"type": "offhand", "style": "melee", "d_stab": 8, "d_slash": 8, "d_crush": 8, "str_melee": 8, "stackable": False, "tradeable": False, "value": 2000, "aliases": "rune def,r def"},
+    "Bone Defender": {"type": "offhand", "style": "melee", "d_stab": 12, "d_slash": 12, "d_crush": 12, "str_melee": 12, "stackable": False, "tradeable": False, "value": 4000, "aliases": "bone def,b def"},
 
     # ── Necromancy Offhands ───────────────────────────────────────────────
     "Skull Lantern": {"type": "offhand", "style": "necro", "a_necro": 16, "stackable": False, "value": 142000, "aliases": "lantern"},
@@ -273,28 +273,28 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Revenant Relic Shard": {"type": "misc", "stackable": True, "value": 50000, "aliases": "relic shard,rev relic shard,revenant relic shard"},
     "Revenant Totem": {"type": "misc", "stackable": False, "value": 100000, "aliases": "rev totem,revenant totem,totem"},
     "Overlord core fragment": {"type": "misc", "stackable": False, "value": 500000, "aliases": "core fragment,overlord fragment,overlord core fragment"},
-    "Ancient Effigy": {"type": "misc", "stackable": False, "value": 500000, "aliases": "effigy,ancient effigy"},
+    "Ancient Effigy": {"type": "misc", "stackable": False, "tradeable": False, "value": 500000, "aliases": "effigy,ancient effigy"},
     "Ancient Emblem": {"type": "misc", "stackable": False, "value": 1000000, "aliases": "emblem,ancient emblem"},
     "Shadow Veil": {"type": "misc", "stackable": False, "value": 150000, "aliases": "shadow veil,sveil"},
 
     # -- Pouches --
-    "Small pouch": {"type": "esspouch", "essstorage": 4, "stackable": False, "value": 0, "aliases": "spouch"},
-    "Medium pouch": {"type": "esspouch", "essstorage": 6, "stackable": False, "value": 0, "aliases": "mpouch"},
-    "Large pouch": {"type": "esspouch", "essstorage": 9, "stackable": False, "value": 0, "aliases": "lpouch"},
-    "Giant pouch": {"type": "esspouch", "essstorage": 12, "stackable": False, "value": 0, "aliases": "gpouch"},
-    "Colossal pouch": {"type": "esspouch", "essstorage": 16, "stackable": False, "value": 0, "aliases": "cpouch"},
+    "Small pouch": {"type": "esspouch", "essstorage": 4, "stackable": False, "tradeable": False, "value": 0, "aliases": "spouch"},
+    "Medium pouch": {"type": "esspouch", "essstorage": 6, "stackable": False, "tradeable": False, "value": 0, "aliases": "mpouch"},
+    "Large pouch": {"type": "esspouch", "essstorage": 9, "stackable": False, "tradeable": False, "value": 0, "aliases": "lpouch"},
+    "Giant pouch": {"type": "esspouch", "essstorage": 12, "stackable": False, "tradeable": False, "value": 0, "aliases": "gpouch"},
+    "Colossal pouch": {"type": "esspouch", "essstorage": 16, "stackable": False, "tradeable": False, "value": 0, "aliases": "cpouch"},
 
     # ── Pets ───────────────────────────────────────────────────────────────
-    "Tiny Revenant": {"type": "misc", "stackable": False, "value": 0, "aliases": "tiny revenant,rev pet"},
-    "Baby Chaos Fanatic": {"type": "misc", "stackable": False, "value": 0, "aliases": "baby chaos fanatic,fanatic pet"},
-    "Mini Overlord": {"type": "misc", "stackable": False, "value": 0, "aliases": "mini overlord,overlord pet"},
-    "Lil' Undying": {"type": "misc", "stackable": False, "value": 0, "aliases": "lil undying,undying pet"},
-    "Zarvethy": {"type": "misc", "stackable": False, "value": 0, "aliases": "zarvethy,zarveth pet,veilbreaker pet"},
-    "Splat": {"type": "misc", "stackable": False, "value": 0, "aliases": "splat,valthyros pet"},
-    "Flickerwisp": {"type": "misc", "stackable": False, "value": 0, "aliases": "flickerwisp,flicker"},
-    "Tiny Dark Archer": {"type": "misc", "stackable": False, "value": 0, "aliases": "tiny dark archer,dark archer pet,tda"},
-    "Soulflame": {"type": "misc", "stackable": False, "value": 0, "aliases": "soulflame,soul flame"},
-    "Embersprite": {"type": "misc", "stackable": False, "value": 0, "aliases": "embersprite,ember sprite"},
+    "Tiny Revenant": {"type": "misc", "stackable": False, "tradeable": False, "value": 0, "aliases": "tiny revenant,rev pet"},
+    "Baby Chaos Fanatic": {"type": "misc", "stackable": False, "tradeable": False, "value": 0, "aliases": "baby chaos fanatic,fanatic pet"},
+    "Mini Overlord": {"type": "misc", "stackable": False, "tradeable": False, "value": 0, "aliases": "mini overlord,overlord pet"},
+    "Lil' Undying": {"type": "misc", "stackable": False, "tradeable": False, "value": 0, "aliases": "lil undying,undying pet"},
+    "Zarvethy": {"type": "misc", "stackable": False, "tradeable": False, "value": 0, "aliases": "zarvethy,zarveth pet,veilbreaker pet"},
+    "Splat": {"type": "misc", "stackable": False, "tradeable": False, "value": 0, "aliases": "splat,valthyros pet"},
+    "Flickerwisp": {"type": "misc", "stackable": False, "tradeable": False, "value": 0, "aliases": "flickerwisp,flicker"},
+    "Tiny Dark Archer": {"type": "misc", "stackable": False, "tradeable": False, "value": 0, "aliases": "tiny dark archer,dark archer pet,tda"},
+    "Soulflame": {"type": "misc", "stackable": False, "tradeable": False, "value": 0, "aliases": "soulflame,soul flame"},
+    "Embersprite": {"type": "misc", "stackable": False, "tradeable": False, "value": 0, "aliases": "embersprite,ember sprite"},
 
     # ── Potions ────────────────────────────────────────────────────────────
     "Strength (4)": {"type": "misc", "stackable": False, "value": 5000, "aliases": "strength,str,str pot"},
@@ -306,6 +306,9 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Super Strength (2)": {"type": "misc", "stackable": False, "value": 4000, "aliases": ""},
     "Super Strength (1)": {"type": "misc", "stackable": False, "value": 2000, "aliases": ""},
 }
+
+# Items that cannot be traded — derived from "tradeable": False on each item
+UNTRADEABLE = {name for name, meta in ITEMS.items() if not meta.get("tradeable", True)}
 
 ITEM_EFFECTS = {
     "Bracelet of ethereum": {"effect": "When worn you will take 50% reduced damage from Revenants."},
