@@ -723,7 +723,7 @@ class CombatManager:
             lost_items = dict(p.inventory)
             p.inventory.clear()
 
-            bank_loss = int(p.bank_coins * 0.10)
+            bank_loss = int(p.bank_coins * 0.02)
             if bank_loss > 0:
                 p.bank_coins -= bank_loss
 
