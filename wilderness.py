@@ -711,6 +711,96 @@ class Wilderness(commands.Cog):
 
         await ctx.reply("✅ Cleared your blacklist.")
 
+    @w.group(name="warning", invoke_without_command=True)
+    async def warning_cmd(self, ctx: commands.Context, *, args: str = None):
+        """View or set warning thresholds.  !w warning food <n>  |  !w warning health <n>"""
+        if not await self._ensure_ready(ctx):
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+
+            if not args:
+                hp_val = getattr(p, "warning_health", 0)
+                food_val = getattr(p, "warning_food", 0)
+                hp_str = f"**{hp_val} HP** (warn if HP ends below)" if hp_val > 0 else "**Off**"
+                food_str = f"**{food_val}** remaining" if food_val > 0 else "**Off**"
+                await ctx.reply(
+                    f"⚠️ **Warning Settings**\n"
+                    f"❤️ Health: {hp_str}\n"
+                    f"🥩 Food: {food_str}\n\n"
+                    f"Set: `!w warning health <hp>` · `!w warning food <amount>`\n"
+                    f"Disable: `!w warning health 0` · `!w warning food 0`"
+                )
+                return
+
+            parts = args.strip().split()
+            if len(parts) < 2:
+                await ctx.reply("Usage: `!w warning health <hp>` or `!w warning food <amount>`")
+                return
+
+            kind = parts[0].lower()
+            try:
+                val = int(parts[1])
+            except ValueError:
+                await ctx.reply("Amount must be a number.")
+                return
+
+            if val < 0:
+                val = 0
+
+            max_hp = int(self.config.get("max_hp", 99))
+
+            if kind == "health":
+                if val > max_hp:
+                    val = max_hp
+                p.warning_health = val
+                await self._persist()
+                if val > 0:
+                    await ctx.reply(f"❤️ Health warning set to **{val} HP** — you'll be warned if HP ends below this after a fight.")
+                else:
+                    await ctx.reply("❤️ Health warning **disabled**.")
+            elif kind == "food":
+                p.warning_food = val
+                await self._persist()
+                if val > 0:
+                    await ctx.reply(f"🥩 Food warning set to **{val}** remaining.")
+                else:
+                    await ctx.reply("🥩 Food warning **disabled**.")
+            else:
+                await ctx.reply("Usage: `!w warning health <hp>` or `!w warning food <amount>`")
+
+    @w.command(name="autoeat")
+    async def autoeat_cmd(self, ctx: commands.Context, hp: int = None):
+        """Set HP threshold to auto-eat during combat.  !w autoeat <hp>"""
+        if not await self._ensure_ready(ctx):
+            return
+
+        async with self._mem_lock:
+            p = self._get_player(ctx.author)
+
+            if hp is None:
+                val = getattr(p, "autoeat", 0)
+                if val > 0:
+                    await ctx.reply(f"🍖 Auto-eat is set to **{val} HP**.\nChange: `!w autoeat <hp>` · Disable: `!w autoeat 0`")
+                else:
+                    await ctx.reply("🍖 Auto-eat is using **default** threshold.\nSet: `!w autoeat <hp>` (e.g. `!w autoeat 50`)")
+                return
+
+            max_hp = int(self.config.get("max_hp", 99))
+            if hp < 0:
+                hp = 0
+            if hp > max_hp:
+                hp = max_hp
+
+            p.autoeat = hp
+            await self._persist()
+
+            if hp > 0:
+                await ctx.reply(f"🍖 Auto-eat threshold set to **{hp} HP** — you'll eat when HP drops to {hp} or below.")
+            else:
+                await ctx.reply("🍖 Auto-eat threshold reset to **default**.")
+
     @w.command(name="drink")
     async def drink_cmd(self, ctx: commands.Context, *, potion_name: str):
         if not await self._ensure_ready(ctx):
@@ -2342,6 +2432,23 @@ class Wilderness(commands.Cog):
             self._touch(p)
             await self._persist()
 
+            # Build warnings list
+            has_food = any(p.inventory.get(f, 0) > 0 for f in FOOD)
+            total_food = sum(int(v) for f, v in p.inventory.items() if f in FOOD and int(v) > 0)
+            warnings = []
+            hp_warn = getattr(p, "warning_health", 0)
+            food_warn = getattr(p, "warning_food", 0)
+            if hp_warn > 0 and p.hp < hp_warn:
+                warnings.append(f"Your HP is low (**{p.hp}/{self.config['max_hp']}** — below {hp_warn})")
+            elif p.hp < 20:
+                warnings.append(f"Your HP is critically low (**{p.hp}/{self.config['max_hp']}**)")
+            if food_warn > 0 and total_food <= food_warn:
+                warnings.append(f"Food is low (**{total_food}** remaining — at or below {food_warn})")
+            elif not has_food:
+                warnings.append("You have **no food** remaining in your inventory")
+
+            embed_color = 0xFF4444 if warnings else 0x2B2D31
+
             pages = self._build_pages(events, per_page=10)
             summary = (
                 f"✅ **You have killed {npc_name}!**\n"
@@ -2351,7 +2458,7 @@ class Wilderness(commands.Cog):
             pages.append(summary)
 
             npc_image = chosen.get("image")
-            view = FightLogView(author_id=ctx.author.id, pages=pages, title=f"{ctx.author.display_name} vs {npc_name}", cog=self, ground_drops=ground_drops, start_on_last=True, npc_image=npc_image)
+            view = FightLogView(author_id=ctx.author.id, pages=pages, title=f"{ctx.author.display_name} vs {npc_name}", cog=self, ground_drops=ground_drops, start_on_last=True, npc_image=npc_image, embed_color=embed_color)
             await ctx.reply(embed=view._render_embed(), view=view)
 
             if slayer_task_info:
@@ -2368,13 +2475,6 @@ class Wilderness(commands.Cog):
                 )
                 await ctx.send(embed=emb)
 
-            # Low HP / no food warning
-            has_food = any(p.inventory.get(f, 0) > 0 for f in FOOD)
-            warnings = []
-            if p.hp < 20:
-                warnings.append(f"Your HP is critically low (**{p.hp}/{self.config['max_hp']}**)")
-            if not has_food:
-                warnings.append("You have **no food** remaining in your inventory")
             if warnings:
                 if has_food:
                     tip = "Consider using `!w eat`, `!w tele`, or restocking before your next fight!"

@@ -302,7 +302,7 @@ class InventoryManager:
         return best
 
     def maybe_auto_eat_after_hit(self, p: PlayerState, your_hp: int) -> Tuple[int, Optional[str], int, int]:
-        """Auto-eat when HP is <= (heal + random threshold)."""
+        """Auto-eat when HP is <= threshold (player setting or heal + random)."""
         food = self.best_food_in_inventory(p)
         if not food:
             return your_hp, None, 0, 0
@@ -311,17 +311,18 @@ class InventoryManager:
         if heal <= 0:
             return your_hp, None, 0, 0
 
-        r_lo, r_hi = self.cog.config.get("auto_eat_extra_range", [1, 10])
-        try:
-            r_lo = int(r_lo)
-            r_hi = int(r_hi)
-        except Exception:
-            r_lo, r_hi = 1, 10
-        if r_hi < r_lo:
-            r_hi = r_lo
-
-        extra = random.randint(r_lo, r_hi)
-        threshold = heal + extra
+        if p.autoeat > 0:
+            threshold = p.autoeat
+        else:
+            r_lo, r_hi = self.cog.config.get("auto_eat_extra_range", [1, 10])
+            try:
+                r_lo = int(r_lo)
+                r_hi = int(r_hi)
+            except Exception:
+                r_lo, r_hi = 1, 10
+            if r_hi < r_lo:
+                r_hi = r_lo
+            threshold = heal + random.randint(r_lo, r_hi)
 
         if your_hp > 0 and your_hp <= threshold and p.inventory.get(food, 0) > 0:
             if self.remove_item(p.inventory, food, 1):

@@ -101,12 +101,14 @@ class FightLogView(discord.ui.View):
         ground_drops: Optional[List[Tuple[str, int, int]]] = None,
         start_on_last: bool = False,
         npc_image: Optional[str] = None,
+        embed_color: int = 0x2B2D31,
     ):
         super().__init__(timeout=300)
         self.author_id = author_id
         self.pages = pages
         self.title = title
         self.npc_image = npc_image
+        self.embed_color = embed_color
 
         self.page = (max(0, len(self.pages) - 1) if start_on_last else 0)
 
@@ -133,7 +135,7 @@ class FightLogView(discord.ui.View):
         emb = discord.Embed(
             title=f"📜 {self.title} — Page {self.page + 1}/{total}",
             description=self.pages[self.page],
-            color=0x2B2D31,
+            color=self.embed_color,
         )
         if self.npc_image:
             emb.set_thumbnail(url=self.npc_image)

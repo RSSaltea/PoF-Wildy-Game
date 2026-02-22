@@ -63,6 +63,28 @@
       <div class="aliases">Aliases: <code>!w health</code></div>
       <p>Check your current HP.</p>
     </div>
+
+    <h2>Combat Settings</h2>
+
+    <div class="command-block">
+      <h3><code>!w autoeat &lt;hp&gt;</code></h3>
+      <p>Set the HP threshold for auto-eating during combat. When your HP drops to this value or below, you'll automatically eat your best food. Use <code>!w autoeat 0</code> to reset to default. Run with no argument to view your current setting.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w warning</code></h3>
+      <p>View your current warning settings. Warnings appear on the fight summary to alert you of dangerous situations.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w warning health &lt;hp&gt;</code></h3>
+      <p>Set a health warning threshold. After a fight, if your HP ended below this value, a warning will appear on the fight summary. Use <code>!w warning health 0</code> to disable.</p>
+    </div>
+
+    <div class="command-block">
+      <h3><code>!w warning food &lt;amount&gt;</code></h3>
+      <p>Set a food warning threshold. After a fight, if your remaining food count is at or below this amount, a warning will appear on the fight summary. Use <code>!w warning food 0</code> to disable.</p>
+    </div>
   </div>
   <div class="footer">Wilderness Wiki</div>
   <script src="../search.js"></script>

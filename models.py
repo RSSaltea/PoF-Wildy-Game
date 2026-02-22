@@ -97,6 +97,9 @@ class PlayerState:
     pet_counts: Dict[str, int] = None
     consume_auto: List[str] = None
     ammo_qty: int = 0
+    warning_food: int = 0      # warn when total food count <= this (0 = off)
+    warning_health: int = 0    # warn when HP ends below this after a fight (0 = off)
+    autoeat: int = 0           # auto-eat when HP <= this (0 = use default formula)
 
     def __post_init__(self):
         if self.inventory is None:
