@@ -83,6 +83,8 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   text-decoration: none;
 }
 .discord-btn svg { width: 16px; height: 16px; fill: currentColor; }
+.add-bot-btn { background: #23a559; margin-left: 0.4rem; }
+.add-bot-btn:hover { background: #1a7a43; }
 
 /* Main Content */
 .container {
