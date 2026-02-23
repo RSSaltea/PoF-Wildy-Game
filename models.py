@@ -12,6 +12,7 @@ from .config_default import DEFAULT_CONFIG
 DATA_DIR = "data/wilderness"
 PLAYERS_FILE = os.path.join(DATA_DIR, "players.json")
 CONFIG_FILE = os.path.join(DATA_DIR, "config.json")
+GUILD_CONFIG_FILE = os.path.join(DATA_DIR, "guild_config.json")
 
 
 def _now() -> int:
@@ -206,6 +207,14 @@ class JsonStore:
             if changed:
                 await self._write_json(CONFIG_FILE, cfg)
             return cfg
+
+    async def load_guild_configs(self) -> Dict[str, Any]:
+        async with self._lock:
+            return await self._read_json(GUILD_CONFIG_FILE, {})
+
+    async def save_guild_configs(self, data: Dict[str, Any]) -> None:
+        async with self._lock:
+            await self._write_json(GUILD_CONFIG_FILE, data)
 
     async def load_players(self) -> Dict[str, Any]:
         async with self._lock:

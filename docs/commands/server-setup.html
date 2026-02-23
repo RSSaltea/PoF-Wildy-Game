@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Server Setup — Wilderness Wiki</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="navbar">
+    <div class="logo"><span>Wilderness</span> Wiki</div>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../npcs/index.html">NPCs</a>
+      <a href="../items/index.html">Items</a>
+      <a href="index.html" class="active">Commands</a>
+      <a href="../grand-exchange/index.html">Grand Exchange</a>
+    </nav>
+      <a href="https://discord.com/invite/paws-of-fury" target="_blank" class="discord-btn"><svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>Join Discord</a>
+      <a href="https://discord.com/oauth2/authorize?client_id=1475460184141725746&amp;permissions=8&amp;integration_type=0&amp;scope=applications.commands+bot" target="_blank" class="discord-btn add-bot-btn"><svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>Add to Discord</a>
+    <div class="search-wrapper">
+      <input type="text" class="search-input" placeholder="Search wiki...">
+      <div class="search-dropdown"></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="breadcrumb"><a href="../index.html">Home</a><span class="sep">/</span><a href="index.html">Commands</a><span class="sep">/</span>Server Setup</div>
+
+    <div class="page-header">
+      <h1>Server Setup</h1>
+      <div class="subtitle">A guide for server admins on how to configure the Wilderness bot for your server.</div>
+    </div>
+
+    <div class="content">
+
+      <div class="command-block">
+        <p><strong>Permission required:</strong> All <code>/setup</code> commands require the <strong>Manage Server</strong> permission. Regular players cannot run these commands.</p>
+      </div>
+
+      <h2>Overview</h2>
+      <p>The Wilderness bot uses slash commands under <code>/setup</code> to configure which channels the bot operates in. You can designate up to four types of channels:</p>
+      <ul>
+        <li><strong>Main channels</strong> — where all game commands work (venturing, fighting, crafting, etc.)</li>
+        <li><strong>Trade channel</strong> — restricted to trading, bank, inventory, and Grand Exchange commands only</li>
+        <li><strong>Info channel</strong> — restricted to stats, inspect, NPC lookups, highscores, and similar read-only commands</li>
+        <li><strong>Broadcast channel</strong> — where rare drop announcements and milestone messages are posted automatically</li>
+      </ul>
+      <p>None of these are required — the bot simply ignores messages in unconfigured channels. At minimum you need at least one <strong>main channel</strong> for players to use the bot.</p>
+
+      <h2>Step 1 — Invite the Bot</h2>
+      <p>If you haven't already, invite the bot to your server using the <strong>Add to Discord</strong> button at the top of this page, or click the link below:</p>
+      <div class="command-block">
+        <p><a href="https://discord.com/oauth2/authorize?client_id=1475460184141725746&permissions=8&integration_type=0&scope=applications.commands+bot" target="_blank">Invite Wilderness Bot &rarr;</a></p>
+      </div>
+      <p>The bot requires <strong>Administrator</strong> permission to function correctly (send messages, read channels, manage reactions, etc.).</p>
+
+      <h2>Step 2 — Set Up Your Channels</h2>
+      <p>Create the Discord channels you want to use, then run the relevant <code>/setup</code> commands in your server.</p>
+
+      <h3>Main Game Channel</h3>
+      <div class="command-block">
+        <h3><code>/setup main #channel</code></h3>
+        <p>Designates a channel where all game commands are allowed. You can add multiple main channels by running this command again with a different channel. Run it again on the same channel to <strong>remove</strong> it.</p>
+        <p><strong>Example:</strong> <code>/setup main #wilderness-game</code></p>
+      </div>
+
+      <h3>Trade Channel <span style="font-weight:400;font-size:0.9em;color:#8b949e;">(optional)</span></h3>
+      <div class="command-block">
+        <h3><code>/setup trade #channel</code></h3>
+        <p>Restricts a channel to trading, bank, inventory, and Grand Exchange commands only. All other game commands will be blocked there. Run the same command again to clear it.</p>
+        <p><strong>Allowed commands in this channel:</strong> <code>!w trade</code>, <code>!w bank</code>, <code>!w deposit</code>, <code>!w inv</code>, <code>!w ge</code></p>
+        <p><strong>Example:</strong> <code>/setup trade #wilderness-trade</code></p>
+      </div>
+
+      <h3>Info Channel <span style="font-weight:400;font-size:0.9em;color:#8b949e;">(optional)</span></h3>
+      <div class="command-block">
+        <h3><code>/setup info #channel</code></h3>
+        <p>Restricts a channel to read-only informational commands. Useful to keep stats lookups out of the main game channel. Run the same command again to clear it.</p>
+        <p><strong>Allowed commands in this channel:</strong> <code>!w stats</code>, <code>!w examine</code>, <code>!w inspect</code>, <code>!w npcs</code>, <code>!w bank</code>, <code>!w inv</code>, <code>!w kc</code>, <code>!w highscores</code>, <code>!w slayer</code>, <code>!w ge</code></p>
+        <p><strong>Example:</strong> <code>/setup info #wilderness-info</code></p>
+      </div>
+
+      <h3>Broadcast Channel <span style="font-weight:400;font-size:0.9em;color:#8b949e;">(optional)</span></h3>
+      <div class="command-block">
+        <h3><code>/setup broadcast #channel</code></h3>
+        <p>Sets the channel where the bot automatically announces rare unique drops, pet drops, and milestones (e.g. reaching level 99 Slayer). Run the same command again to clear it.</p>
+        <p><strong>Example:</strong> <code>/setup broadcast #wilderness-drops</code></p>
+      </div>
+
+      <h2>Step 3 — Verify Your Setup</h2>
+      <div class="command-block">
+        <h3><code>/setup view</code></h3>
+        <p>Displays the current channel configuration for your server. Use this to confirm everything is set correctly.</p>
+      </div>
+
+      <h2>Recommended Channel Layout</h2>
+      <p>Here is a typical setup for a server running the Wilderness bot:</p>
+      <table>
+        <thead>
+          <tr><th>Channel name</th><th>Type</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>#wilderness-game</code></td><td>Main</td><td>Primary channel — all commands work here</td></tr>
+          <tr><td><code>#wilderness-trade</code></td><td>Trade</td><td>Trading, bank, GE — keeps the main channel cleaner</td></tr>
+          <tr><td><code>#wilderness-stats</code></td><td>Info</td><td>Stats lookups and highscores without spamming the game channel</td></tr>
+          <tr><td><code>#wilderness-drops</code></td><td>Broadcast</td><td>Automatic rare drop and milestone announcements</td></tr>
+        </tbody>
+      </table>
+      <p>You can name the channels whatever you like — the bot goes by channel ID, not name.</p>
+
+      <h2>Removing a Channel</h2>
+      <p>All <code>/setup</code> commands are toggles. Running the same command on the same channel a second time removes it:</p>
+      <ul>
+        <li><code>/setup main #channel</code> &mdash; removes it from the main channel list if already added</li>
+        <li><code>/setup trade #channel</code> &mdash; clears the trade channel if it was already set to that channel</li>
+        <li><code>/setup info #channel</code> &mdash; clears the info channel if it was already set to that channel</li>
+        <li><code>/setup broadcast #channel</code> &mdash; clears the broadcast channel if it was already set to that channel</li>
+      </ul>
+
+      <h2>Players — Getting Started</h2>
+      <p>Once channels are configured, point your players to the <a href="getting-started.html">Getting Started</a> guide so they know how to create a profile and begin playing.</p>
+
+    </div>
+  </div>
+  <div class="footer">Wilderness Wiki</div>
+  <script src="../search.js"></script>
+</body>
+</html>

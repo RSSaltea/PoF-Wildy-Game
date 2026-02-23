@@ -5,6 +5,7 @@
 
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 import asyncio
 import random
@@ -93,6 +94,7 @@ class Wilderness(commands.Cog):
 
         self._afk_task: Optional[asyncio.Task] = None
 
+        self.guild_configs: Dict[int, Dict] = {}
         self.ALLOWED_CHANNEL_IDS = ALLOWED_CHANNEL_IDS
         self.TRADE_ONLY_CHANNEL_IDS = TRADE_ONLY_CHANNEL_IDS
 
@@ -108,6 +110,45 @@ class Wilderness(commands.Cog):
         self.slayer_mgr = SlayerManager(self)
         self.ge_mgr = GEManager(self)
 
+
+    # ── Per-guild channel helpers ────────────────────────────────────────
+
+    def _main_channels_for(self, guild_id: int) -> set:
+        cfg = self.guild_configs.get(guild_id, {})
+        return set(cfg.get("main_channels", [])) | ALLOWED_CHANNEL_IDS
+
+    def _trade_channels_for(self, guild_id: int) -> set:
+        cfg = self.guild_configs.get(guild_id, {})
+        tc = cfg.get("trade_channel")
+        return {tc} if tc else TRADE_ONLY_CHANNEL_IDS
+
+    def _info_channels_for(self, guild_id: int) -> set:
+        cfg = self.guild_configs.get(guild_id, {})
+        ic = cfg.get("info_channel")
+        return {ic} if ic else INFO_ONLY_CHANNEL_IDS
+
+    def _broadcast_for(self, guild_id: int) -> int:
+        cfg = self.guild_configs.get(guild_id, {})
+        return cfg.get("broadcast_channel", BROADCAST_CHANNEL_ID)
+
+    def _refresh_allowed_channels(self) -> None:
+        """Rebuild the combined ALLOWED_CHANNEL_IDS used by combat_manager and trade_mgr."""
+        combined_main = set(ALLOWED_CHANNEL_IDS)
+        combined_trade = set(TRADE_ONLY_CHANNEL_IDS)
+        for cfg in self.guild_configs.values():
+            combined_main.update(cfg.get("main_channels", []))
+            tc = cfg.get("trade_channel")
+            if tc:
+                combined_trade.add(tc)
+        self.ALLOWED_CHANNEL_IDS = combined_main
+        self.TRADE_ONLY_CHANNEL_IDS = combined_trade
+        if hasattr(self, "trade_mgr"):
+            self.trade_mgr.allowed_channel_ids = combined_main | combined_trade
+
+    async def _save_guild_configs(self) -> None:
+        await self.store.save_guild_configs({str(k): v for k, v in self.guild_configs.items()})
+
+    # ─────────────────────────────────────────────────────────────────────
 
     def _norm(self, s: str) -> str:
         return self.player_mgr.norm(s)
@@ -132,6 +173,9 @@ class Wilderness(commands.Cog):
 
     async def cog_load(self):
         self.config = await self.store.load_config()
+        raw_guild = await self.store.load_guild_configs()
+        self.guild_configs = {int(k): v for k, v in raw_guild.items()}
+        self._refresh_allowed_channels()
         raw_players = await self.store.load_players()
         self.players = {}
         for user_id_str, pdata in raw_players.items():
@@ -156,19 +200,21 @@ class Wilderness(commands.Cog):
 
         cmd_name = ctx.command.qualified_name if ctx.command else ""
 
-        if ch.id in TRADE_ONLY_CHANNEL_IDS:
+        guild_id = ctx.guild.id if ctx.guild else 0
+
+        if ch.id in self._trade_channels_for(guild_id):
             if cmd_name in TRADE_CHANNEL_CMDS or cmd_name.startswith("w trade"):
                 return self._ready or (await ctx.reply("Wilderness is still loading.") and False)
             await ctx.reply("This channel is for **trading, bank & inventory** only.")
             return False
 
-        if ch.id in INFO_ONLY_CHANNEL_IDS:
+        if ch.id in self._info_channels_for(guild_id):
             if cmd_name in INFO_CHANNEL_CMDS:
                 return self._ready or (await ctx.reply("Wilderness is still loading.") and False)
             await ctx.reply("This channel is for **stats, examine, inspect & npcs** only.")
             return False
 
-        if ch.id not in ALLOWED_CHANNEL_IDS:
+        if ch.id not in self._main_channels_for(guild_id):
             return False
 
         if not self._ready:
@@ -455,10 +501,10 @@ class Wilderness(commands.Cog):
         emb.description = "\n".join(lines)
         return emb
 
-    async def _send_broadcasts(self, user: discord.abc.User, broadcasts: List):
+    async def _send_broadcasts(self, user: discord.abc.User, broadcasts: List, guild_id: int = 0):
         if not broadcasts:
             return
-        ch = self.bot.get_channel(BROADCAST_CHANNEL_ID)
+        ch = self.bot.get_channel(self._broadcast_for(guild_id))
         if not ch:
             return
         for drop_type, item_name, npc_name in broadcasts:
@@ -2585,7 +2631,7 @@ class Wilderness(commands.Cog):
                 emb = discord.Embed(description=tip_msg, color=0x3498db)
                 await ctx.send(embed=emb)
 
-        await self._send_broadcasts(ctx.author, broadcasts)
+        await self._send_broadcasts(ctx.author, broadcasts, ctx.guild.id if ctx.guild else 0)
 
     @w.command(name="attack")
     async def attack(self, ctx: commands.Context, target: discord.Member):
@@ -2776,7 +2822,7 @@ class Wilderness(commands.Cog):
                             npc_image=npc_image,
                         )
                         await ctx.reply(embed=view._render_embed(), view=view)
-                        await self._send_broadcasts(ctx.author, all_broadcasts)
+                        await self._send_broadcasts(ctx.author, all_broadcasts, ctx.guild.id if ctx.guild else 0)
                         return
 
                     # Won both ambushes — teleport out
@@ -2871,7 +2917,7 @@ class Wilderness(commands.Cog):
                     )
                     await ctx.send(embed=emb)
 
-                await self._send_broadcasts(ctx.author, all_broadcasts)
+                await self._send_broadcasts(ctx.author, all_broadcasts, ctx.guild.id if ctx.guild else 0)
                 return
 
             # 80% successful teleport
@@ -3958,7 +4004,7 @@ class Wilderness(commands.Cog):
         ch = getattr(ctx, "channel", None)
         if ch is None:
             return
-        if ch.id not in ALLOWED_CHANNEL_IDS:
+        if ch.id not in self._main_channels_for(ctx.guild.id if ctx.guild else 0):
             return
         if not self._ready:
             await ctx.reply("Wilderness is still loading. Try again in a moment.")
@@ -4090,7 +4136,7 @@ class Wilderness(commands.Cog):
 
         await ctx.reply(msg)
         if milestone_broadcasts:
-            await self._send_broadcasts(ctx.author, milestone_broadcasts)
+            await self._send_broadcasts(ctx.author, milestone_broadcasts, ctx.guild.id if ctx.guild else 0)
 
     @consume_cmd.command(name="auto")
     async def consume_auto_cmd(self, ctx: commands.Context, *, item_name: str = ""):
@@ -4232,6 +4278,99 @@ class Wilderness(commands.Cog):
         )
         view = GEOpenView(self.ge_mgr, ctx.author.id)
         await ctx.send(embed=emb, view=view)
+
+
+    # ── /setup slash commands ────────────────────────────────────────────
+
+    setup_group = app_commands.Group(
+        name="setup",
+        description="Configure the Wilderness bot for this server. Requires Manage Server permission.",
+        default_permissions=discord.Permissions(manage_guild=True),
+    )
+
+    @setup_group.command(name="main", description="Add a channel where all game commands are allowed.")
+    @app_commands.describe(channel="The text channel to allow game commands in.")
+    async def setup_main(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        guild_id = interaction.guild_id
+        cfg = self.guild_configs.setdefault(guild_id, {})
+        mains: list = cfg.setdefault("main_channels", [])
+        if channel.id in mains:
+            mains.remove(channel.id)
+            action = f"removed {channel.mention} from"
+        else:
+            mains.append(channel.id)
+            action = f"added {channel.mention} to"
+        self._refresh_allowed_channels()
+        await self._save_guild_configs()
+        await interaction.response.send_message(
+            f"✅ {action} the **main game channels**.", ephemeral=True
+        )
+
+    @setup_group.command(name="trade", description="Set the trade/bank-only channel (run again to clear).")
+    @app_commands.describe(channel="The text channel for trading and bank commands only.")
+    async def setup_trade(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        guild_id = interaction.guild_id
+        cfg = self.guild_configs.setdefault(guild_id, {})
+        if cfg.get("trade_channel") == channel.id:
+            cfg["trade_channel"] = None
+            msg = f"Cleared the trade channel (was {channel.mention})."
+        else:
+            cfg["trade_channel"] = channel.id
+            msg = f"Set {channel.mention} as the **trade/bank channel**."
+        self._refresh_allowed_channels()
+        await self._save_guild_configs()
+        await interaction.response.send_message(f"✅ {msg}", ephemeral=True)
+
+    @setup_group.command(name="info", description="Set the info/stats-only channel (run again to clear).")
+    @app_commands.describe(channel="The text channel for stats and inspect commands only.")
+    async def setup_info(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        guild_id = interaction.guild_id
+        cfg = self.guild_configs.setdefault(guild_id, {})
+        if cfg.get("info_channel") == channel.id:
+            cfg["info_channel"] = None
+            msg = f"Cleared the info channel (was {channel.mention})."
+        else:
+            cfg["info_channel"] = channel.id
+            msg = f"Set {channel.mention} as the **info/stats channel**."
+        self._refresh_allowed_channels()
+        await self._save_guild_configs()
+        await interaction.response.send_message(f"✅ {msg}", ephemeral=True)
+
+    @setup_group.command(name="broadcast", description="Set the channel for rare drop announcements (run again to clear).")
+    @app_commands.describe(channel="The text channel for rare drop and milestone broadcasts.")
+    async def setup_broadcast(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        guild_id = interaction.guild_id
+        cfg = self.guild_configs.setdefault(guild_id, {})
+        if cfg.get("broadcast_channel") == channel.id:
+            cfg["broadcast_channel"] = None
+            msg = f"Cleared the broadcast channel (was {channel.mention})."
+        else:
+            cfg["broadcast_channel"] = channel.id
+            msg = f"Set {channel.mention} as the **broadcast channel**."
+        await self._save_guild_configs()
+        await interaction.response.send_message(f"✅ {msg}", ephemeral=True)
+
+    @setup_group.command(name="view", description="Show the current channel configuration for this server.")
+    async def setup_view(self, interaction: discord.Interaction):
+        guild_id = interaction.guild_id
+        cfg = self.guild_configs.get(guild_id, {})
+
+        def fmt(ch_id):
+            if not ch_id:
+                return "*not set*"
+            ch = self.bot.get_channel(ch_id)
+            return ch.mention if ch else f"<#{ch_id}>"
+
+        mains = cfg.get("main_channels", [])
+        main_str = ", ".join(fmt(c) for c in mains) if mains else "*none set*"
+
+        emb = discord.Embed(title="Wilderness Bot — Channel Setup", color=0x2B2D31)
+        emb.add_field(name="Main game channels", value=main_str, inline=False)
+        emb.add_field(name="Trade/bank channel", value=fmt(cfg.get("trade_channel")), inline=True)
+        emb.add_field(name="Info/stats channel", value=fmt(cfg.get("info_channel")), inline=True)
+        emb.add_field(name="Broadcast channel", value=fmt(cfg.get("broadcast_channel")), inline=True)
+        emb.set_footer(text="Use /setup main/trade/info/broadcast to configure. Run the same command again to remove.")
+        await interaction.response.send_message(embed=emb, ephemeral=True)
 
 
 async def setup(bot: commands.Bot):
