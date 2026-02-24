@@ -202,13 +202,15 @@ class Wilderness(commands.Cog):
 
         guild_id = ctx.guild.id if ctx.guild else 0
 
-        if ch.id in self._trade_channels_for(guild_id):
+        is_main = ch.id in self._main_channels_for(guild_id)
+
+        if ch.id in self._trade_channels_for(guild_id) and not is_main:
             if cmd_name in TRADE_CHANNEL_CMDS or cmd_name.startswith("w trade"):
                 return self._ready or (await ctx.reply("Wilderness is still loading.") and False)
             await ctx.reply("This channel is for **trading, bank & inventory** only.")
             return False
 
-        if ch.id in self._info_channels_for(guild_id):
+        if ch.id in self._info_channels_for(guild_id) and not is_main:
             if cmd_name in INFO_CHANNEL_CMDS:
                 return self._ready or (await ctx.reply("Wilderness is still loading.") and False)
             await ctx.reply("This channel is for **stats, examine, inspect & npcs** only.")
@@ -587,6 +589,7 @@ class Wilderness(commands.Cog):
         emb.add_field(name="Getting Started", value=(
             "`!w start` — Create your profile\n"
             "`!w quickstart` — Step-by-step guide\n"
+            "`!w wiki` — Open the Wilderness Wiki\n"
             "`!w reset` — Wipe your profile and start over"
         ), inline=False)
         emb.add_field(name="Combat & Exploring", value=(
@@ -718,6 +721,18 @@ class Wilderness(commands.Cog):
             "- `!w ge` — Trade items with other players\n"
             "- `!w help` — See all commands"
         ), inline=False)
+        await ctx.reply(embed=emb)
+
+    @w.command(name="wiki")
+    async def wiki_cmd(self, ctx: commands.Context):
+        if not await self._ensure_ready(ctx):
+            return
+        emb = discord.Embed(
+            title="Wilderness Wiki",
+            description="Everything you need to know — NPCs, items, commands, drop tables, and more.\n\n[**Open the Wiki →**](https://rssaltea.github.io/PoF-Wildy-Game/index.html)",
+            color=0x2B2D31,
+            url="https://rssaltea.github.io/PoF-Wildy-Game/index.html",
+        )
         await ctx.reply(embed=emb)
 
     @w.group(name="trade", invoke_without_command=True)
