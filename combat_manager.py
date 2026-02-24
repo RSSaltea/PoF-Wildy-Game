@@ -618,8 +618,8 @@ class CombatManager:
                 your_hp = int(p.hp)
                 events.append(f"🩸 Amulet of Seeping heals **{healed}** | You: **{your_hp}/{self.cog.config['max_hp']}**")
 
-            # Fury Paw weapon special — Paws of Fury (15% chance, 2 extra hits at 50% reduced damage)
-            if p.equipment.get("mainhand") == "Fury Paw" and hit > 0 and npc_hp > 0:
+            # Fury Paws weapon special — Paws of Fury (15% chance, 2 extra hits at 50% reduced damage)
+            if p.equipment.get("mainhand") == "Fury Paws" and hit > 0 and npc_hp > 0:
                 if random.random() < 0.15:
                     events.append("🐾 **Paws of Fury!** Your claws slash twice more!")
                     for fury_i in range(2):

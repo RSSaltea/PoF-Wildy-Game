@@ -55,7 +55,7 @@
     { title: "Death Guard", url: "items/death-guard.html", tags: "death guard mainhand weapon necro necromancy" },
     { title: "Viggora's Chainmace", url: "items/viggoras-chainmace.html", tags: "viggora chainmace mainhand weapon melee ether npc bonus" },
     { title: "Abyssal Chainmace", url: "items/abyssal-chainmace.html", tags: "abyssal chainmace mainhand weapon melee ether npc bonus craft" },
-    { title: "Fury Paw", url: "items/fury-paw.html", tags: "fury paw fpaw mainhand weapon melee slash paws of fury bunny" },
+    { title: "Fury Paws", url: "items/fury-paw.html", tags: "fury paws fpaw mainhand weapon melee slash two-handed paws of fury bunny" },
 
     // Range Weapons
     { title: "Rotwood shortbow", url: "items/rotwood-shortbow.html", tags: "rotwood shortbow mainhand weapon range bow arrows" },

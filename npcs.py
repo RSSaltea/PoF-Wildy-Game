@@ -291,7 +291,7 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
     "fury_bunny": {
         "coins_range": [0, 750],
         "unique": [
-            {"item": "Fury Paw", "min": 1, "max": 1, "chance": "1/200"},
+            {"item": "Fury Paws", "min": 1, "max": 1, "chance": "1/200"},
         ],
         "loot": [
             {"item": "Steel arrows", "min": 15, "max": 50, "chance": "1/2"},
