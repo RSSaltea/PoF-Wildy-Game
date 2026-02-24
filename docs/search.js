@@ -37,6 +37,7 @@
     { title: "Duskwalker", url: "npcs/duskwalker.html", tags: "tier 5 wildy 47 duskwalker range boss shadow volley nightfall" },
     { title: "Emberlord Kael", url: "npcs/emberlord-kael.html", tags: "tier 5 wildy 48 emberlord kael magic boss flame burst soulfire" },
     { title: "Gravekeeper Azriel", url: "npcs/gravekeeper-azriel.html", tags: "tier 5 wildy 49 gravekeeper azriel necro boss soul siphon" },
+    { title: "Fury Bunny", url: "npcs/fury-bunny.html", tags: "tier 3 wildy 23 fury bunny melee slash paws of fury" },
 
     // Items index
     { title: "Items", url: "items/index.html", tags: "items weapons armour armor gear equipment" },
@@ -54,6 +55,7 @@
     { title: "Death Guard", url: "items/death-guard.html", tags: "death guard mainhand weapon necro necromancy" },
     { title: "Viggora's Chainmace", url: "items/viggoras-chainmace.html", tags: "viggora chainmace mainhand weapon melee ether npc bonus" },
     { title: "Abyssal Chainmace", url: "items/abyssal-chainmace.html", tags: "abyssal chainmace mainhand weapon melee ether npc bonus craft" },
+    { title: "Fury Paw", url: "items/fury-paw.html", tags: "fury paw fpaw mainhand weapon melee slash paws of fury bunny" },
 
     // Range Weapons
     { title: "Rotwood shortbow", url: "items/rotwood-shortbow.html", tags: "rotwood shortbow mainhand weapon range bow arrows" },
