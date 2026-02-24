@@ -1022,8 +1022,10 @@ class Wilderness(commands.Cog):
         if not await self._ensure_ready(ctx):
             return
 
-        emb = self._npc_info_embed(NPCS[0]["name"], ctx.guild)
-        view = NPCInfoView(self, author_id=ctx.author.id)
+        _npcs_guild_id = ctx.guild.id if ctx.guild else None
+        first_visible = next((n for n in NPCS if n.get("guild_id") is None or n.get("guild_id") == _npcs_guild_id), NPCS[0])
+        emb = self._npc_info_embed(first_visible["name"], ctx.guild)
+        view = NPCInfoView(self, author_id=ctx.author.id, guild_id=_npcs_guild_id)
         await ctx.reply(embed=emb, view=view)
 
     @w.command(name="eat")
@@ -2494,12 +2496,16 @@ class Wilderness(commands.Cog):
 
             self._touch(p)
 
-            eligible = [n for n in NPCS if p.wildy_level >= n["min_wildy"]] or [NPCS[0]]
+            guild_id = ctx.guild.id if ctx.guild else None
+            eligible = [n for n in NPCS if p.wildy_level >= n["min_wildy"] and (n.get("guild_id") is None or n.get("guild_id") == guild_id)] or [NPCS[0]]
 
             if npcname:
                 forced_npc = self._resolve_npc(npcname)
                 if not forced_npc:
                     await ctx.reply("Unknown NPC. Use `!w npcs` to see the list.")
+                    return
+                if forced_npc.get("guild_id") and forced_npc["guild_id"] != guild_id:
+                    await ctx.reply("That NPC cannot be encountered in this server.")
                     return
                 if p.wildy_level < int(forced_npc["min_wildy"]):
                     await ctx.reply(
@@ -2728,7 +2734,8 @@ class Wilderness(commands.Cog):
             self._set_cd(p, "tele")
 
             if random.random() < 0.20:
-                eligible = [n for n in NPCS if p.wildy_level >= n["min_wildy"]] or [NPCS[0]]
+                _tele_guild_id = ctx.guild.id if ctx.guild else None
+                eligible = [n for n in NPCS if p.wildy_level >= n["min_wildy"] and (n.get("guild_id") is None or n.get("guild_id") == _tele_guild_id)] or [NPCS[0]]
                 chosen = random.choice(eligible)
 
                 header = [
@@ -2791,7 +2798,7 @@ class Wilderness(commands.Cog):
 
                 # 2% chance of a second ambush after winning the first
                 if random.random() < 0.02:
-                    eligible2 = [n for n in NPCS if p.wildy_level >= n["min_wildy"]] or [NPCS[0]]
+                    eligible2 = [n for n in NPCS if p.wildy_level >= n["min_wildy"] and (n.get("guild_id") is None or n.get("guild_id") == _tele_guild_id)] or [NPCS[0]]
                     chosen2 = random.choice(eligible2)
 
                     summary += f"\n\n⚠️ **Another ambush!** A **{chosen2['name']}** attacks before you can teleport!"
@@ -3736,7 +3743,7 @@ class Wilderness(commands.Cog):
                 await ctx.reply(f"🗡️ Current task: Kill **{task['remaining']}/{task['total']} {task['npc']}**.")
                 return
 
-            ok, result = self.slayer_mgr.assign_task(p)
+            ok, result = self.slayer_mgr.assign_task(p, guild_id=ctx.guild.id if ctx.guild else None)
             if not ok:
                 await ctx.reply(result)
                 return
@@ -3833,8 +3840,11 @@ class Wilderness(commands.Cog):
         if not await self._ensure_ready(ctx):
             return
 
+        _slayer_guild_id = ctx.guild.id if ctx.guild else None
         lines = []
         for npc in NPCS:
+            if npc.get("guild_id") is not None and npc.get("guild_id") != _slayer_guild_id:
+                continue
             info = NPC_SLAYER.get(npc["npc_type"])
             if not info:
                 continue

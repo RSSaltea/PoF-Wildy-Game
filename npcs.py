@@ -40,6 +40,10 @@ NPCS: List[Dict[str, Any]] = [
     {"name": "Phantom Archer", "hp": 80, "tier": 3, "min_wildy": 21, "npc_type": "phantom_archer",
      "stance": "range", "str_range": 24, "d_stab": 4, "d_slash": 4, "d_magic": -8, "d_range": 20, "slayer_level": 15, "slayer_xp": 50, "task_range": [10, 20],
      "image": _IMG_BASE + "phantom%20archer.png"},
+    {"name": "Fury Bunny", "hp": 85, "tier": 3, "min_wildy": 23, "npc_type": "fury_bunny",
+     "stance": "slash", "str_melee": 26, "d_stab": 8, "d_slash": 12, "d_crush": 4, "d_magic": -4, "d_range": 8, "slayer_level": 16, "slayer_xp": 55, "task_range": [10, 20],
+     "guild_id": 1327651830133690439,
+     "image": _IMG_BASE + "fury%20bunny.png"},
     {"name": "Chaos fanatic", "hp": 90, "tier": 3, "min_wildy": 24, "npc_type": "chaos_fanatic",
      "stance": "magic", "str_magic": 28, "d_stab": 8, "d_slash": 8, "d_crush": 4, "d_magic": 20, "d_range": 16, "slayer_level": 15, "slayer_xp": 60, "task_range": [10, 20],
      "image": _IMG_BASE + "chaos%20fanatic.png"},
@@ -281,6 +285,21 @@ NPC_DROPS: Dict[str, Dict[str, Any]] = {
             {"item": "Adamant arrows", "min": 5, "max": 25, "chance": "1/4"},
             {"item": "Steel arrows", "min": 20, "max": 80, "chance": "1/2"},
             {"item": "Uncut emerald", "min": 1, "max": 2, "chance": "1/6", "noted": True},
+        ],
+    },
+    # ── Fury Bunny (T3 w23) ──
+    "fury_bunny": {
+        "coins_range": [0, 750],
+        "unique": [
+            {"item": "Fury Paw", "min": 1, "max": 1, "chance": "1/200"},
+        ],
+        "loot": [
+            {"item": "Steel arrows", "min": 15, "max": 50, "chance": "1/2"},
+            {"item": "Mithril arrows", "min": 10, "max": 40, "chance": "1/3"},
+            {"item": "Chaos rune", "min": 10, "max": 30, "chance": "1/3"},
+            {"item": "Uncut emerald", "min": 1, "max": 2, "chance": "1/6", "noted": True},
+            {"item": "Shark", "min": 1, "max": 3, "chance": "1/5"},
+            {"item": "Mysterious key", "min": 1, "max": 1, "chance": "1/30"},
         ],
     },
     # ── Chaos fanatic (T3 w24) ──

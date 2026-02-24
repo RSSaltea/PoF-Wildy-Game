@@ -109,7 +109,7 @@ class SlayerManager:
 
         return xp_gained, task_completed, points_earned
 
-    def assign_task(self, p: PlayerState) -> Tuple[bool, str]:
+    def assign_task(self, p: PlayerState, guild_id: int = None) -> Tuple[bool, str]:
         if p.slayer_task and int(p.slayer_task.get("remaining", 0)) > 0:
             t = p.slayer_task
             return False, f"You already have a task: Kill **{t['remaining']}/{t['total']} {t['npc']}**."
@@ -119,6 +119,8 @@ class SlayerManager:
         eligible = []
         for npc in NPCS:
             npc_type = npc["npc_type"]
+            if npc.get("guild_id") is not None and npc.get("guild_id") != guild_id:
+                continue
             info = NPC_SLAYER.get(npc_type)
             if not info:
                 continue

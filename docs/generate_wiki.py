@@ -89,6 +89,7 @@ NPC_DESCRIPTIONS = {
     "corrupted_ranger": "The Corrupted Ranger is a fallen archer twisted by dark energy. Its arrows fly true and strike with unnatural precision, making it a formidable ranged threat.",
     "shade": "The Shade is a dark entity that exists between life and death. It attacks with necromantic energy, draining the very essence of its victims.",
     "infernal_imp": "The Infernal Imp is a demonic creature from the depths of the Wilderness. Its crushing blows are powered by hellfire, dealing heavy melee damage.",
+    "fury_bunny": "The Fury Bunny is a deceptively vicious creature that lurks in the mid-level Wilderness. Don't let its fluffy appearance fool you — this rabbit attacks with blinding speed, unleashing a flurry of razor-sharp claw strikes that can shred even armoured adventurers.",
     "chaos_fanatic": "The Chaos Fanatic is a deranged mage who has made the Wilderness his domain. He bombards adventurers with chaotic magical attacks while cackling maniacally. Despite his madness, he guards valuable treasures.",
     "phantom_archer": "The Phantom Archer is a spectral marksman that haunts the mid-level Wilderness. Its ghostly arrows are nearly impossible to dodge, making it a formidable ranged threat.",
     "risen_bonecaller": "The Risen Bonecaller is a necromancer that commands the dead. It attacks with bone magic and can summon spectral minions to aid in combat.",
@@ -110,6 +111,7 @@ NPC_DESCRIPTIONS = {
 }
 
 NPC_SPECIALS = {
+    "fury_bunny": "Paws of Fury (2\u201312%) \u2014 Hits 3 times in rapid succession; 2nd and 3rd hits deal 50% reduced damage",
     "windstrider": "Evasive Dash (10%) \u2014 Dodges the player's next attack entirely",
     "infernal_warlock": "Infernal Blaze (8%) \u2014 NPC's attacks deal +3 bonus fire damage for 3 hits",
     "hollow_warden": "Stone Shell (10%) \u2014 Player's damage is halved for 3 hits",

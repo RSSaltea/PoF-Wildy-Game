@@ -218,11 +218,13 @@ class DuelView(discord.ui.View):
 
 class NPCInfoSelect(discord.ui.Select):
 
-    def __init__(self, cog: "Wilderness", author_id: int):
+    def __init__(self, cog: "Wilderness", author_id: int, guild_id: int = None):
         self.cog = cog
         self.author_id = author_id
         options = []
         for npc in NPCS:
+            if npc.get("guild_id") is not None and npc.get("guild_id") != guild_id:
+                continue
             options.append(
                 discord.SelectOption(
                     label=npc["name"],
@@ -248,9 +250,9 @@ class NPCInfoSelect(discord.ui.Select):
 
 class NPCInfoView(discord.ui.View):
 
-    def __init__(self, cog: "Wilderness", author_id: int):
+    def __init__(self, cog: "Wilderness", author_id: int, guild_id: int = None):
         super().__init__(timeout=180)
-        self.add_item(NPCInfoSelect(cog, author_id))
+        self.add_item(NPCInfoSelect(cog, author_id, guild_id=guild_id))
 
     async def on_timeout(self):
         for child in self.children:

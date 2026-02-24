@@ -618,6 +618,25 @@ class CombatManager:
                 your_hp = int(p.hp)
                 events.append(f"🩸 Amulet of Seeping heals **{healed}** | You: **{your_hp}/{self.cog.config['max_hp']}**")
 
+            # Fury Paw weapon special — Paws of Fury (15% chance, 2 extra hits at 50% reduced damage)
+            if p.equipment.get("mainhand") == "Fury Paw" and hit > 0 and npc_hp > 0:
+                if random.random() < 0.15:
+                    events.append("🐾 **Paws of Fury!** Your claws slash twice more!")
+                    for fury_i in range(2):
+                        if npc_hp <= 0:
+                            break
+                        fury_roll_a = random.randint(0, your_atk)
+                        fury_roll_d = random.randint(0, npc_def_stat)
+                        fury_hit = max(0, fury_roll_a - fury_roll_d)
+                        fury_hit = max(1, fury_hit // 2)  # 50% reduced damage
+                        if helm in ("Slayer Helmet", "Shady Slayer Helm") and fury_hit > 0:
+                            task = getattr(p, "slayer_task", None)
+                            if task and task.get("npc_type") == npc_type and int(task.get("remaining", 0)) > 0:
+                                mult = 1.27 if helm == "Shady Slayer Helm" else 1.20
+                                fury_hit = int(fury_hit * mult)
+                        npc_hp = max(0, npc_hp - fury_hit)
+                        events.append(f"🐾 Fury slash #{fury_i + 2} deals **{fury_hit}** (50% reduced) | {npc_name}: **{npc_hp}/{npc_max}**")
+
             if npc_hp <= 0:
                 break
 
@@ -693,6 +712,27 @@ class CombatManager:
                 if random.random() < 0.10:
                     stone_shell_hits = 3
                     events.append("🪨 **Hollow Warden** raises a Stone Shell! Your damage is **halved** for **3** hits.")
+
+            # Fury Bunny 2-12% proc — Paws of Fury (3 rapid hits, 2nd and 3rd at 50% reduced damage)
+            if npc_name == "Fury Bunny" and your_hp > 0 and npc_hp > 0:
+                fury_chance = random.randint(2, 12) / 100
+                if random.random() < fury_chance:
+                    events.append("🐾 **Fury Bunny** unleashes **Paws of Fury**!")
+                    for paw_i in range(2):
+                        if your_hp <= 0:
+                            break
+                        roll_paw_a = random.randint(0, npc_max_hit)
+                        roll_paw_d = random.randint(0, def_for_roll)
+                        paw_hit = max(0, roll_paw_a - roll_paw_d)
+                        paw_hit = max(1, paw_hit // 2)  # 50% reduced damage
+                        if npc_type in REVENANT_TYPES and p.equipment.get("amulet") == "Bracelet of ethereum":
+                            paw_hit = int(paw_hit * 0.5)
+                        if p.equipment.get("cape") == "Shroud of the Undying" and paw_hit > 0:
+                            if random.random() < 0.02:
+                                paw_hit = 0
+                                events.append("🛡️ **Shroud of the Undying** nullifies the hit!")
+                        your_hp = clamp(your_hp - paw_hit, 0, int(self.cog.config["max_hp"]))
+                        events.append(f"🐾 Paws of Fury hit #{paw_i + 2} deals **{paw_hit}** (50% reduced) | You: **{your_hp}/{self.cog.config['max_hp']}**")
 
             # Duskwalker 8% proc — Shadow Volley (immediate second NPC attack)
             if npc_name == "Duskwalker" and your_hp > 0 and npc_hp > 0:
