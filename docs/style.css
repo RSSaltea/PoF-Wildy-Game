@@ -367,6 +367,8 @@ tr:hover td { background: var(--bg-tertiary); }
   font-weight: 600;
   font-size: 1.05rem;
   transition: all 0.2s;
+  min-width: 180px;
+  text-align: center;
 }
 .hero-links a:hover {
   border-color: var(--accent);
