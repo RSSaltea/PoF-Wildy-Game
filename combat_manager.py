@@ -601,12 +601,12 @@ class CombatManager:
                 hit += 2
                 events.append(f"🩸 Bleed deals +2 damage. ({bleed_hits} hits remaining)")
 
-            # Slayer Helm bonus - 20%/27% damage on task
+            # Slayer helm/mask bonus - 13%/20%/27% damage on task
             helm = p.equipment.get("helm", "")
-            if helm in ("Slayer Helmet", "Shady Slayer Helm") and hit > 0:
+            if helm in ("Black Mask", "Slayer Helmet", "Shady Slayer Helm") and hit > 0:
                 task = getattr(p, "slayer_task", None)
                 if task and task.get("npc_type") == npc_type and int(task.get("remaining", 0)) > 0:
-                    mult = 1.27 if helm == "Shady Slayer Helm" else 1.20
+                    mult = 1.27 if helm == "Shady Slayer Helm" else 1.20 if helm == "Slayer Helmet" else 1.13
                     hit = int(hit * mult)
 
             npc_hp = max(0, npc_hp - hit)
@@ -629,10 +629,10 @@ class CombatManager:
                         fury_roll_d = random.randint(0, npc_def_stat)
                         fury_hit = max(0, fury_roll_a - fury_roll_d)
                         fury_hit = max(1, fury_hit // 2)  # 50% reduced damage
-                        if helm in ("Slayer Helmet", "Shady Slayer Helm") and fury_hit > 0:
+                        if helm in ("Black Mask", "Slayer Helmet", "Shady Slayer Helm") and fury_hit > 0:
                             task = getattr(p, "slayer_task", None)
                             if task and task.get("npc_type") == npc_type and int(task.get("remaining", 0)) > 0:
-                                mult = 1.27 if helm == "Shady Slayer Helm" else 1.20
+                                mult = 1.27 if helm == "Shady Slayer Helm" else 1.20 if helm == "Slayer Helmet" else 1.13
                                 fury_hit = int(fury_hit * mult)
                         npc_hp = max(0, npc_hp - fury_hit)
                         events.append(f"🐾 Fury slash #{fury_i + 2} deals **{fury_hit}** (50% reduced) | {npc_name}: **{npc_hp}/{npc_max}**")

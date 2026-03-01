@@ -323,6 +323,7 @@ ITEM_EFFECTS = {
     "Abyssal Chainmace": {"effect": "Grants +136 strength against ALL NPCs at a cost of 3 Revenant ether per hit (no bonus in PvP)."},
     "Amulet of Seeping": {"effect": "Heals 1 + 2% of damage dealt at the cost of 5 Blood runes per successful hit."},
     "Shroud of the Undying": {"effect": "2% chance to completely nullify incoming damage on any hit."},
+    "Black Mask": {"effect": "When worn, increases damage dealt to your current slayer task NPC by 13%."},
     "Slayer Helmet": {"effect": "When worn, increases damage dealt to your current slayer task NPC by 20%."},
     "Shady Slayer Helm": {"effect": "When worn, increases damage dealt to your current slayer task NPC by 27%."},
     "Bracelet of Slayer Aggression": {"effect": "When worn, guarantees finding your slayer task NPC when using !w fight <npc>. Costs 20 Chaos runes per fight."},
