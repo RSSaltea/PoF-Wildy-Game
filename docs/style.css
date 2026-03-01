@@ -358,7 +358,7 @@ tr:hover td { background: var(--bg-tertiary); }
 .hero h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
 .hero h1 span { color: var(--gold); }
 .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto 2rem; }
-.hero-links { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; max-width: 600px; margin-left: auto; margin-right: auto; }
+.hero-links { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
 .hero-links a {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
@@ -367,8 +367,9 @@ tr:hover td { background: var(--bg-tertiary); }
   font-weight: 600;
   font-size: 1.05rem;
   transition: all 0.2s;
-  flex: 0 0 calc(33.333% - 0.667rem);
+  min-width: 175px;
   text-align: center;
+  white-space: nowrap;
 }
 .hero-links a:hover {
   border-color: var(--accent);

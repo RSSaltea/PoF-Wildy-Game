@@ -216,27 +216,84 @@ class DuelView(discord.ui.View):
         await self.cog._duel_action(interaction, self.duel, action="tele")
 
 
-class NPCInfoSelect(discord.ui.Select):
+class NPCTierSelect(discord.ui.Select):
 
-    def __init__(self, cog: "Wilderness", author_id: int, guild_id: int = None):
+    def __init__(self, cog: "Wilderness", author_id: int, guild_id: int = None, current_tier: int = 1):
         self.cog = cog
         self.author_id = author_id
+        self.guild_id = guild_id
+
+        # Collect tiers that have visible NPCs
+        visible_tiers: set = set()
+        for npc in NPCS:
+            if npc.get("guild_id") is not None and npc.get("guild_id") != guild_id:
+                continue
+            visible_tiers.add(npc["tier"])
+
+        options = []
+        for t in sorted(visible_tiers):
+            options.append(
+                discord.SelectOption(
+                    label=f"Tier {t}",
+                    value=str(t),
+                    default=(t == current_tier),
+                )
+            )
+
+        super().__init__(
+            placeholder="Select a tier…",
+            min_values=1,
+            max_values=1,
+            options=options[:25],
+            row=0,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the command user can use this menu.", ephemeral=True)
+            return
+        tier = int(self.values[0])
+        # Rebuild the view with the selected tier
+        view: NPCInfoView = self.view  # type: ignore
+        new_view = NPCInfoView(self.cog, self.author_id, guild_id=self.guild_id, current_tier=tier)
+        # Show the first NPC in the selected tier
+        first_npc = next(
+            (n for n in NPCS
+             if n["tier"] == tier
+             and (n.get("guild_id") is None or n.get("guild_id") == self.guild_id)),
+            NPCS[0],
+        )
+        emb = self.cog._npc_info_embed(first_npc["name"], interaction.guild)
+        await interaction.response.edit_message(embed=emb, view=new_view)
+
+
+class NPCInfoSelect(discord.ui.Select):
+
+    def __init__(self, cog: "Wilderness", author_id: int, guild_id: int = None, tier: int = 1):
+        self.cog = cog
+        self.author_id = author_id
+        self.guild_id = guild_id
         options = []
         for npc in NPCS:
+            if npc["tier"] != tier:
+                continue
             if npc.get("guild_id") is not None and npc.get("guild_id") != guild_id:
                 continue
             options.append(
                 discord.SelectOption(
                     label=npc["name"],
-                    description=f"Min wildy {npc['min_wildy']} • Tier {npc['tier']}",
+                    description=f"HP {npc['hp']} • Wildy {npc['min_wildy']}+",
                     value=npc["name"],
                 )
             )
+        if not options:
+            options.append(discord.SelectOption(label="No NPCs", value="_none"))
         super().__init__(
-            placeholder="Select an NPC to view details…",
+            placeholder="Select an NPC…",
             min_values=1,
             max_values=1,
             options=options[:25],
+            row=1,
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -244,15 +301,18 @@ class NPCInfoSelect(discord.ui.Select):
             await interaction.response.send_message("Only the command user can use this menu.", ephemeral=True)
             return
         npc_name = self.values[0]
+        if npc_name == "_none":
+            return
         emb = self.cog._npc_info_embed(npc_name, interaction.guild)
         await interaction.response.edit_message(embed=emb, view=self.view)
 
 
 class NPCInfoView(discord.ui.View):
 
-    def __init__(self, cog: "Wilderness", author_id: int, guild_id: int = None):
+    def __init__(self, cog: "Wilderness", author_id: int, guild_id: int = None, current_tier: int = 1):
         super().__init__(timeout=180)
-        self.add_item(NPCInfoSelect(cog, author_id, guild_id=guild_id))
+        self.add_item(NPCTierSelect(cog, author_id, guild_id=guild_id, current_tier=current_tier))
+        self.add_item(NPCInfoSelect(cog, author_id, guild_id=guild_id, tier=current_tier))
 
     async def on_timeout(self):
         for child in self.children:
