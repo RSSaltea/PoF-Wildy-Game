@@ -82,7 +82,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
 
     # ── All Styles Weapons ────────────────────────────────────────────────
     "Viggora's Chainmace": {"type": "mainhand", "style": "melee", "stance": "crush", "str_melee": 16, "atk_vs_npc": 80, "stackable": False, "value": 20000, "ge_price": 150000, "aliases": "chainmace,viggoras chainmace,vigs chainmace,viggora chainmace,Viggora's Chainmace"},
-    "Abyssal Chainmace": {"type": "mainhand", "style": "melee", "stance": "crush", "str_melee": 24, "atk_vs_npc": 136, "stackable": False, "value": 80000, "ge_price": 500000, "aliases": "abyssal mace,abyssal chainmace,abby chainmace,abby mace"},
+    "Abyssal Chainmace": {"type": "mainhand", "style": "melee", "stance": "crush", "str_melee": 24, "atk_vs_npc": 174, "stackable": False, "value": 80000, "ge_price": 500000, "aliases": "abyssal mace,abyssal chainmace,abby chainmace,abby mace"},
 
     # ── Range Weapons (mainhand) ──────────────────────────────────────────
     "Rotwood shortbow": {"type": "mainhand", "style": "range", "stance": "range", "str_range": 4, "consumes": "arrow", "stackable": False, "value": 800, "ge_price": 4000, "aliases": "rotwood bow,rotwood"},
@@ -91,7 +91,6 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Hexwood bow": {"type": "mainhand", "style": "range", "stance": "range", "str_range": 20, "consumes": "arrow", "stackable": False, "value": 15000, "ge_price": 65000, "aliases": "hexwood,hbow"},
     "Bone crossbow": {"type": "mainhand", "style": "range", "stance": "range", "str_range": 20, "consumes": "bolt", "stackable": False, "value": 25000, "ge_price": 120000, "aliases": "bone xbow,bone cbow,bcbow"},
     "Nightfall bow": {"type": "mainhand,offhand", "style": "range", "stance": "range", "str_range": 28, "consumes": "arrow", "stackable": False, "value": 45000, "ge_price": 280000, "aliases": "nightfall,nbow"},
-
     # ── Magic Weapons (mainhand) ──────────────────────────────────────────
     "Galestaff": {"type": "mainhand", "style": "magic", "stance": "magic", "str_magic": 12, "a_magic": 4, "consumes": "Air rune", "stackable": False, "value": 800, "ge_price": 4000, "aliases": "gale staff,gale"},
     "Tidestaff": {"type": "mainhand", "style": "magic", "stance": "magic", "str_magic": 20, "a_magic": 6, "consumes": "Water rune", "stackable": False, "value": 3000, "ge_price": 18000, "aliases": "tide staff,tide"},
@@ -318,7 +317,7 @@ ITEM_EFFECTS = {
     "Bracelet of ethereum": {"effect": "When worn you will take 50% reduced damage from Revenants."},
     "Wristwraps of the Damned": {"effect": "When worn you have a small chance to inflict a bleed."},
     "Viggora's Chainmace": {"effect": "Grants +80 strength against ALL NPCs at a cost of 3 Revenant ether per hit (no bonus in PvP)."},
-    "Abyssal Chainmace": {"effect": "Grants +136 strength against ALL NPCs at a cost of 3 Revenant ether per hit (no bonus in PvP)."},
+    "Abyssal Chainmace": {"effect": "Grants +174 strength against ALL NPCs at a cost of 3 Revenant ether per hit (no bonus in PvP)."},
     "Amulet of Seeping": {"effect": "Heals 1 + 2% of damage dealt at the cost of 5 Blood runes per successful hit."},
     "Shroud of the Undying": {"effect": "2% chance to completely nullify incoming damage on any hit."},
     "Black Mask": {"effect": "When worn, increases damage dealt to your current slayer task NPC by 13%."},
