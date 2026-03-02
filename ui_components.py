@@ -428,6 +428,7 @@ class BankCategorySelect(discord.ui.Select):
             min_values=1,
             max_values=1,
             options=opts[:25],
+            row=0,
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -441,13 +442,35 @@ class BankCategorySelect(discord.ui.Select):
         await interaction.response.edit_message(embed=emb, view=view)
 
 
+class BankSearchModal(discord.ui.Modal, title="Search Bank"):
+
+    query = discord.ui.TextInput(
+        label="Item name",
+        placeholder="Type an item name to search…",
+        required=True,
+        max_length=100,
+    )
+
+    def __init__(self, cog: "Wilderness", author_id: int):
+        super().__init__()
+        self.cog = cog
+        self.author_id = author_id
+
+    async def on_submit(self, interaction: discord.Interaction):
+        search = self.query.value.strip().lower()
+        emb = self.cog._bank_embed(interaction.user, "All", search_query=search)
+        view = BankView(self.cog, self.author_id, "All", search_query=search)
+        await interaction.response.edit_message(embed=emb, view=view)
+
+
 class BankView(discord.ui.View):
 
-    def __init__(self, cog: "Wilderness", author_id: int, current_category: str):
+    def __init__(self, cog: "Wilderness", author_id: int, current_category: str, search_query: str = ""):
         super().__init__(timeout=180)
         self.cog = cog
         self.author_id = author_id
         self.current_category = current_category
+        self.search_query = search_query
 
         categories = cog._bank_categories_for_user(author_id)
         if current_category not in categories:
@@ -461,9 +484,19 @@ class BankView(discord.ui.View):
             return False
         return True
 
+    @discord.ui.button(label="Search", emoji="🔍", style=discord.ButtonStyle.primary, row=1)
+    async def search_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(BankSearchModal(self.cog, self.author_id))
+
+    @discord.ui.button(label="Clear Search", style=discord.ButtonStyle.secondary, row=1)
+    async def clear_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        emb = self.cog._bank_embed(interaction.user, self.current_category)
+        view = BankView(self.cog, self.author_id, self.current_category)
+        await interaction.response.edit_message(embed=emb, view=view)
+
     async def on_timeout(self):
         for child in self.children:
-            if isinstance(child, discord.ui.Select):
+            if isinstance(child, (discord.ui.Select, discord.ui.Button)):
                 child.disabled = True
 
 

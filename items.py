@@ -313,6 +313,8 @@ UNTRADEABLE = {name for name, meta in ITEMS.items() if not meta.get("tradeable",
 
 ITEM_EFFECTS = {
     "Fury Paws": {"effect": "When equipped, has a 15% chance on hit to trigger Paws of Fury — 2 extra slashes at 50% reduced damage."},
+    "Soulfire staff": {"effect": "When equipped, has a 50% chance on hit to trigger Soulfire Blaze — an extra flame dealing 10 damage. Chance increases to 75% with Cindertome."},
+    "Cindertome": {"effect": "When equipped alongside a Soulfire staff, increases Soulfire Blaze proc chance from 50% to 75%."},
     "Bracelet of ethereum": {"effect": "When worn you will take 50% reduced damage from Revenants."},
     "Wristwraps of the Damned": {"effect": "When worn you have a small chance to inflict a bleed."},
     "Viggora's Chainmace": {"effect": "Grants +80 strength against ALL NPCs at a cost of 3 Revenant ether per hit (no bonus in PvP)."},

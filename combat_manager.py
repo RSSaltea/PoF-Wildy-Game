@@ -640,6 +640,14 @@ class CombatManager:
                         npc_hp = max(0, npc_hp - fury_hit)
                         events.append(f"🐾 Fury slash #{fury_i + 2} deals **{fury_hit}** (50% reduced) | {npc_name}: **{npc_hp}/{npc_max}**")
 
+            # Soulfire Staff special — 50% chance (75% with Cindertome) for an extra hit dealing 10 damage
+            if p.equipment.get("mainhand") == "Soulfire staff" and hit > 0 and npc_hp > 0:
+                sf_chance = 0.75 if p.equipment.get("offhand") == "Cindertome" else 0.50
+                if random.random() < sf_chance:
+                    sf_hit = 10
+                    npc_hp = max(0, npc_hp - sf_hit)
+                    events.append(f"🔥 **Soulfire Blaze!** An extra flame deals **{sf_hit}** damage | {npc_name}: **{npc_hp}/{npc_max}**")
+
             if npc_hp <= 0:
                 break
 

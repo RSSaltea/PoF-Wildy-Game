@@ -397,7 +397,7 @@ class InventoryManager:
         present = [c for c in order if c == "All" or c in cats]
         return present or ["All"]
 
-    def bank_embed(self, user: discord.abc.User, category: str) -> discord.Embed:
+    def bank_embed(self, user: discord.abc.User, category: str, search_query: str = "") -> discord.Embed:
         p = self.cog._get_player(user)
 
         items = [(k, int(v)) for k, v in (p.bank or {}).items() if int(v) > 0]
@@ -406,9 +406,17 @@ class InventoryManager:
         if category != "All":
             items = [(k, v) for (k, v) in items if self.bank_category_for_item(k) == category]
 
+        if search_query:
+            sq = search_query.lower()
+            items = [(k, v) for (k, v) in items if sq in k.lower()]
+
+        desc = f"Category: **{category}**"
+        if search_query:
+            desc += f"\nSearch: **{search_query}**"
+
         emb = discord.Embed(
             title=f"🏦 {user.display_name}'s Bank",
-            description=f"Category: **{category}**",
+            description=desc,
         )
         emb.add_field(
             name="🪙 Bank Coins",

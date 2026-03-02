@@ -322,7 +322,7 @@ class Wilderness(commands.Cog):
     def _bank_category_for_item(self, item_name): return self.inv_mgr.bank_category_for_item(item_name)
     def _chunk_lines(self, lines, max_chars=950): return self.inv_mgr.chunk_lines(lines, max_chars)
     def _bank_categories_for_user(self, user_id): return self.inv_mgr.bank_categories_for_user(user_id)
-    def _bank_embed(self, user, category): return self.inv_mgr.bank_embed(user, category)
+    def _bank_embed(self, user, category, search_query=""): return self.inv_mgr.bank_embed(user, category, search_query=search_query)
     def _inv_categories_for_user(self, user_id): return self.inv_mgr.inv_categories_for_user(user_id)
     def _inv_embed(self, user, category): return self.inv_mgr.inv_embed(user, category)
 
@@ -1726,16 +1726,26 @@ class Wilderness(commands.Cog):
             old_oh = p.equipment.get("offhand") if is_2h else None  # offhand to clear for 2h
             if slot != "ammo":
                 slots_needed = (1 if old_mh else 0) + (1 if old_oh else 0)
-                if slots_needed > 0 and self._inv_free_slots(p.inventory) < slots_needed:
+                free = self._inv_free_slots(p.inventory)
+                if slots_needed > 0 and free < slots_needed and p.in_wilderness:
                     await ctx.reply(f"No inventory space to swap gear (need **{slots_needed}** free slot(s)).")
                     return
 
-            # Return old items to inventory (ammo slot handles its own return)
+            # Return old items to inventory, or bank them if inventory is full (outside wildy)
             removed_extra = None
+            banked_old: list = []
             if old_mh and slot != "ammo":
-                self._add_item(p.inventory, old_mh, 1)
+                if not p.in_wilderness and self._inv_free_slots(p.inventory) < 1:
+                    self._add_item(p.bank, old_mh, 1)
+                    banked_old.append(old_mh)
+                else:
+                    self._add_item(p.inventory, old_mh, 1)
             if old_oh:
-                self._add_item(p.inventory, old_oh, 1)
+                if not p.in_wilderness and self._inv_free_slots(p.inventory) < 1:
+                    self._add_item(p.bank, old_oh, 1)
+                    banked_old.append(old_oh)
+                else:
+                    self._add_item(p.inventory, old_oh, 1)
                 p.equipment.pop("offhand", None)
                 removed_extra = old_oh
 
@@ -1832,6 +1842,8 @@ class Wilderness(commands.Cog):
         msg = f"✅ Equipped **{item_key}** in slot **{slot}**."
         if removed_extra:
             msg += f"\n↩️ **{removed_extra}** was unequipped from your offhand."
+        if banked_old:
+            msg += f"\n🏦 **{', '.join(banked_old)}** sent to bank (inventory full)."
         await ctx.reply(msg)
 
     @w.command(name="unequip")
@@ -2174,16 +2186,19 @@ class Wilderness(commands.Cog):
                 inv_item = bank_key
 
             space = self._inv_free_slots(p.inventory)
-            if space <= 0:
-                await ctx.reply("Your inventory is full.")
-                return
 
             # How many can we actually take based on slot rules?
             if inv_item in FOOD or (not self._is_stackable(inv_item) and inv_item not in FOOD):
+                if space <= 0:
+                    await ctx.reply("Your inventory is full.")
+                    return
                 take = min(space, qty)
             else:
                 need = self._slots_needed_to_add(p.inventory, inv_item, qty)
-                take = qty if (need == 0 or space >= need) else 0
+                if need > 0 and space < need:
+                    await ctx.reply("Your inventory is full.")
+                    return
+                take = qty
 
             if take <= 0:
                 await ctx.reply("No inventory space for that item.")
