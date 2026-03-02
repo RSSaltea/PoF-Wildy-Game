@@ -64,10 +64,6 @@ FOOD: Dict[str, Dict[str, int]] = {
 
 _IMG_BASE = "https://raw.githubusercontent.com/RSSaltea/PoF-Wildy-Game/main/docs/images/items/"
 
-# ─── value = shop sell / alch base ────────────────────────────────────────
-# ─── ge_price = estimated market value shown on the Grand Exchange wiki ───
-# ─── Alch gives value * 1.3 ───────────────────────────────────────────────
-
 ITEMS: Dict[str, Dict[str, Any]] = {
     # ── Starter gear ──────────────────────────────────────────────────────
     "Starter Sword": {"type": "mainhand", "style": "melee", "stance": "slash", "str_melee": 8, "stackable": False, "value": 0, "aliases": "start sword,starter sword", "image": _IMG_BASE + "starter%20sword.png"},

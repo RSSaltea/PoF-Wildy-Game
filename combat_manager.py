@@ -198,9 +198,11 @@ class CombatManager:
         desc = f"Min Wilderness level: **{min_wildy}**\nType: **{npc_type}**\nTier: **{tier}**"
         if slayer_info:
             desc += f"\n\n🗡️ **Slayer**\nLevel required: **{slayer_info['level']}**\nXP per kill: **{slayer_info['xp']}**"
+        tier_colors = {1: 0x2ecc71, 2: 0xa3d65c, 3: 0xf1c40f, 4: 0xe67e22, 5: 0xe74c3c}
         emb = discord.Embed(
             title=f"👹 NPC: {name}",
             description=desc,
+            color=tier_colors.get(tier, 0x2B2D31),
         )
         stats_parts = [f"Base HP: **{base_hp}**", f"Stance: **{STANCE_DISPLAY.get(npc_stance, npc_stance)}**", f"Strength ({STYLE_DISPLAY.get(npc_style, npc_style)}): **{npc_str}**"]
         def_parts = []
@@ -221,8 +223,9 @@ class CombatManager:
 
         emb.add_field(name="Pet", value=section_lines("pet"), inline=False)
 
-        if guild and guild.icon:
-            emb.set_thumbnail(url=guild.icon.url)
+        npc_image = npc.get("image")
+        if npc_image:
+            emb.set_thumbnail(url=npc_image)
 
         return emb
 
