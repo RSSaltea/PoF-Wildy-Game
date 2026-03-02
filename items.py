@@ -80,7 +80,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "Dragon scimitar": {"type": "mainhand", "style": "melee", "stance": "slash", "str_melee": 20, "stackable": False, "value": 12000, "ge_price": 45000, "aliases": "d scim,dscim,dragon scim,d scimitar", "image": _IMG_BASE + "dragon%20scimitar.png"},
     "Abyssal Whip": {"type": "mainhand", "style": "melee", "stance": "slash", "str_melee": 44, "stackable": False, "value": 25000, "ge_price": 120000, "aliases": "whip,abby whip,abyssal whip"},
     "Abyssal Scourge": {"type": "mainhand", "style": "melee", "stance": "slash", "str_melee": 60, "stackable": False, "value": 30000, "ge_price": 180000, "aliases": "scourge,abby scourge,abyssal scourge"},
-    "Fury Paws": {"type": "mainhand,offhand", "style": "melee", "stance": "slash", "str_melee": 90, "stackable": False, "value": 18000, "ge_price": 80000, "aliases": "fury paw,fpaw"},
+    "Fury Paws": {"type": "mainhand,offhand", "style": "melee", "stance": "slash", "str_melee": 100, "stackable": False, "value": 18000, "ge_price": 80000, "aliases": "fury paw,fpaw"},
     "Dragon 2h sword": {"type": "mainhand,offhand", "style": "melee", "stance": "crush", "str_melee": 32, "stackable": False, "value": 20000, "ge_price": 75000, "aliases": "d2h,dragon 2h", "image": _IMG_BASE + "dragon%202h%20sword.png"},
     "Veilbreaker": {"type": "mainhand", "style": "melee", "stance": "slash", "str_melee": 112, "stackable": False, "value": 50000, "ge_price": 350000, "aliases": "veil"},
 
