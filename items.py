@@ -55,11 +55,11 @@ POTIONS = {
 }
 
 FOOD: Dict[str, Dict[str, int]] = {
-    "Lobster": {"heal": 12},
-    "Shark": {"heal": 20},
-    "Manta Ray": {"heal": 22, "aliases": "manta"},
-    "Anglerfish": {"heal": 24, "aliases": "angler"},
-    "Veilfruit": {"heal": 28},
+    "Lobster": {"heal": 18},
+    "Shark": {"heal": 30},
+    "Manta Ray": {"heal": 33, "aliases": "manta"},
+    "Anglerfish": {"heal": 36, "aliases": "angler"},
+    "Veilfruit": {"heal": 42},
 }
 
 _IMG_BASE = "https://raw.githubusercontent.com/RSSaltea/PoF-Wildy-Game/main/docs/images/items/"

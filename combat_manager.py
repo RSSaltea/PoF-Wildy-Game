@@ -675,6 +675,17 @@ class CombatManager:
                     npc_hit = 0
                     events.append("🛡️ **Shroud of the Undying** nullifies the hit!")
 
+            # Death prevention: if this hit would kill us, eat food first
+            if your_hp - npc_hit <= 0 and npc_hit > 0:
+                save_food = self.cog.inv_mgr.best_food_in_inventory(p)
+                if save_food:
+                    save_heal = int(FOOD.get(save_food, {}).get("heal", 0))
+                    if save_heal > 0 and self.cog.inv_mgr.remove_item(p.inventory, save_food, 1):
+                        hp_before_save = your_hp
+                        your_hp = clamp(your_hp + save_heal, 0, int(self.cog.config["max_hp"]))
+                        eaten_food[save_food] = eaten_food.get(save_food, 0) + 1
+                        events.append(f"🍖 **Death prevented!** Auto-ate **{save_food}** (+{your_hp - hp_before_save}) before taking the hit.")
+
             your_hp = clamp(your_hp - npc_hit, 0, int(self.cog.config["max_hp"]))
             events.append(f"💥 {npc_name} hits **{npc_hit}** | You: **{your_hp}/{self.cog.config['max_hp']}** | {npc_name}: **{npc_hp}/{npc_max}**")
 
