@@ -28,9 +28,10 @@ The importer now does the soft chroma-key matte and neighbor-fragment cleanup.
 `fix_imagegen_blanks.py` also applies targeted transparent PNG overrides for
 known bad generated cells, including the shifted Super Strength/Thornweave/
 Tidestaff/Tiny Dark Archer run, the Netharis equipment set, and the emerald
-icons. NPCs are rebuilt from the saved NPC sheets, with Lord Valthyros using
-`docs/game/_imagegen_sheets/lord-valthyros-single.png` as a full-body vampire
-lord override with exactly one Amulet of Seeping.
+icons. NPCs are rebuilt from the saved NPC sheets. Any NPC sheet cells that
+cropped feet or robe hems use `*-single.png` source images in
+`docs/game/_imagegen_sheets/` as full-body overrides, including Lord Valthyros
+as a vampire lord with exactly one Amulet of Seeping.
 Use `clean_chroma_fringe.py` only as an extra repair pass if a future generated
 sheet still leaves visible green edge spill.
 
